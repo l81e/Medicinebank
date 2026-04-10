@@ -1,1 +1,184 @@
-nvm
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Clone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0f0f0f;
+      color: white;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #202020;
+      position: sticky;
+      top: 0;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: bold;
+      color: red;
+    }
+
+    .search-bar {
+      flex: 1;
+      margin: 0 20px;
+      display: flex;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      outline: none;
+    }
+
+    .search-bar button {
+      padding: 8px 15px;
+      background: #303030;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* LAYOUT */
+    .container {
+      display: flex;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 200px;
+      background: #181818;
+      padding: 10px;
+      height: calc(100vh - 60px);
+    }
+
+    .sidebar div {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .sidebar div:hover {
+      background: #333;
+    }
+
+    /* CONTENT */
+    .content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .videos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .video-card {
+      cursor: pointer;
+    }
+
+    .thumbnail {
+      width: 100%;
+      height: 150px;
+      background: #555;
+    }
+
+    .video-info {
+      margin-top: 8px;
+    }
+
+    .video-title {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .channel {
+      font-size: 12px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">YouTube</div>
+
+    <div class="search-bar">
+      <input type="text" placeholder="Search">
+      <button>🔍</button>
+    </div>
+
+    <div>👤</div>
+  </div>
+
+  <div class="container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div>🏠 Home</div>
+      <div>🔥 Trending</div>
+      <div>📺 Subscriptions</div>
+      <div>📚 Library</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+      <div class="videos">
+
+        <!-- VIDEO CARD -->
+        <div class="video-card">
+          <div class="thumbnail"></div>
+          <div class="video-info">
+            <div class="video-title">Sample Video Title</div>
+            <div class="channel">Channel Name • 1M views</div>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="thumbnail"></div>
+          <div class="video-info">
+            <div class="video-title">Another Cool Video</div>
+            <div class="channel">Channel Name • 500K views</div>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="thumbnail"></div>
+          <div class="video-info">
+            <div class="video-title">Learn HTML Fast</div>
+            <div class="channel">Dev Channel • 200K views</div>
+          </div>
+        </div>
+
+        <div class="video-card">
+          <div class="thumbnail"></div>
+          <div class="video-info">
+            <div class="video-title">UI Design Inspiration</div>
+            <div class="channel">Design Hub • 800K views</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
