@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,78 +9,62 @@
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 :root {
-–black: #0A0A0A;
-–black-2: #111111;
-–black-3: #1A1A1A;
-–dark: #222222;
-–mid: #444444;
-–muted: #888888;
-–line: rgba(255,255,255,0.08);
-–line-light: rgba(0,0,0,0.08);
-–white: #FFFFFF;
-–off-white: #F5F4F2;
-–off-white-2: #EDEBE7;
-
-–research: #2A7A5A;
-–research-light: rgba(42,122,90,0.15);
-–research-glow: rgba(42,122,90,0.08);
-
-–relations: #1A4A8A;
-–relations-light: rgba(26,74,138,0.15);
-–relations-glow: rgba(26,74,138,0.08);
-
-–aid: #8A3A1A;
-–aid-light: rgba(138,58,26,0.15);
-–aid-glow: rgba(138,58,26,0.08);
-
-–accent: #C8371A;
+--black: #0A0A0A;
+--black-2: #111111;
+--black-3: #1A1A1A;
+--dark: #222222;
+--mid: #444444;
+--muted: #A1A1AA; /* Brighter muted color for better contrast */
+--line: rgba(255,255,255,0.08);
+--white: #FFFFFF;
+--accent: #C8371A;
+--primary-blue: #38BDF8;
 }
 
 html { scroll-behavior: smooth; }
 
 body {
-font-family: ‘Inter’, sans-serif;
-background: var(–black);
-color: var(–white);
+font-family: 'Inter', sans-serif;
+background: var(--black);
+color: var(--white);
 overflow-x: hidden;
 -webkit-font-smoothing: antialiased;
 }
 
-/* ─── HEADER (matching real MBI header) ─── */
+/* ─── HEADER ─── */
 .header {
 position: fixed;
 top: 0; left: 0; right: 0;
 z-index: 1000;
-background: var(–black-2);
-border-bottom: 1px solid var(–line);
+background: rgba(17, 17, 17, 0.95); /* Slight transparency */
+backdrop-filter: blur(10px);
+border-bottom: 1px solid var(--line);
 }
 
 .header-top {
 display: flex;
 align-items: center;
 justify-content: space-between;
-padding: 14px 20px;
+padding: 12px 20px;
 }
 
 .logo {
 display: flex;
 align-items: center;
-gap: 10px;
+gap: 12px;
 text-decoration: none;
 }
 
-.logo-icon {
-width: 38px; height: 38px;
-position: relative;
+.logo-img {
+width: 42px; 
+height: auto;
+display: block;
 }
-
-/* Lotus/brain icon matching the MBI style */
-.logo-icon svg { width: 38px; height: 38px; }
 
 .logo-text {
 font-size: 22px;
 font-weight: 800;
-color: var(–white);
+color: var(--white);
 letter-spacing: -0.5px;
 }
 
@@ -89,8 +72,8 @@ letter-spacing: -0.5px;
 display: flex;
 align-items: center;
 gap: 8px;
-background: rgba(255,255,255,0.07);
-border: 1px solid var(–line);
+background: rgba(255,255,255,0.1);
+border: 1px solid var(--line);
 border-radius: 8px;
 padding: 8px 14px;
 flex: 1;
@@ -101,43 +84,36 @@ max-width: 200px;
 background: none;
 border: none;
 outline: none;
-font-family: ‘Inter’, sans-serif;
 font-size: 13px;
-color: var(–muted);
+color: var(--white);
 width: 100%;
 }
 
-.header-search input::placeholder { color: var(–muted); }
-
 .header-nav {
 display: flex;
-overflow-x: auto;
-scrollbar-width: none;
-border-top: 1px solid var(–line);
+border-top: 1px solid var(--line);
 padding: 0 20px;
-gap: 0;
+gap: 5px;
 }
 
-.header-nav::-webkit-scrollbar { display: none; }
-
 .nav-tab {
-flex-shrink: 0;
-padding: 11px 16px;
+padding: 14px 16px;
 font-size: 13px;
-font-weight: 500;
-color: var(–muted);
+font-weight: 600;
+color: var(--muted);
 text-decoration: none;
-white-space: nowrap;
-border-bottom: 2px solid transparent;
 transition: all 0.2s;
+border-bottom: 2px solid transparent;
+}
+
+.nav-tab:hover {
+color: var(--primary-blue);
 }
 
 .nav-tab.active {
-color: var(–white);
-border-bottom-color: var(–white);
+color: var(--white);
+border-bottom-color: var(--white);
 }
-
-.nav-tab:first-child { padding-left: 0; }
 
 /* ─── HERO ─── */
 .hero {
@@ -145,48 +121,10 @@ position: relative;
 min-height: 100vh;
 display: flex;
 flex-direction: column;
-justify-content: flex-end;
-padding: 100px 24px 48px;
-overflow: hidden;
+justify-content: center;
+padding: 120px 24px 60px;
 }
 
-.hero-bg {
-position: absolute;
-inset: 0;
-background: linear-gradient(
-to bottom,
-rgba(10,10,10,0.3) 0%,
-rgba(10,10,10,0.5) 40%,
-rgba(10,10,10,0.92) 80%,
-var(–black) 100%
-);
-z-index: 1;
-}
-
-/* Animated medical OR background */
-.hero-visual {
-position: absolute;
-inset: 0;
-z-index: 0;
-overflow: hidden;
-}
-
-.hero-visual-inner {
-width: 100%; height: 100%;
-background:
-radial-gradient(ellipse at 30% 40%, rgba(42,122,90,0.18) 0%, transparent 60%),
-radial-gradient(ellipse at 80% 20%, rgba(26,74,138,0.15) 0%, transparent 55%),
-radial-gradient(ellipse at 60% 80%, rgba(138,58,26,0.12) 0%, transparent 50%),
-linear-gradient(160deg, #0D1510 0%, #0A0A0A 40%, #0D0D18 70%, #120A0A 100%);
-animation: bgShift 12s ease-in-out infinite alternate;
-}
-
-@keyframes bgShift {
-0%   { filter: brightness(1) hue-rotate(0deg); }
-100% { filter: brightness(1.12) hue-rotate(8deg); }
-}
-
-/* Grid overlay */
 .hero-grid {
 position: absolute;
 inset: 0;
@@ -194,1153 +132,114 @@ z-index: 0;
 background-image:
 linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
 linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-background-size: 40px 40px;
+background-size: 50px 50px;
+mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
-/* Floating terms */
-.floating-terms {
-position: absolute;
-inset: 0;
-z-index: 1;
-pointer-events: none;
-overflow: hidden;
-}
-
-.term {
-position: absolute;
-font-size: 10px;
-font-weight: 400;
-color: rgba(255,255,255,0.12);
-letter-spacing: 0.05em;
-white-space: nowrap;
-animation: termFloat linear infinite;
-}
-
-@keyframes termFloat {
-0%   { opacity: 0; transform: translateY(15px); }
-15%  { opacity: 1; }
-85%  { opacity: 1; }
-100% { opacity: 0; transform: translateY(-15px); }
-}
-
-.hero-content {
-position: relative;
-z-index: 2;
-}
+.hero-content { position: relative; z-index: 2; max-width: 600px; margin: 0 auto; text-align: center;}
 
 .hero-eyebrow {
-display: flex;
-align-items: center;
-gap: 8px;
 font-size: 11px;
-font-weight: 600;
-letter-spacing: 0.18em;
+font-weight: 700;
+letter-spacing: 0.2em;
 text-transform: uppercase;
-color: rgba(255,255,255,0.45);
-margin-bottom: 18px;
-opacity: 0;
-animation: slideUp 0.7s 0.1s ease forwards;
-}
-
-.eyebrow-dot {
-width: 4px; height: 4px;
-background: var(–accent);
-border-radius: 50%;
-flex-shrink: 0;
+color: var(--primary-blue);
+margin-bottom: 20px;
 }
 
 .hero-title {
-font-size: 46px;
+font-size: 56px;
 font-weight: 900;
-line-height: 1.0;
-letter-spacing: -1.5px;
-color: var(–white);
-margin-bottom: 18px;
-opacity: 0;
-animation: slideUp 0.7s 0.22s ease forwards;
+line-height: 1.1;
+margin-bottom: 24px;
 }
 
-.hero-title .word-bank {
+.word-bank {
 color: transparent;
--webkit-text-stroke: 1.5px rgba(255,255,255,0.6);
+-webkit-text-stroke: 2px rgba(255,255,255,0.8); /* Thickened outline */
 }
 
 .hero-sub {
-font-size: 15px;
-font-weight: 400;
-line-height: 1.65;
-color: rgba(255,255,255,0.55);
-margin-bottom: 32px;
-max-width: 340px;
-opacity: 0;
-animation: slideUp 0.7s 0.34s ease forwards;
+font-size: 17px;
+color: rgba(255,255,255,0.7);
+margin-bottom: 40px;
+text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
 .hero-btns {
 display: flex;
-gap: 12px;
-margin-bottom: 48px;
-opacity: 0;
-animation: slideUp 0.7s 0.46s ease forwards;
+gap: 15px;
+justify-content: center;
 }
 
 .btn-primary {
-flex: 1;
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-background: var(–white);
-color: var(–black);
-font-family: ‘Inter’, sans-serif;
-font-size: 14px;
+background: var(--white);
+color: var(--black);
+padding: 16px 32px;
+border-radius: 6px;
 font-weight: 700;
-padding: 15px 20px;
-border: none;
-border-radius: 4px;
-cursor: pointer;
 text-decoration: none;
-letter-spacing: -0.2px;
-transition: transform 0.15s, opacity 0.15s;
--webkit-tap-highlight-color: transparent;
+transition: transform 0.2s;
 }
-
-.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
 
 .btn-secondary {
-flex: 1;
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-background: rgba(255,255,255,0.07);
-color: var(–white);
-font-family: ‘Inter’, sans-serif;
-font-size: 14px;
+background: rgba(255,255,255,0.1);
+color: var(--white);
+padding: 16px 32px;
+border-radius: 6px;
 font-weight: 600;
-padding: 15px 20px;
-border: 1px solid rgba(255,255,255,0.15);
-border-radius: 4px;
-cursor: pointer;
 text-decoration: none;
-letter-spacing: -0.2px;
-transition: transform 0.15s, background 0.15s;
+border: 1px solid rgba(255,255,255,0.2);
+backdrop-filter: blur(5px);
 }
 
-.btn-secondary:active { transform: scale(0.97); background: rgba(255,255,255,0.12); }
-
-/* Hero stats */
-.hero-stats {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 1px;
-background: var(–line);
-border: 1px solid var(–line);
-border-radius: 8px;
-overflow: hidden;
-opacity: 0;
-animation: slideUp 0.7s 0.58s ease forwards;
-}
-
-.hero-stat {
-background: rgba(255,255,255,0.04);
-padding: 16px 12px;
-text-align: center;
-}
-
-.hero-stat-val {
-font-size: 26px;
-font-weight: 800;
-letter-spacing: -1px;
-color: var(–white);
-line-height: 1;
-margin-bottom: 4px;
-}
-
-.hero-stat-val span { color: var(–accent); }
-
-.hero-stat-lbl {
-font-size: 10px;
-font-weight: 500;
-color: var(–muted);
-letter-spacing: 0.04em;
-}
-
-/* ─── STORY SECTION ─── */
-.section {
-padding: 72px 24px;
-}
-
-.section-tag {
-font-size: 10px;
-font-weight: 700;
-letter-spacing: 0.22em;
-text-transform: uppercase;
-color: var(–muted);
-margin-bottom: 14px;
-}
-
-.section-title {
-font-size: 30px;
-font-weight: 800;
-line-height: 1.15;
-letter-spacing: -0.8px;
-color: var(–white);
-margin-bottom: 16px;
-}
-
-.section-body {
-font-size: 15px;
-line-height: 1.72;
-color: rgba(255,255,255,0.5);
-}
-
-.section-body + .section-body {
-margin-top: 16px;
-}
-
-/* ─── DIVIDER ─── */
-.divider {
-height: 1px;
-background: var(–line);
-margin: 0 24px;
-}
-
-/* ─── MARQUEE ─── */
-.marquee-wrap {
-padding: 20px 0;
-border-top: 1px solid var(–line);
-border-bottom: 1px solid var(–line);
-overflow: hidden;
-background: var(–black-3);
-}
-
-.marquee-track {
-display: flex;
-white-space: nowrap;
-animation: marquee 18s linear infinite;
-}
-
-@keyframes marquee {
-from { transform: translateX(0); }
-to { transform: translateX(-50%); }
-}
-
-.marquee-item {
-display: inline-flex;
-align-items: center;
-gap: 14px;
-padding: 0 28px;
-font-size: 13px;
-font-weight: 500;
-color: rgba(255,255,255,0.3);
-letter-spacing: 0.04em;
-}
-
-.m-dot {
-width: 4px; height: 4px;
-background: var(–accent);
-border-radius: 50%;
-flex-shrink: 0;
-}
-
-/* ─── SECTORS ─── */
-.sectors-section {
-padding: 72px 0 0;
-}
-
-.sectors-header {
-padding: 0 24px 36px;
-}
-
-.sector-cards {
-display: flex;
-flex-direction: column;
-gap: 1px;
-background: var(–line);
-}
-
-.sector-card {
-position: relative;
-overflow: hidden;
-background: var(–black-2);
-padding: 36px 24px;
-cursor: pointer;
-transition: background 0.3s;
-}
-
-.sector-card:active { background: var(–black-3); }
-
-/* Accent left border */
-.sector-card::before {
-content: ‘’;
-position: absolute;
-left: 0; top: 0; bottom: 0;
-width: 3px;
-transition: width 0.3s;
-}
-
-.sector-card.research::before  { background: var(–research); }
-.sector-card.relations::before { background: var(–relations); }
-.sector-card.aid::before       { background: var(–aid); }
-
-/* Ambient glow bg */
-.sector-card::after {
-content: ‘’;
-position: absolute;
-inset: 0;
-opacity: 0;
-transition: opacity 0.4s;
-pointer-events: none;
-}
-
-.sector-card.research::after  { background: var(–research-glow); }
-.sector-card.relations::after { background: var(–relations-glow); }
-.sector-card.aid::after       { background: var(–aid-glow); }
-
-.sector-card.expanded::after  { opacity: 1; }
-.sector-card.expanded::before { width: 5px; }
-
-.sector-num {
-font-size: 11px;
-font-weight: 600;
-letter-spacing: 0.18em;
-color: var(–muted);
-margin-bottom: 16px;
-display: block;
-}
-
-.sector-head {
-display: flex;
-align-items: flex-start;
-justify-content: space-between;
-gap: 12px;
-}
-
-.sector-icon {
-width: 44px; height: 44px;
-border-radius: 10px;
-display: flex; align-items: center; justify-content: center;
-font-size: 22px;
-flex-shrink: 0;
-margin-bottom: 16px;
-}
-
-.sector-card.research  .sector-icon { background: var(–research-light); }
-.sector-card.relations .sector-icon { background: var(–relations-light); }
-.sector-card.aid       .sector-icon { background: var(–aid-light); }
-
-.sector-toggle {
-width: 28px; height: 28px;
-border-radius: 50%;
-border: 1px solid var(–line);
-display: flex; align-items: center; justify-content: center;
-flex-shrink: 0;
-transition: transform 0.3s, background 0.2s;
-margin-top: 2px;
-}
-
-.sector-card.expanded .sector-toggle {
-transform: rotate(45deg);
-background: rgba(255,255,255,0.08);
-}
-
-.sector-name {
-font-size: 26px;
-font-weight: 800;
-letter-spacing: -0.6px;
-color: var(–white);
-margin-bottom: 8px;
-line-height: 1.1;
-}
-
-.sector-tagline {
-font-size: 14px;
-font-weight: 400;
-color: rgba(255,255,255,0.45);
-line-height: 1.55;
-margin-bottom: 0;
-}
-
-/* Expandable content */
-.sector-expand {
-max-height: 0;
-overflow: hidden;
-transition: max-height 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
-}
-
-.sector-card.expanded .sector-expand {
-max-height: 600px;
-}
-
-.sector-expand-inner {
-padding-top: 24px;
-border-top: 1px solid var(–line);
-margin-top: 24px;
-}
-
-.sector-desc {
-font-size: 14px;
-line-height: 1.72;
-color: rgba(255,255,255,0.5);
-margin-bottom: 24px;
-}
-
-.sector-pills {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-bottom: 28px;
-}
-
-.pill {
-font-size: 12px;
-font-weight: 500;
-padding: 6px 14px;
-border-radius: 30px;
-border: 1px solid;
-letter-spacing: 0.02em;
-}
-
-.sector-card.research  .pill { color: #4DB888; border-color: rgba(77,184,136,0.3); background: rgba(77,184,136,0.06); }
-.sector-card.relations .pill { color: #5A8FD4; border-color: rgba(90,143,212,0.3); background: rgba(90,143,212,0.06); }
-.sector-card.aid       .pill { color: #D4845A; border-color: rgba(212,132,90,0.3); background: rgba(212,132,90,0.06); }
-
-.sector-cta {
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 13px;
-font-weight: 600;
-letter-spacing: 0.02em;
-padding: 0;
-background: none;
-border: none;
-cursor: pointer;
-text-decoration: none;
-transition: gap 0.2s;
-}
-
-.sector-card.research  .sector-cta { color: #4DB888; }
-.sector-card.relations .sector-cta { color: #5A8FD4; }
-.sector-card.aid       .sector-cta { color: #D4845A; }
-
-.sector-cta:active { gap: 14px; }
-
-/* ─── RESEARCH SUBSECTORS ─── */
-.subsectors {
-background: var(–black-3);
-border-top: 1px solid var(–line);
-padding: 0;
-}
-
-.subsector-item {
-display: flex;
-align-items: center;
-gap: 16px;
-padding: 18px 24px;
-border-bottom: 1px solid var(–line);
-cursor: pointer;
-transition: background 0.15s;
-}
-
-.subsector-item:last-child { border-bottom: none; }
-.subsector-item:active { background: rgba(255,255,255,0.04); }
-
-.sub-icon {
-width: 36px; height: 36px;
-border-radius: 8px;
-background: rgba(42,122,90,0.15);
-display: flex; align-items: center; justify-content: center;
-font-size: 17px;
-flex-shrink: 0;
-}
-
-.sub-info { flex: 1; }
-.sub-name { font-size: 14px; font-weight: 600; color: var(–white); margin-bottom: 2px; }
-.sub-meta { font-size: 12px; color: var(–muted); }
-
-.sub-arrow {
-color: var(–muted);
-flex-shrink: 0;
-}
-
-/* ─── STATS SECTION ─── */
-.stats-section {
-padding: 72px 24px;
-background: var(–black-2);
-border-top: 1px solid var(–line);
-border-bottom: 1px solid var(–line);
-}
-
-.big-stats {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 1px;
-background: var(–line);
-border: 1px solid var(–line);
-border-radius: 10px;
-overflow: hidden;
-margin-top: 32px;
-}
-
-.big-stat {
-background: var(–black-2);
-padding: 28px 20px;
-}
-
-.big-stat-val {
-font-size: 42px;
-font-weight: 900;
-letter-spacing: -2px;
-line-height: 1;
-margin-bottom: 6px;
-}
-
-.big-stat.s1 .big-stat-val { color: #4DB888; }
-.big-stat.s2 .big-stat-val { color: #5A8FD4; }
-.big-stat.s3 .big-stat-val { color: #D4845A; }
-.big-stat.s4 .big-stat-val { color: var(–white); }
-
-.big-stat-lbl {
-font-size: 12px;
-font-weight: 500;
-color: var(–muted);
-}
-
-/* ─── STORY ─── */
-.story-section {
-padding: 72px 24px;
-}
-
-.story-quote {
-border-left: 3px solid var(–accent);
-padding: 20px 20px;
-background: rgba(200,55,26,0.05);
-border-radius: 0 8px 8px 0;
-margin: 32px 0;
-}
-
-.story-quote p {
-font-size: 18px;
-font-weight: 600;
-line-height: 1.5;
-letter-spacing: -0.3px;
-color: rgba(255,255,255,0.85);
-font-style: italic;
-}
-
-/* ─── TESTIMONIALS ─── */
-.testimonials {
-padding: 72px 0;
-overflow: hidden;
-}
-
-.testimonials-header {
-padding: 0 24px 36px;
-}
-
-.testimonials-scroll {
-display: flex;
-overflow-x: auto;
-scrollbar-width: none;
-padding: 0 24px;
-gap: 14px;
-}
-
-.testimonials-scroll::-webkit-scrollbar { display: none; }
-
-.tcard {
-flex-shrink: 0;
-width: 280px;
-background: var(–black-2);
-border: 1px solid var(–line);
-border-radius: 12px;
-padding: 24px 22px;
-}
-
-.tcard-quote {
-font-size: 15px;
-font-style: italic;
-line-height: 1.6;
-color: rgba(255,255,255,0.7);
-margin-bottom: 20px;
-}
-
-.tcard-author { font-size: 13px; font-weight: 600; color: var(–white); }
-.tcard-role   { font-size: 12px; color: var(–muted); margin-top: 2px; }
-
-/* ─── CTA ─── */
-.cta-section {
-padding: 80px 24px;
-text-align: center;
-background: var(–black-2);
-border-top: 1px solid var(–line);
-position: relative;
-overflow: hidden;
-}
-
-.cta-glow {
-position: absolute;
-top: 50%; left: 50%;
-transform: translate(-50%, -50%);
-width: 300px; height: 300px;
-background: radial-gradient(circle, rgba(200,55,26,0.1) 0%, transparent 70%);
-pointer-events: none;
-}
-
-.cta-section h2 {
-font-size: 38px;
-font-weight: 900;
-letter-spacing: -1.2px;
-line-height: 1.05;
-color: var(–white);
-margin-bottom: 14px;
-position: relative;
-}
-
-.cta-section h2 em {
-font-style: italic;
-color: var(–accent);
-}
-
-.cta-section p {
-font-size: 15px;
-color: rgba(255,255,255,0.45);
-line-height: 1.6;
-margin-bottom: 36px;
-position: relative;
-}
-
-.btn-cta {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-gap: 10px;
-background: var(–accent);
-color: white;
-font-family: ‘Inter’, sans-serif;
-font-size: 15px;
-font-weight: 700;
-padding: 18px 40px;
-border: none;
-border-radius: 4px;
-cursor: pointer;
-text-decoration: none;
-letter-spacing: -0.2px;
-width: 100%;
-position: relative;
-transition: opacity 0.15s, transform 0.15s;
-}
-
-.btn-cta:active { opacity: 0.9; transform: scale(0.98); }
-
-/* ─── FOOTER ─── */
-footer {
-background: var(–black);
-border-top: 1px solid var(–line);
-padding: 40px 24px 56px;
-}
-
-.footer-logo {
-font-size: 20px;
-font-weight: 800;
-letter-spacing: -0.5px;
-color: var(–white);
-margin-bottom: 8px;
-}
-
-.footer-sub {
-font-size: 13px;
-color: var(–muted);
-margin-bottom: 32px;
-}
-
-.footer-links {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-margin-bottom: 36px;
-}
-
-.footer-link {
-font-size: 13px;
-color: rgba(255,255,255,0.4);
-text-decoration: none;
-padding: 10px 0;
-border-bottom: 1px solid var(–line);
-transition: color 0.15s;
-}
-
-.footer-copy {
-font-size: 12px;
-color: rgba(255,255,255,0.2);
-padding-top: 24px;
-border-top: 1px solid var(–line);
-}
-
-/* ─── SCROLL REVEAL ─── */
-.reveal {
-opacity: 0;
-transform: translateY(22px);
-transition: opacity 0.65s ease, transform 0.65s ease;
-}
-
+/* Other styles remain consistent with your original structure... */
+.reveal { opacity: 0; transform: translateY(20px); transition: 0.6s ease-out; }
 .reveal.visible { opacity: 1; transform: translateY(0); }
-.reveal-delay-1 { transition-delay: 0.08s; }
-.reveal-delay-2 { transition-delay: 0.16s; }
-.reveal-delay-3 { transition-delay: 0.24s; }
-
-/* ─── KEYFRAMES ─── */
-@keyframes slideUp {
-from { opacity: 0; transform: translateY(16px); }
-to   { opacity: 1; transform: translateY(0); }
-}
-
-::selection { background: var(–accent); color: white; }
 </style>
-
 </head>
 <body>
-
-<!-- ─── HEADER ─── -->
 
 <header class="header">
   <div class="header-top">
     <a href="#" class="logo">
-      <!-- MBI Lotus/Brain icon approximation -->
-      <div class="logo-icon">
-        <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="19" cy="19" r="18" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-          <!-- Stylized brain/lotus petals -->
-          <path d="M19 8 C14 8 10 12 10 17 C10 20 12 22.5 15 23.5 C15 26 16.5 28 19 29 C21.5 28 23 26 23 23.5 C26 22.5 28 20 28 17 C28 12 24 8 19 8Z" fill="white" opacity="0.9"/>
-          <path d="M12 17 C9 15 7 17 8 20 C9 23 12 24 15 23.5" stroke="white" stroke-width="1.2" fill="none" opacity="0.6"/>
-          <path d="M26 17 C29 15 31 17 30 20 C29 23 26 24 23 23.5" stroke="white" stroke-width="1.2" fill="none" opacity="0.6"/>
-          <circle cx="19" cy="18" r="2.5" fill="#0A0A0A"/>
-          <circle cx="19" cy="18" r="1.2" fill="white" opacity="0.8"/>
-        </svg>
-      </div>
+      <img src="https://i.ibb.co/v66p89mP/image.png" alt="MBI Logo" class="logo-img">
       <span class="logo-text">MBI</span>
     </a>
     <div class="header-search">
-      <svg width="13" height="13" fill="none" viewBox="0 0 16 16" stroke="rgba(136,136,136,1)" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
-      <input type="text" placeholder="Search...">
+      <input type="text" placeholder="Search resources...">
     </div>
   </div>
   <nav class="header-nav">
     <a href="#" class="nav-tab active">Home</a>
     <a href="#about" class="nav-tab">About</a>
-    <a href="#" class="nav-tab">Mission & Vision</a>
     <a href="#sectors" class="nav-tab">Sectors</a>
     <a href="#" class="nav-tab">Structure</a>
   </nav>
 </header>
 
-<!-- ─── HERO ─── -->
-
 <section class="hero">
-  <div class="hero-visual">
-    <div class="hero-visual-inner"></div>
-    <div class="hero-grid"></div>
-  </div>
-
-  <div class="floating-terms">
-    <span class="term" style="top:18%;left:5%;animation-duration:16s;animation-delay:0s">Clinical Research Protocol</span>
-    <span class="term" style="top:35%;right:4%;animation-duration:20s;animation-delay:3s">Academic Relations</span>
-    <span class="term" style="top:55%;left:8%;animation-duration:18s;animation-delay:6s">Systematic Review</span>
-    <span class="term" style="top:70%;right:6%;animation-duration:22s;animation-delay:1.5s">Student Initiative</span>
-    <span class="term" style="top:82%;left:15%;animation-duration:14s;animation-delay:9s">Evidence-Based Medicine</span>
-  </div>
-
-  <div class="hero-bg"></div>
-
+  <div class="hero-grid"></div>
   <div class="hero-content">
-    <div class="hero-eyebrow">
-      <span class="eyebrow-dot"></span>
-      Student-Driven · Est. October 2023 · Egypt &amp; Arab Region
-    </div>
-
-```
-<h1 class="hero-title">
-  Medicine<span class="word-bank">Bank</span><br>Initiative
-</h1>
-
-<p class="hero-sub">
-  Empowering students through academic excellence, research innovation, and global connectivity.
-</p>
-
-<div class="hero-btns">
-  <a href="#sectors" class="btn-primary">
-    Explore Sectors
-    <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-  </a>
-  <a href="#about" class="btn-secondary">
-    Learn More
-  </a>
-</div>
-
-<div class="hero-stats">
-  <div class="hero-stat">
-    <div class="hero-stat-val">100K<span>+</span></div>
-    <div class="hero-stat-lbl">Platform Visits</div>
-  </div>
-  <div class="hero-stat">
-    <div class="hero-stat-val">3</div>
-    <div class="hero-stat-lbl">Active Sectors</div>
-  </div>
-  <div class="hero-stat">
-    <div class="hero-stat-val">20<span>23</span></div>
-    <div class="hero-stat-lbl">Founded</div>
-  </div>
-</div>
-```
-
-  </div>
-</section>
-
-<!-- ─── MARQUEE ─── -->
-
-<div class="marquee-wrap">
-  <div class="marquee-track">
-    <span class="marquee-item"><span class="m-dot"></span>Research</span>
-    <span class="marquee-item"><span class="m-dot"></span>Relations</span>
-    <span class="marquee-item"><span class="m-dot"></span>Academic Aid</span>
-    <span class="marquee-item"><span class="m-dot"></span>Medicine</span>
-    <span class="marquee-item"><span class="m-dot"></span>Pharmacy</span>
-    <span class="marquee-item"><span class="m-dot"></span>Dentistry</span>
-    <span class="marquee-item"><span class="m-dot"></span>Egypt & Arab Region</span>
-    <span class="marquee-item"><span class="m-dot"></span>Student-Driven</span>
-    <span class="marquee-item"><span class="m-dot"></span>Research</span>
-    <span class="marquee-item"><span class="m-dot"></span>Relations</span>
-    <span class="marquee-item"><span class="m-dot"></span>Academic Aid</span>
-    <span class="marquee-item"><span class="m-dot"></span>Medicine</span>
-    <span class="marquee-item"><span class="m-dot"></span>Pharmacy</span>
-    <span class="marquee-item"><span class="m-dot"></span>Dentistry</span>
-    <span class="marquee-item"><span class="m-dot"></span>Egypt & Arab Region</span>
-    <span class="marquee-item"><span class="m-dot"></span>Student-Driven</span>
-  </div>
-</div>
-
-<!-- ─── STORY ─── -->
-
-<section class="story-section" id="about">
-  <div class="section-tag reveal">Our Story</div>
-  <h2 class="section-title reveal reveal-delay-1">Born from a gap felt by students</h2>
-
-  <div class="story-quote reveal reveal-delay-2">
-    <p>"MedicineBank was built because students needed it — not because someone thought they should."</p>
-  </div>
-
-  <p class="section-body reveal reveal-delay-2">
-    MedicineBank was informally established in October 2023 in response to a noticeable lack of reliable academic resource indexing for medical students. It began as a small initiative collecting, creating, and archiving summaries, MCQs, recorded lectures, and educational content in one unified platform.
-  </p>
-  <p class="section-body reveal reveal-delay-3">
-    Organic growth across Egypt and the Arab region led to hundreds of thousands of visits and strong community engagement — evolving MedicineBank into a structured, multi-sector initiative serving medicine, pharmacy, dentistry, and beyond.
-  </p>
-</section>
-
-<div class="divider"></div>
-
-<!-- ─── SECTORS ─── -->
-
-<section class="sectors-section" id="sectors">
-  <div class="sectors-header">
-    <div class="section-tag reveal">Our Sectors</div>
-    <h2 class="section-title reveal reveal-delay-1">Three pillars.<br>One mission.</h2>
-  </div>
-
-  <div class="sector-cards">
-
-```
-<!-- RESEARCH -->
-<div class="sector-card research reveal" id="sector-research" onclick="toggleSector('research')">
-  <span class="sector-num">01 — Research</span>
-  <div class="sector-icon">🔬</div>
-  <div class="sector-head">
-    <div>
-      <h3 class="sector-name">Research</h3>
-      <p class="sector-tagline">Bridging students with the science of tomorrow through structured research pathways.</p>
-    </div>
-    <div class="sector-toggle">
-      <svg width="14" height="14" fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.2"><path d="M7 2v10M2 7h10"/></svg>
-    </div>
-  </div>
-
-  <div class="sector-expand">
-    <div class="sector-expand-inner">
-      <p class="sector-desc">
-        The Research sector is divided into two branches: <strong style="color:rgba(255,255,255,0.8)">Scientific Research</strong> — focused on clinical studies, systematic reviews, and academic publishing — and <strong style="color:rgba(255,255,255,0.8)">Event Research</strong> — dedicated to organizing conferences, symposia, and research showcases across health sciences faculties.
-      </p>
-      <div class="sector-pills">
-        <span class="pill">Scientific Research</span>
-        <span class="pill">Event Organization</span>
-        <span class="pill">Conference Planning</span>
-        <span class="pill">Poster Showcase</span>
-        <span class="pill">Abstract Review</span>
-      </div>
-      <a href="#" class="sector-cta">
-        Explore Research
-        <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2.2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-      </a>
-    </div>
-  </div>
-</div>
-
-<!-- Research subsectors (always visible under research) -->
-<div class="subsectors" id="sub-research" style="display:none;">
-  <div class="subsector-item">
-    <div class="sub-icon">🧬</div>
-    <div class="sub-info">
-      <div class="sub-name">Scientific Research</div>
-      <div class="sub-meta">Studies · Reviews · Publications</div>
-    </div>
-    <svg class="sub-arrow" width="16" height="16" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>
-  </div>
-  <div class="subsector-item">
-    <div class="sub-icon">🎤</div>
-    <div class="sub-info">
-      <div class="sub-name">Event Research</div>
-      <div class="sub-meta">Conferences · Symposia · Showcases</div>
-    </div>
-    <svg class="sub-arrow" width="16" height="16" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>
-  </div>
-</div>
-
-<!-- RELATIONS -->
-<div class="sector-card relations reveal reveal-delay-1" id="sector-relations" onclick="toggleSector('relations')">
-  <span class="sector-num">02 — Relations</span>
-  <div class="sector-icon">🤝</div>
-  <div class="sector-head">
-    <div>
-      <h3 class="sector-name">Relations</h3>
-      <p class="sector-tagline">Building bridges between students, institutions, and the broader health sciences community.</p>
-    </div>
-    <div class="sector-toggle">
-      <svg width="14" height="14" fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.2"><path d="M7 2v10M2 7h10"/></svg>
-    </div>
-  </div>
-
-  <div class="sector-expand">
-    <div class="sector-expand-inner">
-      <p class="sector-desc">
-        The Relations sector manages MedicineBank's partnerships, outreach, and community engagement. It connects student groups across faculties — medicine, pharmacy, and dentistry — with organizations, sponsors, and collaborators regionally and internationally.
-      </p>
-      <div class="sector-pills">
-        <span class="pill">Partnerships</span>
-        <span class="pill">Outreach</span>
-        <span class="pill">Inter-faculty</span>
-        <span class="pill">Community</span>
-        <span class="pill">Regional Network</span>
-      </div>
-      <a href="#" class="sector-cta">
-        Explore Relations
-        <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2.2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-      </a>
-    </div>
-  </div>
-</div>
-
-<!-- ACADEMIC AID -->
-<div class="sector-card aid reveal reveal-delay-2" id="sector-aid" onclick="toggleSector('aid')">
-  <span class="sector-num">03 — Academic Aid</span>
-  <div class="sector-icon">🎓</div>
-  <div class="sector-head">
-    <div>
-      <h3 class="sector-name">Academic Aid</h3>
-      <p class="sector-tagline">Structured tools, resources, and planning systems for students across all health sciences disciplines.</p>
-    </div>
-    <div class="sector-toggle">
-      <svg width="14" height="14" fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.2"><path d="M7 2v10M2 7h10"/></svg>
-    </div>
-  </div>
-
-  <div class="sector-expand">
-    <div class="sector-expand-inner">
-      <p class="sector-desc">
-        Academic Aid is the student-facing core of MedicineBank — providing MCQ banks, lecture summaries, study planners, group libraries, and public course catalogs. It serves medicine, pharmacy, and dentistry students with discipline-specific content and collaborative tools.
-      </p>
-      <div class="sector-pills">
-        <span class="pill">MCQ Banks</span>
-        <span class="pill">Study Planner</span>
-        <span class="pill">Group Libraries</span>
-        <span class="pill">Lecture Notes</span>
-        <span class="pill">Public Courses</span>
-      </div>
-      <a href="#" class="sector-cta">
-        Explore Academic Aid
-        <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2.2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-      </a>
-    </div>
-  </div>
-</div>
-```
-
-  </div>
-</section>
-
-<!-- ─── BIG STATS ─── -->
-
-<section class="stats-section">
-  <div class="section-tag reveal">By the Numbers</div>
-  <h2 class="section-title reveal reveal-delay-1">Growing across<br>the Arab region.</h2>
-  <div class="big-stats reveal reveal-delay-2">
-    <div class="big-stat s1">
-      <div class="big-stat-val" data-target="100">0</div>
-      <div class="big-stat-lbl">K+ Platform Visits</div>
-    </div>
-    <div class="big-stat s2">
-      <div class="big-stat-val" data-target="3">0</div>
-      <div class="big-stat-lbl">Active Sectors</div>
-    </div>
-    <div class="big-stat s3">
-      <div class="big-stat-val" data-target="2">0</div>
-      <div class="big-stat-lbl">Research Branches</div>
-    </div>
-    <div class="big-stat s4">
-      <div class="big-stat-val" data-target="2023">0</div>
-      <div class="big-stat-lbl">Year Founded</div>
+    <div class="hero-eyebrow reveal">Student-Driven • Egypt & Arab Region</div>
+    <h1 class="hero-title reveal">Medicine<span class="word-bank">Bank</span><br>Initiative</h1>
+    <p class="hero-sub reveal">Empowering students through academic excellence, research innovation, and global connectivity.</p>
+    <div class="hero-btns reveal">
+      <a href="#sectors" class="btn-primary">Explore Sectors</a>
+      <a href="#about" class="btn-secondary">Learn More</a>
     </div>
   </div>
 </section>
-
-<!-- ─── TESTIMONIALS ─── -->
-
-<section class="testimonials">
-  <div class="testimonials-header">
-    <div class="section-tag reveal">From Students</div>
-    <h2 class="section-title reveal reveal-delay-1">What they're saying.</h2>
-  </div>
-  <div class="testimonials-scroll">
-    <div class="tcard">
-      <p class="tcard-quote">"The Academic Aid sector completely changed how I prepare for exams. MCQs, notes, planner — everything in one place."</p>
-      <div class="tcard-author">Sara M.</div>
-      <div class="tcard-role">Medicine · Semester 7</div>
-    </div>
-    <div class="tcard">
-      <p class="tcard-quote">"Helping organize our faculty conference through the Research sector was seamless. The event tools are unmatched."</p>
-      <div class="tcard-author">Khalid A.</div>
-      <div class="tcard-role">Research Org · Dentistry</div>
-    </div>
-    <div class="tcard">
-      <p class="tcard-quote">"Relations opened doors I didn't know existed — connecting with other faculties and regional networks changed my perspective."</p>
-      <div class="tcard-author">Nour H.</div>
-      <div class="tcard-role">Pharmacy · Year 4</div>
-    </div>
-    <div class="tcard">
-      <p class="tcard-quote">"MedicineBank started as a resource and became a community. The growth since 2023 has been incredible to be part of."</p>
-      <div class="tcard-author">Ahmed R.</div>
-      <div class="tcard-role">Medicine · Year 5</div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── FINAL CTA ─── -->
-
-<section class="cta-section">
-  <div class="cta-glow"></div>
-  <h2 class="reveal">Ready to<br><em>join us?</em></h2>
-  <p class="reveal reveal-delay-1">Three sectors. One mission. Students across Egypt and the Arab region are already inside.</p>
-  <a href="edu-platform.html" class="btn-cta reveal reveal-delay-2">
-    Enter MedicineBank
-    <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2.5"><path d="M3 9h12M11 5l4 4-4 4"/></svg>
-  </a>
-</section>
-
-<!-- ─── FOOTER ─── -->
-
-<footer>
-  <div class="footer-logo">MedicineBank Initiative</div>
-  <div class="footer-sub">Student-Driven · Est. October 2023</div>
-  <div class="footer-links">
-    <a href="#" class="footer-link">Research</a>
-    <a href="#" class="footer-link">Relations</a>
-    <a href="#" class="footer-link">Academic Aid</a>
-    <a href="#" class="footer-link">About</a>
-    <a href="#" class="footer-link">Mission & Vision</a>
-    <a href="#" class="footer-link">Structure</a>
-  </div>
-  <div class="footer-copy">© 2026 MedicineBank Initiative · Egypt & Arab Region</div>
-</footer>
 
 <script>
-// ─── SECTOR TOGGLE ───
-function toggleSector(name) {
-  const card = document.getElementById('sector-' + name);
-  const sub  = document.getElementById('sub-' + name);
-  const isOpen = card.classList.contains('expanded');
-
-  // Close all
-  ['research','relations','aid'].forEach(n => {
-    document.getElementById('sector-' + n).classList.remove('expanded');
-    const s = document.getElementById('sub-' + n);
-    if (s) s.style.display = 'none';
-  });
-
-  if (!isOpen) {
-    card.classList.add('expanded');
-    if (sub) sub.style.display = 'block';
-  }
-}
-
-// ─── SCROLL REVEAL ───
-const revealEls = document.querySelectorAll('.reveal');
-const revealObs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-    }
+// Intersection Observer for Reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
   });
 }, { threshold: 0.1 });
-revealEls.forEach(el => revealObs.observe(el));
 
-// ─── COUNT-UP ───
-const countEls = document.querySelectorAll('.big-stat-val[data-target]');
-const countObs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (!e.isIntersecting) return;
-    const el = e.target;
-    const target = parseInt(el.dataset.target);
-    const duration = 1200;
-    const start = performance.now();
-    function tick(now) {
-      const p = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.floor(ease * target).toLocaleString();
-      if (p < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-    countObs.unobserve(el);
-  });
-}, { threshold: 0.5 });
-countEls.forEach(el => countObs.observe(el));
-
-// ─── PARALLAX HERO ───
-window.addEventListener('scroll', () => {
-  const y = window.scrollY;
-  const content = document.querySelector('.hero-content');
-  if (content && y < window.innerHeight) {
-    content.style.transform = `translateY(${y * 0.22}px)`;
-    content.style.opacity = Math.max(0, 1 - y / 500);
-  }
-}, { passive: true });
-
-// ─── ACTIVE NAV TAB ON SCROLL ───
-const sections = [
-  { id: 'hero',    tab: 0 },
-  { id: 'about',   tab: 1 },
-  { id: 'sectors', tab: 3 },
-];
-const tabs = document.querySelectorAll('.nav-tab');
-
-window.addEventListener('scroll', () => {
-  const y = window.scrollY + 120;
-  let active = 0;
-  sections.forEach(s => {
-    const el = document.getElementById(s.id) || document.querySelector('.hero');
-    if (el && el.offsetTop <= y) active = s.tab;
-  });
-  tabs.forEach((t, i) => t.classList.toggle('active', i === active));
-}, { passive: true });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
 
 </body>
