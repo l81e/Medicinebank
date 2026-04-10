@@ -4,671 +4,627 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MedicineBank Initiative</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;700&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ink: #0e1a14;
-      --cream: #f5f0e8;
-      --sage: #3a6b4a;
-      --sage-light: #5a8f6a;
-      --sage-pale: #c8ddd0;
-      --gold: #b8973a;
-      --gold-light: #d4b35a;
-      --muted: #7a8a80;
-      --rule: rgba(58,107,74,0.18);
+      --black: #0b0b0b;
+      --carbon-90: #1a1a1a;
+      --carbon-80: #2b2b2b;
+      --carbon-60: #58585b;
+      --carbon-40: #8e8e8e;
+      --carbon-30: #b9b9bb;
+      --carbon-20: #d9d9d9;
+      --carbon-05: #f5f5f5;
+      --white: #f7f5f4;
+      --green: #1a7f4e;
+      --green-light: #25a863;
+      --tint: #6de4a8;
+      --gold: #c8a84b;
     }
 
-    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
 
-    body {
-      background: var(--cream);
-      color: var(--ink);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 300;
-      overflow-x: hidden;
-    }
-
-    /* ── NOISE TEXTURE OVERLAY ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.6;
-    }
-
-    /* ── NAV ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
+    /* ── HEADER ── */
+    .site-header {
+      background: var(--black);
+      color: var(--white);
+      padding: 14px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.2rem 4rem;
-      background: rgba(245,240,232,0.88);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--rule);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
 
-    .nav-logo {
+    .logo {
       display: flex;
       align-items: center;
-      gap: 0.9rem;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--white);
+      letter-spacing: -0.3px;
     }
 
-    .nav-logo img {
-      height: 38px;
-      width: auto;
-    }
+    .logo img { height: 40px; width: auto; }
 
-    .nav-wordmark {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.15rem;
+    .site-header nav { display: flex; gap: 24px; align-items: center; }
+    .site-header nav a { font-size: 0.85rem; font-weight: 600; color: var(--carbon-30); transition: color .2s; }
+    .site-header nav a:hover { color: var(--white); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 9px 18px;
+      border-radius: 2px;
+      transition: background .2s;
+      cursor: pointer;
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn:hover { background: var(--green-light); }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--white);
+      color: var(--white);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); }
+    .btn-dark { background: var(--black); }
+    .btn-dark:hover { background: var(--carbon-80); }
+
+    /* ── SECONDARY NAV ── */
+    .secondary-nav {
+      background: var(--carbon-90);
+      border-bottom: 1px solid var(--carbon-80);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .secondary-nav ul { display: inline-flex; padding: 0 32px; }
+    .secondary-nav li a {
+      display: block;
+      padding: 13px 18px;
+      font-size: 0.85rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
-      color: var(--sage);
+      color: var(--carbon-30);
+      transition: color .2s;
+      border-bottom: 3px solid transparent;
     }
-
-    .nav-links {
-      display: flex;
-      gap: 2.4rem;
-      list-style: none;
-    }
-
-    .nav-links a {
-      font-size: 0.78rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .nav-links a:hover { color: var(--sage); }
+    .secondary-nav li a:hover,
+    .secondary-nav li a.active { color: var(--white); border-bottom-color: var(--green-light); }
 
     /* ── HERO ── */
     .hero {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding: 10rem 2rem 6rem;
       position: relative;
-    }
-
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 50%;
-      transform: translateX(-50%);
-      width: 1px;
-      height: 80px;
-      background: linear-gradient(to bottom, var(--sage), transparent);
-    }
-
-    .hero-eyebrow {
-      font-size: 0.72rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 1.8rem;
-      opacity: 0;
-      animation: fadeUp 0.9s 0.2s ease forwards;
-    }
-
-    .hero-logo {
-      width: 110px;
-      height: auto;
-      margin: 0 auto 2.2rem;
-      opacity: 0;
-      animation: fadeUp 0.9s 0.35s ease forwards;
-    }
-
-    .hero h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3.2rem, 8vw, 7rem);
-      font-weight: 300;
-      line-height: 1.0;
-      letter-spacing: -0.01em;
-      color: var(--ink);
-      opacity: 0;
-      animation: fadeUp 1s 0.5s ease forwards;
-    }
-
-    .hero h1 em {
-      font-style: italic;
-      color: var(--sage);
-    }
-
-    .hero-sub {
-      max-width: 560px;
-      margin: 2rem auto 0;
-      font-size: 1rem;
-      line-height: 1.75;
-      color: var(--muted);
-      opacity: 0;
-      animation: fadeUp 1s 0.75s ease forwards;
-    }
-
-    .hero-badges {
+      min-height: 500px;
       display: flex;
-      gap: 1rem;
-      justify-content: center;
-      margin-top: 2.8rem;
-      flex-wrap: wrap;
-      opacity: 0;
-      animation: fadeUp 1s 0.95s ease forwards;
-    }
-
-    .badge {
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.45rem 1.1rem;
-      border: 1px solid var(--sage-pale);
-      border-radius: 100px;
-      color: var(--sage);
-      background: rgba(200,221,208,0.25);
-    }
-
-    /* ── SECTION BASE ── */
-    section {
-      padding: 7rem 2rem;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .section-label {
-      font-size: 0.7rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 0.8rem;
-    }
-
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2rem, 4vw, 3.2rem);
-      font-weight: 300;
-      line-height: 1.15;
-      color: var(--ink);
-      margin-bottom: 1.4rem;
-    }
-
-    .section-title em {
-      font-style: italic;
-      color: var(--sage);
-    }
-
-    .rule {
-      width: 48px;
-      height: 1px;
-      background: var(--gold);
-      margin-bottom: 2.4rem;
-    }
-
-    /* ── ABOUT ── */
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5rem;
       align-items: center;
-    }
-
-    .about-text p {
-      font-size: 1rem;
-      line-height: 1.85;
-      color: #3a4a40;
-      margin-bottom: 1.2rem;
-    }
-
-    .about-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-
-    .stat-card {
-      background: white;
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 2rem 1.6rem;
-      position: relative;
+      background: var(--black);
+      color: var(--white);
       overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px;
-      height: 100%;
-      background: var(--sage);
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #062b19 0%, #0b3a26 50%, #0a2a1e 100%);
     }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(58,107,74,0.1);
+    .hero-glow {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 70% 50%, rgba(26,127,78,0.28) 0%, transparent 55%),
+        radial-gradient(circle at 15% 80%, rgba(200,168,75,0.1) 0%, transparent 40%);
     }
+    .hero-skrim {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 70%, transparent 100%);
+    }
+    .hero-content {
+      position: relative; z-index: 10;
+      max-width: 1200px; margin: 0 auto;
+      padding: 80px 32px; width: 100%;
+    }
+    .hero-eyebrow {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--tint); margin-bottom: 14px;
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 900; line-height: 1.0;
+      margin-bottom: 16px; max-width: 620px;
+    }
+    .hero p {
+      font-size: 1.05rem; color: var(--carbon-20);
+      max-width: 480px; margin-bottom: 32px; line-height: 1.7;
+    }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 48px; }
 
+    .hero-stats {
+      display: flex; gap: 48px; flex-wrap: wrap;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
     .stat-number {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.6rem;
-      font-weight: 300;
-      color: var(--sage);
-      line-height: 1;
-      margin-bottom: 0.4rem;
+      font-family: 'Merriweather', serif;
+      font-size: 2.4rem; font-weight: 300;
+      color: var(--tint); line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 0.8rem; font-weight: 600; color: var(--carbon-30); }
+
+    /* ── SECTION COMMONS ── */
+    section { padding: 64px 32px; }
+    .inner { max-width: 1200px; margin: 0 auto; }
+
+    .section-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; }
+    .label-tag {
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 1.8px; text-transform: uppercase;
+      color: var(--green); margin-bottom: 8px;
     }
 
-    .stat-label {
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    /* ── MISSION/VISION STRIP ── */
-    .mv-strip {
-      background: var(--sage);
-      padding: 6rem 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .mv-strip::before {
-      content: 'MEDICINE BANK';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 14vw;
-      font-weight: 600;
-      color: rgba(255,255,255,0.04);
-      white-space: nowrap;
-      pointer-events: none;
-      letter-spacing: 0.05em;
-    }
-
-    .mv-grid {
+    /* ── ABOUT 2-COL ── */
+    .two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      max-width: 1100px;
-      margin: 0 auto;
+      gap: 56px; align-items: center;
+    }
+    @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+
+    .two-col h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 900; line-height: 1.1; margin-bottom: 14px;
+    }
+    .two-col p { font-size: 0.95rem; color: var(--carbon-60); line-height: 1.8; margin-bottom: 12px; }
+
+    .img-placeholder {
+      width: 100%; border-radius: 4px; overflow: hidden;
+      aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem;
+    }
+    .caption { font-size: 0.78rem; color: var(--carbon-60); padding: 10px 0; line-height: 1.5; }
+
+    /* ── DARK STRIP (mission/vision) ── */
+    .dark-strip {
+      background: var(--black);
+      color: var(--white);
+      padding: 64px 32px;
+    }
+    .mv-grid {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 56px;
       position: relative;
     }
-
-    .mv-card {
-      color: white;
+    @media (max-width: 860px) { .mv-grid { grid-template-columns: 1fr; } }
+    .mv-grid::before {
+      content: '';
+      position: absolute; top: 0; bottom: 0; left: 50%;
+      width: 1px; background: var(--carbon-80);
     }
+    @media (max-width: 860px) { .mv-grid::before { display: none; } }
+    .mv-card .label-tag { color: var(--tint); }
+    .mv-card h3 { font-size: 1.6rem; font-weight: 700; margin-bottom: 12px; }
+    .mv-card p { font-size: 0.9rem; color: var(--carbon-30); line-height: 1.8; }
 
-    .mv-card .section-label { color: var(--gold-light); }
-
-    .mv-card h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 300;
-      margin-bottom: 1rem;
-      line-height: 1.2;
-    }
-
-    .mv-card p {
-      font-size: 0.95rem;
-      line-height: 1.85;
-      color: rgba(255,255,255,0.75);
-    }
-
-    .mv-divider {
-      width: 1px;
-      background: rgba(255,255,255,0.15);
-      position: absolute;
-      left: 50%;
-      top: 0;
-      bottom: 0;
-    }
-
-    /* ── SECTORS ── */
-    .sectors-header {
-      text-align: center;
-      margin-bottom: 4rem;
-    }
-
-    .sectors-header .rule { margin: 0 auto 2.4rem; }
-
+    /* ── SECTOR CARDS ── */
+    .sectors-bg { background: var(--carbon-05); }
     .sectors-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
+      gap: 14px;
     }
+    @media (max-width: 1000px) { .sectors-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .sectors-grid { grid-template-columns: 1fr; } }
 
     .sector-card {
-      background: white;
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 2.4rem 1.8rem;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      position: relative;
-      overflow: hidden;
+      background: var(--white);
+      border: 1px solid var(--carbon-20);
+      border-radius: 3px;
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+      position: relative; overflow: hidden;
     }
-
     .sector-card::after {
       content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--sage);
-      transform: scaleX(0);
-      transition: transform 0.3s ease;
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 3px; background: var(--green);
+      transform: scaleX(0); transition: transform .25s;
       transform-origin: left;
     }
-
+    .sector-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.09); }
     .sector-card:hover::after { transform: scaleX(1); }
 
-    .sector-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 50px rgba(58,107,74,0.1);
-    }
-
     .sector-tag {
-      font-size: 0.68rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: white;
-      background: var(--sage);
       display: inline-block;
-      padding: 0.3rem 0.7rem;
-      border-radius: 2px;
-      margin-bottom: 1.2rem;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      background: var(--green); color: #fff;
+      padding: 3px 8px; border-radius: 2px;
+      margin-bottom: 12px;
     }
+    .sector-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .sector-card p { font-size: 0.83rem; color: var(--carbon-60); line-height: 1.7; }
 
-    .sector-card h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.45rem;
-      font-weight: 400;
-      color: var(--ink);
-      margin-bottom: 0.8rem;
-      line-height: 1.2;
+    /* ── TABBED SECTION ── */
+    .tab-nav {
+      display: flex; border-bottom: 1px solid var(--carbon-20);
+      overflow-x: auto; margin-bottom: 36px;
     }
-
-    .sector-card p {
-      font-size: 0.85rem;
-      line-height: 1.75;
-      color: var(--muted);
+    .tab-nav button {
+      background: none; border: none;
+      border-bottom: 4px solid transparent;
+      padding: 12px 20px;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      color: var(--carbon-60); transition: all .2s;
+      font-family: 'Inter', sans-serif;
     }
+    .tab-nav button.active,
+    .tab-nav button:hover { border-bottom-color: var(--black); color: var(--black); }
 
-    /* ── ACCREDITATION BANNER ── */
-    .accreditation {
-      background: var(--ink);
-      padding: 4rem 2rem;
+    .tab-panel { display: none; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+    .tab-panel.active { display: grid; }
+    @media (max-width: 860px) { .tab-panel.active { grid-template-columns: 1fr; } }
+
+    .tab-panel h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+    .tab-panel p { font-size: 0.9rem; color: var(--carbon-60); line-height: 1.8; margin-bottom: 20px; }
+
+    /* ── LINK LIST ── */
+    .link-list-item {
+      display: grid;
+      grid-template-columns: 52px 1fr 36px;
+      gap: 18px; align-items: center;
+      padding: 18px 0;
+      border-top: 1px solid var(--carbon-20);
+    }
+    .ll-thumb {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .ll-content { display: flex; flex-direction: column; gap: 2px; }
+    .ll-name { font-size: 1rem; font-weight: 700; }
+    .ll-desc { font-size: 0.83rem; color: var(--carbon-60); line-height: 1.6; }
+    .arrow-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--green);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .arrow-btn svg { fill: #fff; width: 13px; }
+
+    /* ── ACCREDITATION STRIP ── */
+    .accred-strip {
+      background: var(--carbon-90);
+      color: var(--white);
+      padding: 28px 32px;
       text-align: center;
-      color: white;
     }
-
-    .accreditation p {
-      font-size: 0.78rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 0.8rem;
-    }
-
-    .accreditation h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.8rem;
-      font-weight: 300;
-      color: var(--gold-light);
-    }
-
-    /* ── INTER-SECTOR ── */
-    .coordination {
-      background: #f0ebe0;
-      border-top: 1px solid var(--rule);
-      border-bottom: 1px solid var(--rule);
-      padding: 6rem 2rem;
-    }
-
-    .coordination-inner {
-      max-width: 780px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .coordination-inner p {
-      font-size: 1rem;
-      line-height: 1.9;
-      color: #4a5a50;
-    }
+    .accred-strip p { font-size: 0.75rem; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-40); margin-bottom: 6px; }
+    .accred-strip h3 { font-size: 1.4rem; font-weight: 700; color: var(--gold); }
 
     /* ── FOOTER ── */
     footer {
-      background: var(--ink);
-      padding: 3.5rem 4rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--black); color: var(--white);
+      padding: 56px 32px 32px;
     }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 760px) { .footer-inner { grid-template-columns: 1fr; } }
 
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.9rem;
-    }
+    .footer-logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1rem; margin-bottom: 14px; }
+    .footer-logo img { height: 32px; filter: brightness(0) invert(1) opacity(0.7); }
+    .footer-desc { font-size: 0.85rem; color: var(--carbon-40); line-height: 1.7; }
 
-    .footer-brand img {
-      height: 32px;
-      filter: brightness(0) invert(1) opacity(0.6);
-    }
+    .footer-col-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-40); margin-bottom: 14px; }
+    .footer-links li { margin-bottom: 9px; }
+    .footer-links a { font-size: 0.85rem; color: var(--carbon-30); transition: color .2s; }
+    .footer-links a:hover { color: var(--white); }
 
-    .footer-brand span {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem;
-      color: rgba(255,255,255,0.5);
-      letter-spacing: 0.06em;
+    .footer-divider { max-width: 1200px; margin: 0 auto 20px; border: none; border-top: 1px solid var(--carbon-80); }
+    .footer-bottom {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 14px 24px;
+      font-size: 0.75rem; color: var(--carbon-60);
     }
+    .footer-bottom a { color: var(--carbon-40); }
+    .footer-bottom a:hover { color: var(--carbon-20); }
 
-    .footer-copy {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.3);
-      letter-spacing: 0.08em;
-    }
-
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      nav { padding: 1rem 1.8rem; }
-      .about-grid { grid-template-columns: 1fr; gap: 3rem; }
-      .mv-grid { grid-template-columns: 1fr; }
-      .mv-divider { display: none; }
-      .sectors-grid { grid-template-columns: 1fr 1fr; }
-      footer { flex-direction: column; gap: 1.2rem; text-align: center; }
-    }
-
-    @media (max-width: 560px) {
-      .sectors-grid { grid-template-columns: 1fr; }
-      .about-stats { grid-template-columns: 1fr 1fr; }
-      nav { padding: 1rem; }
-      .nav-links { gap: 1.2rem; }
-    }
+    @media (max-width: 600px) { section { padding: 48px 20px; } .site-header { padding: 12px 20px; } .site-header nav { display: none; } }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
+<!-- HEADER -->
+<header class="site-header">
+  <a href="/" class="logo">
+    <img src="IMG_3083.png" alt="MedicineBank" />
+    MedicineBank Initiative
+  </a>
   <nav>
-    <div class="nav-logo">
-      <img src="IMG_3083.png" alt="MedicineBank Logo" />
-      <span class="nav-wordmark">MedicineBank</span>
-    </div>
-    <ul class="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#sectors">Sectors</a></li>
-      <li><a href="#coordination">Structure</a></li>
-    </ul>
+    <a href="#about">About</a>
+    <a href="#sectors">Sectors</a>
+    <a href="#structure">Structure</a>
+    <a href="#contact" class="btn">Get Involved</a>
   </nav>
+</header>
 
-  <!-- HERO -->
-  <section class="hero">
+<!-- SECONDARY NAV -->
+<nav class="secondary-nav">
+  <ul>
+    <li><a href="#" class="active">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#sectors">Sectors</a></li>
+    <li><a href="#mission">Mission & Vision</a></li>
+    <li><a href="#structure">Structure</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-skrim"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Student-Driven · Est. October 2023</p>
+    <h1>Medicine<br>Bank</h1>
+    <p>Empowering medical students through academic excellence, research innovation, and global connectivity — one resource at a time.</p>
+    <div class="hero-btns">
+      <a href="#sectors" class="btn">Explore Our Sectors</a>
+      <a href="#about" class="btn btn-outline">Learn More</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-number">100K+</div>
+        <div class="stat-label">Platform Visits</div>
+      </div>
+      <div>
+        <div class="stat-number">2023</div>
+        <div class="stat-label">Founded</div>
+      </div>
+      <div>
+        <div class="stat-number">4</div>
+        <div class="stat-label">Active Sectors</div>
+      </div>
+      <div>
+        <div class="stat-number">2026</div>
+        <div class="stat-label">MNU Accredited</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" style="background:var(--carbon-05);">
+  <div class="inner">
+    <div class="two-col">
+      <div>
+        <p class="label-tag">Our Story</p>
+        <h2>Born from a gap felt by students</h2>
+        <p>MedicineBank was informally established in October 2023 in response to a noticeable lack of reliable academic resource indexing for medical students. It began as a small initiative collecting, creating, and archiving summaries, MCQs, recorded lectures, and educational content in one unified platform.</p>
+        <p>Organic growth across Egypt and the Arab region led to hundreds of thousands of visits and strong community engagement. This evolution turned MedicineBank into a structured, multi-sector initiative. In March 2026, MedicineBank received official accreditation from Mansoura National University.</p>
+        <a href="#sectors" class="btn btn-dark" style="margin-top:8px;">Explore Our Sectors</a>
+      </div>
+      <div>
+        <div class="img-placeholder" style="background:linear-gradient(135deg,#1a7f4e,#062b19);">🎓</div>
+        <p class="caption">MedicineBank grew from a single institution initiative to a multi-region student platform spanning Egypt and the broader Arab world.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION / VISION -->
+<div class="dark-strip" id="mission">
+  <div class="mv-grid">
+    <div class="mv-card">
+      <p class="label-tag">Mission</p>
+      <h3>Empower student personal development</h3>
+      <p>To serve as the definitive resource hub for medical students — providing academic materials, research support, and professional opportunities that fuel individual and collective growth across institutions and borders.</p>
+    </div>
+    <div class="mv-card">
+      <p class="label-tag">Vision</p>
+      <h3>A leading student-driven global foundation</h3>
+      <p>To be the foremost student-led foundation fostering academic excellence, research innovation, and global connectivity — branching under the same name nationally and internationally.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECTORS -->
+<section id="sectors" class="sectors-bg">
+  <div class="inner">
+    <div class="section-header">
+      <div>
+        <p class="label-tag">Operational Arms</p>
+        <h2 class="section-title">The Four Acting Sectors</h2>
+      </div>
+    </div>
+    <div class="sectors-grid">
+      <div class="sector-card">
+        <span class="sector-tag">LOG</span>
+        <h3>Logistics</h3>
+        <p>Manages internal operations, IT assets, academic aid archival, public event relations, and human resources to keep the initiative running seamlessly.</p>
+      </div>
+      <div class="sector-card">
+        <span class="sector-tag">RES</span>
+        <h3>Research</h3>
+        <p>Advances research capacity through educational activities, project facilitation, mentorship, publication support, and management of MedicineBank's prospective research journal.</p>
+      </div>
+      <div class="sector-card">
+        <span class="sector-tag">REL</span>
+        <h3>Relations</h3>
+        <p>Manages external affairs, institutional partnerships, collaborative networks, and long-term engagement to expand the initiative's academic and professional reach.</p>
+      </div>
+      <div class="sector-card">
+        <span class="sector-tag">MED</span>
+        <h3>Media</h3>
+        <p>Oversees social media platforms, educational content campaigns, brand identity, and community outreach to grow the initiative's public presence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TABBED: SECTOR DEEP DIVES -->
+<section>
+  <div class="inner">
+    <div class="section-header" style="margin-bottom:0;">
+      <div>
+        <p class="label-tag">Sector Details</p>
+        <h2 class="section-title">What Each Sector Does</h2>
+      </div>
+    </div>
+    <div class="tab-nav" style="margin-top:24px;">
+      <button class="active" onclick="showTab(0)">Logistics</button>
+      <button onclick="showTab(1)">Research</button>
+      <button onclick="showTab(2)">Relations</button>
+      <button onclick="showTab(3)">Media</button>
+    </div>
+
+    <div class="tab-panel active">
+      <div>
+        <p class="label-tag">LOG</p>
+        <h3>Logistics Sector</h3>
+        <p>Responsible for the management and development of internal operations, IT assets, and means of academic aid archival. Handles public event-related logistics and human resources. The backbone that keeps every other sector running efficiently.</p>
+        <a href="#contact" class="btn btn-dark">Get Involved</a>
+      </div>
+      <div class="img-placeholder" style="background:linear-gradient(135deg,#1a7f4e,#062b19);">⚙️</div>
+    </div>
+
+    <div class="tab-panel">
+      <div>
+        <p class="label-tag">RES</p>
+        <h3>Research Sector</h3>
+        <p>Responsible for advancing research capacity within the initiative. Functions include organization of research methodology education, facilitation of research projects, mentorship opportunities, and support of publication efforts. RES also oversees the development of MedicineBank's prospective research journal, and uniquely operates with separate chiefs per college or school, coordinated by a chief coordinator.</p>
+        <a href="#contact" class="btn btn-dark">Get Involved</a>
+      </div>
+      <div class="img-placeholder" style="background:linear-gradient(135deg,#0b3a26,#052010);">🔬</div>
+    </div>
+
+    <div class="tab-panel">
+      <div>
+        <p class="label-tag">REL</p>
+        <h3>Relations Sector</h3>
+        <p>Responsible for managing external affairs and institutional long-term engagement. Establishes and maintains partnerships, coordinates collaborative projects, and expands the initiative's professional and academic network — serving both RES and MED in their outward-facing activities.</p>
+        <a href="#contact" class="btn btn-dark">Get Involved</a>
+      </div>
+      <div class="img-placeholder" style="background:linear-gradient(135deg,#062b19,#1a7f4e);">🤝</div>
+    </div>
+
+    <div class="tab-panel">
+      <div>
+        <p class="label-tag">MED</p>
+        <h3>Media Sector</h3>
+        <p>Responsible for the management of public presence and community engagement. Oversees social media platforms, produces promotional and educational content campaigns, and maintains the initiative's brand identity and outreach strategy.</p>
+        <a href="#contact" class="btn btn-dark">Get Involved</a>
+      </div>
+      <div class="img-placeholder" style="background:linear-gradient(135deg,#0a2a1e,#0b3a26);">📣</div>
+    </div>
+  </div>
+</section>
+
+<!-- ACCREDITATION STRIP -->
+<div class="accred-strip">
+  <p>Officially Accredited By</p>
+  <h3>Mansoura National University · March 2026</h3>
+</div>
+
+<!-- INTER-SECTORAL STRUCTURE -->
+<section id="structure" style="background:var(--carbon-05);">
+  <div class="inner">
+    <div class="section-header">
+      <div>
+        <p class="label-tag">Internal Structure</p>
+        <h2 class="section-title">Inter-Sectoral Coordination</h2>
+      </div>
+    </div>
+    <div class="link-list-item">
+      <div class="ll-thumb" style="background:linear-gradient(135deg,#1a7f4e,#062b19);">📋</div>
+      <div class="ll-content">
+        <span class="ll-name">Sector Secretaries</span>
+        <span class="ll-desc">Each sector designates a Secretary as the central coordination point, facilitating communication across sectors and reporting to their Chief or Vice Chief.</span>
+      </div>
+      <div class="arrow-btn"><svg viewBox="0 0 32 32"><path d="M8 16.956h12.604l-3.844 4.106 1.252 1.338L24 16l-5.988-6.4-1.252 1.338 3.844 4.106H8v1.912z"/></svg></div>
+    </div>
+    <div class="link-list-item">
+      <div class="ll-thumb" style="background:linear-gradient(135deg,#0b3a26,#052010);">🔗</div>
+      <div class="ll-content">
+        <span class="ll-name">Cross-Sector Liaison</span>
+        <span class="ll-desc">Secretaries liaise with one another across all four sectors, ensuring timely information flow, alignment, and overall cohesion of the initiative.</span>
+      </div>
+      <div class="arrow-btn"><svg viewBox="0 0 32 32"><path d="M8 16.956h12.604l-3.844 4.106 1.252 1.338L24 16l-5.988-6.4-1.252 1.338 3.844 4.106H8v1.912z"/></svg></div>
+    </div>
+    <div class="link-list-item">
+      <div class="ll-thumb" style="background:linear-gradient(135deg,#062b19,#1a7f4e);">📡</div>
+      <div class="ll-content">
+        <span class="ll-name">Each Sector's Own Protocol</span>
+        <span class="ll-desc">Every sector operates with its own inner coordination protocol, maintaining independence while staying aligned with the initiative's strategic direction.</span>
+      </div>
+      <div class="arrow-btn"><svg viewBox="0 0 32 32"><path d="M8 16.956h12.604l-3.844 4.106 1.252 1.338L24 16l-5.988-6.4-1.252 1.338 3.844 4.106H8v1.912z"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contact">
+  <div class="footer-inner">
     <div>
-      <p class="hero-eyebrow">Student-Driven · Since 2023</p>
-      <img class="hero-logo" src="IMG_3083.png" alt="MedicineBank" />
-      <h1>Medicine<em>Bank</em><br>Initiative</h1>
-      <p class="hero-sub">Empowering medical students through academic excellence, research innovation, and global connectivity — one resource at a time.</p>
-      <div class="hero-badges">
-        <span class="badge">Accredited · MNU 2026</span>
-        <span class="badge">Egypt & Arab Region</span>
-        <span class="badge">Hundreds of Thousands of Visits</span>
+      <div class="footer-logo">
+        <img src="IMG_3083.png" alt="MedicineBank" />
+        MedicineBank Initiative
       </div>
+      <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — officially accredited by Mansoura National University, serving students across Egypt and the Arab region.</p>
     </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section id="about">
-    <div class="container">
-      <div class="about-grid">
-        <div class="about-text reveal">
-          <p class="section-label">Our Story</p>
-          <h2 class="section-title">Born from a <em>need</em><br>felt by students</h2>
-          <div class="rule"></div>
-          <p>MedicineBank was informally established in October 2023, born out of a noticeable absence of reliable, indexed academic resources for medical students. What began as a small collection of summaries, MCQs, recorded lectures, and educational content quickly became something far greater.</p>
-          <p>Organic growth across Egypt and the Arab region led to hundreds of thousands of visits and strong community engagement — evolving MedicineBank into a structured, multi-sector initiative. In March 2026, MedicineBank received official accreditation from Mansoura National University.</p>
-        </div>
-        <div class="about-stats reveal">
-          <div class="stat-card">
-            <div class="stat-number">2023</div>
-            <div class="stat-label">Founded</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">100K+</div>
-            <div class="stat-label">Platform Visits</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">2026</div>
-            <div class="stat-label">MNU Accredited</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">4</div>
-            <div class="stat-label">Active Sectors</div>
-          </div>
-        </div>
-      </div>
+    <div>
+      <p class="footer-col-title">Navigate</p>
+      <ul class="footer-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#mission">Mission & Vision</a></li>
+        <li><a href="#sectors">Sectors</a></li>
+        <li><a href="#structure">Structure</a></li>
+      </ul>
     </div>
-  </section>
-
-  <!-- MISSION / VISION STRIP -->
-  <div class="mv-strip">
-    <div class="mv-grid">
-      <div class="mv-divider"></div>
-      <div class="mv-card reveal">
-        <p class="section-label">Mission</p>
-        <h3>Empower student<br>personal development</h3>
-        <p>To serve as the definitive resource hub for medical students, providing academic materials, research support, and professional opportunities that fuel individual and collective growth.</p>
-      </div>
-      <div class="mv-card reveal">
-        <p class="section-label">Vision</p>
-        <h3>A leading student-driven<br>global foundation</h3>
-        <p>To be the foremost student-led foundation fostering academic excellence, research innovation, and global connectivity — branching under the same name nationally and internationally.</p>
-      </div>
+    <div>
+      <p class="footer-col-title">Sectors</p>
+      <ul class="footer-links">
+        <li><a href="#sectors">Logistics [LOG]</a></li>
+        <li><a href="#sectors">Research [RES]</a></li>
+        <li><a href="#sectors">Relations [REL]</a></li>
+        <li><a href="#sectors">Media [MED]</a></li>
+      </ul>
     </div>
   </div>
-
-  <!-- SECTORS -->
-  <section id="sectors">
-    <div class="container">
-      <div class="sectors-header reveal">
-        <p class="section-label">Operational Arms</p>
-        <h2 class="section-title">The Four <em>Acting</em> Sectors</h2>
-        <div class="rule"></div>
-        <p style="color:var(--muted); font-size:0.95rem; max-width:560px; margin:0 auto;">Each sector operates under a Chief and Vice Chiefs, ensuring efficiency, accountability, and continuous development in alignment with the initiative's strategic direction.</p>
-      </div>
-      <div class="sectors-grid">
-        <div class="sector-card reveal">
-          <span class="sector-tag">LOG</span>
-          <h3>Logistics</h3>
-          <p>Manages internal operations, IT assets, academic aid archival, public event relations, and human resources to keep the initiative running seamlessly.</p>
-        </div>
-        <div class="sector-card reveal">
-          <span class="sector-tag">RES</span>
-          <h3>Research</h3>
-          <p>Advances research capacity through educational activities, facilitation of projects, mentorship, publication support, and oversight of MedicineBank's prospective research journal.</p>
-        </div>
-        <div class="sector-card reveal">
-          <span class="sector-tag">REL</span>
-          <h3>Relations</h3>
-          <p>Manages external affairs, institutional partnerships, collaborative networks, and long-term engagement to expand the initiative's academic and professional reach.</p>
-        </div>
-        <div class="sector-card reveal">
-          <span class="sector-tag">MED</span>
-          <h3>Media</h3>
-          <p>Oversees social media platforms, educational content campaigns, brand identity, and community outreach to maintain and grow the initiative's public presence.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ACCREDITATION BANNER -->
-  <div class="accreditation">
-    <p>Officially Recognized By</p>
-    <h3>Mansoura National University · March 2026</h3>
+  <hr class="footer-divider" />
+  <div class="footer-bottom">
+    <span>© 2026 MedicineBank Initiative</span>
+    <a href="#">Mansoura National University</a>
+    <a href="#">Dakahlia, Egypt</a>
+    <span>Page Last Updated: April 2026</span>
   </div>
+</footer>
 
-  <!-- INTER-SECTORAL COORDINATION -->
-  <section id="coordination" class="coordination">
-    <div class="coordination-inner reveal">
-      <p class="section-label">Internal Structure</p>
-      <h2 class="section-title" style="text-align:center;">Inter-Sectoral<br><em>Coordination</em></h2>
-      <div class="rule" style="margin:0 auto 2.4rem;"></div>
-      <p>Each sector designates a Secretary who serves as the central point of coordination, facilitating communication and collaboration across sectors. Secretaries liaise with one another and report pertinent updates directly to their Chief or Vice Chief — ensuring timely information flow, alignment between sectors, and the overall cohesion of the initiative.</p>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-brand">
-      <img src="IMG_3083.png" alt="MedicineBank" />
-      <span>MedicineBank Initiative</span>
-    </div>
-    <p class="footer-copy">© 2026 MedicineBank · Mansoura National University · Egypt</p>
-  </footer>
-
-  <script>
-    // Scroll reveal
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry, i) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => entry.target.classList.add('visible'), i * 80);
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    reveals.forEach(el => observer.observe(el));
-  </script>
-
+<script>
+  function showTab(index) {
+    document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === index));
+    document.querySelectorAll('.tab-nav button').forEach((b, i) => b.classList.toggle('active', i === index));
+  }
+</script>
 </body>
 </html>
