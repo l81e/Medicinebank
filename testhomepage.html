@@ -22,16 +22,25 @@
       --white: #f7f5f4;
 
       --blue:      #1a5fa8;
-      --blue-dark: #134a85;
       --champ:     #b8973a;
-      --champ-dark:#9a7d2e;
       --burg:      #7d2040;
-      --burg-dark: #621832;
       --orange:    #c4601a;
-      --orange-dark:#a34e14;
     }
 
-    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); line-height: 1.6; }
+    /* Fix iOS overscroll color */
+    html {
+      background: var(--black);
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--white);
+      color: var(--black);
+      line-height: 1.6;
+      min-height: 100%;
+    }
+
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
 
@@ -62,7 +71,7 @@
       transition: background .2s;
     }
     .search-wrap:hover { background: rgba(255,255,255,0.11); }
-    .search-wrap svg { fill: var(--carbon-40); flex-shrink: 0; }
+    .search-wrap svg { flex-shrink: 0; }
     .search-wrap input {
       background: none; border: none; outline: none;
       font-family: 'Inter', sans-serif;
@@ -81,17 +90,54 @@
       top: 56px;
       z-index: 999;
     }
-    .secondary-nav ul { display: inline-flex; padding: 0 32px; }
+    .secondary-nav ul { display: inline-flex; padding: 0 32px; width: 100%; justify-content: space-around; }
+    .secondary-nav li { flex: 1; text-align: center; }
     .secondary-nav li a {
       display: block;
-      padding: 12px 18px;
-      font-size: 0.82rem;
-      font-weight: 600;
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
       color: var(--carbon-30);
       transition: color .2s;
       border-bottom: 3px solid transparent;
+      cursor: pointer;
     }
-    .secondary-nav li a:hover { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
+    .secondary-nav li a:hover { color: var(--white); }
+
+    /* ── SECTOR OVERLAY ── */
+    .sector-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: opacity 0.05s, transform 0.05s;
+    }
+    .sector-overlay.active {
+      pointer-events: all;
+      opacity: 1;
+      transform: scaleY(1);
+      transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .sector-overlay.exit {
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: opacity 0.3s ease 0.1s, transform 0.4s cubic-bezier(0.55, 0, 1, 0.45) 0.05s;
+    }
+    .sector-overlay-label {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 900;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      user-select: none;
+    }
 
     /* ── BUTTONS ── */
     .btn {
@@ -103,8 +149,6 @@
       background: var(--white); color: var(--black);
     }
     .btn:hover { opacity: 0.88; }
-    .btn-dark { background: var(--black); color: var(--white); }
-    .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.5); color: var(--white); }
 
     /* ── SECTIONS ── */
     section { padding: 60px 40px; }
@@ -146,7 +190,7 @@
     .article-excerpt { font-size: 0.83rem; color: var(--carbon-60); line-height: 1.7; }
     .article-thumb {
       width: 200px; height: 130px; border-radius: 3px;
-      object-fit: cover; display: block; flex-shrink: 0;
+      flex-shrink: 0;
       background: var(--carbon-20);
       display: flex; align-items: center; justify-content: center;
       font-size: 2.5rem;
@@ -164,7 +208,7 @@
     }
     @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
 
-    .footer-logo { margin-bottom: 14px; }
+    .footer-logo { margin-bottom: 14px; cursor: pointer; display: inline-block; }
     .footer-logo img { height: 26px; }
     .footer-desc { font-size: 0.83rem; color: var(--carbon-40); line-height: 1.7; margin-bottom: 20px; }
     .footer-accred { font-size: 0.75rem; color: var(--carbon-60); }
@@ -193,10 +237,60 @@
     .footer-bottom a { color: var(--carbon-60); }
     .footer-bottom a:hover { color: var(--carbon-30); }
 
-    @media (max-width: 600px) { section { padding: 48px 20px; } .site-header { padding: 0 20px; } footer { padding: 48px 20px 24px; } }
+    @media (max-width: 600px) {
+      section { padding: 48px 20px; }
+      .site-header { padding: 0 20px; }
+      footer { padding: 48px 20px 24px; }
+    }
+
+    /* ── PONG MODAL ── */
+    .pong-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .pong-overlay.open { opacity: 1; pointer-events: all; }
+    .pong-title {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+      margin-bottom: 20px;
+    }
+    #pong-canvas {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 3px;
+      background: #0b0b0b;
+      touch-action: none;
+    }
+    .pong-hint {
+      margin-top: 14px;
+      font-size: 0.72rem; color: rgba(255,255,255,0.25);
+      letter-spacing: 1px;
+    }
+    .pong-close {
+      position: absolute; top: 24px; right: 28px;
+      background: none; border: none; color: rgba(255,255,255,0.3);
+      font-size: 1.4rem; cursor: pointer; line-height: 1;
+      transition: color .2s;
+    }
+    .pong-close:hover { color: rgba(255,255,255,0.7); }
+    .pong-score {
+      display: flex; gap: 48px; margin-bottom: 16px;
+    }
+    .pong-score span {
+      font-family: 'Merriweather', serif;
+      font-size: 1.6rem; font-weight: 300; color: rgba(255,255,255,0.6);
+    }
   </style>
 </head>
 <body>
+
+<!-- SECTOR OVERLAY -->
+<div class="sector-overlay" id="sector-overlay">
+  <div class="sector-overlay-label" id="sector-overlay-label"></div>
+</div>
 
 <!-- HEADER -->
 <header class="site-header">
@@ -212,10 +306,10 @@
 <!-- SECONDARY NAV -->
 <nav class="secondary-nav">
   <ul>
-    <li><a href="https://research.medicinebank.org" target="_blank">Research</a></li>
-    <li><a href="https://media.medicinebank.org" target="_blank">Media</a></li>
-    <li><a href="https://academic.medicinebank.org" target="_blank">Academic</a></li>
-    <li><a href="https://relations.medicinebank.org" target="_blank">Relations</a></li>
+    <li><a data-sector="research" data-color="#1a5fa8" data-url="https://research.medicinebank.org">Research</a></li>
+    <li><a data-sector="media"    data-color="#7d2040" data-url="https://media.medicinebank.org">Media</a></li>
+    <li><a data-sector="academic" data-color="#b8973a" data-url="https://academic.medicinebank.org">Academic</a></li>
+    <li><a data-sector="relations" data-color="#c4601a" data-url="https://relations.medicinebank.org">Relations</a></li>
   </ul>
 </nav>
 
@@ -296,7 +390,7 @@
 <footer id="contact">
   <div class="footer-inner">
     <div>
-      <div class="footer-logo">
+      <div class="footer-logo" id="footer-logo">
         <img src="IMG_3083.png" alt="MedicineBank" />
       </div>
       <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — serving medical students across Egypt and the Arab region.</p>
@@ -338,5 +432,278 @@
   </div>
 </footer>
 
+<!-- PONG MODAL -->
+<div class="pong-overlay" id="pong-overlay">
+  <button class="pong-close" id="pong-close">✕</button>
+  <p class="pong-title">MedicineBank · Secret Game</p>
+  <div class="pong-score">
+    <span id="score-left">0</span>
+    <span id="score-right">0</span>
+  </div>
+  <canvas id="pong-canvas"></canvas>
+  <p class="pong-hint" id="pong-hint">TOUCH LEFT / RIGHT SIDE TO MOVE · TAP TO START</p>
+</div>
+
+<script>
+  /* ── SECTOR NAV OVERLAY ── */
+  const overlay = document.getElementById('sector-overlay');
+  const overlayLabel = document.getElementById('sector-overlay-label');
+  let redirectTimer = null;
+
+  document.querySelectorAll('.secondary-nav a[data-sector]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const color = link.dataset.color;
+      const url   = link.dataset.url;
+      const label = link.dataset.sector;
+
+      // clear any pending
+      clearTimeout(redirectTimer);
+
+      // reset state
+      overlay.classList.remove('active', 'exit');
+      overlay.style.background = color;
+      overlayLabel.textContent = label;
+
+      // force reflow then animate in
+      void overlay.offsetWidth;
+      overlay.classList.add('active');
+
+      redirectTimer = setTimeout(() => {
+        overlay.classList.add('exit');
+        overlay.classList.remove('active');
+        setTimeout(() => {
+          overlay.classList.remove('exit');
+          window.location.href = url;
+        }, 500);
+      }, 900);
+    });
+  });
+
+  /* ── PONG ── */
+  const pongOverlay = document.getElementById('pong-overlay');
+  const pongClose   = document.getElementById('pong-close');
+  const canvas      = document.getElementById('pong-canvas');
+  const ctx         = canvas.getContext('2d');
+  const scoreLeft   = document.getElementById('score-left');
+  const scoreRight  = document.getElementById('score-right');
+  const hint        = document.getElementById('pong-hint');
+
+  let pongRunning = false, animId = null;
+  let sl = 0, sr = 0;
+
+  const PAD_H = 64, PAD_W = 8, BALL_R = 6, SPEED_INIT = 4.5;
+
+  let state = {};
+
+  function initPong() {
+    const size = Math.min(window.innerWidth - 40, 420);
+    canvas.width  = size;
+    canvas.height = Math.round(size * 0.65);
+
+    state = {
+      lPad: canvas.height / 2 - PAD_H / 2,
+      rPad: canvas.height / 2 - PAD_H / 2,
+      bx: canvas.width / 2,
+      by: canvas.height / 2,
+      vx: (Math.random() > 0.5 ? 1 : -1) * SPEED_INIT,
+      vy: (Math.random() > 0.5 ? 1 : -1) * SPEED_INIT * 0.7,
+      started: false,
+      keys: { w: false, s: false, up: false, dn: false },
+      touchL: null, touchR: null,
+    };
+    sl = 0; sr = 0;
+    scoreLeft.textContent  = '0';
+    scoreRight.textContent = '0';
+    hint.textContent = window.matchMedia('(pointer:coarse)').matches
+      ? 'TOUCH LEFT / RIGHT SIDE TO MOVE · TAP TO START'
+      : 'W/S  LEFT PAD · ↑/↓  RIGHT PAD · SPACE TO START';
+    drawFrame();
+  }
+
+  function drawFrame() {
+    const W = canvas.width, H = canvas.height;
+    ctx.fillStyle = '#0b0b0b';
+    ctx.fillRect(0, 0, W, H);
+
+    // centre line
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // pads
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath(); ctx.roundRect(10, state.lPad, PAD_W, PAD_H, 3); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(W - 10 - PAD_W, state.rPad, PAD_W, PAD_H, 3); ctx.fill();
+
+    // ball
+    ctx.beginPath();
+    ctx.arc(state.bx, state.by, BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    if (!state.started) {
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.font = '700 0.7rem Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PONG', W/2, H/2 - 8);
+    }
+  }
+
+  function stepPong() {
+    const W = canvas.width, H = canvas.height;
+    const PAD_SPEED = 5;
+
+    // keyboard
+    if (state.keys.w) state.lPad = Math.max(0, state.lPad - PAD_SPEED);
+    if (state.keys.s) state.lPad = Math.min(H - PAD_H, state.lPad + PAD_SPEED);
+    if (state.keys.up) state.rPad = Math.max(0, state.rPad - PAD_SPEED);
+    if (state.keys.dn) state.rPad = Math.min(H - PAD_H, state.rPad + PAD_SPEED);
+
+    // touch
+    if (state.touchL !== null) {
+      const target = state.touchL - PAD_H / 2;
+      state.lPad += (target - state.lPad) * 0.18;
+      state.lPad = Math.max(0, Math.min(H - PAD_H, state.lPad));
+    }
+    if (state.touchR !== null) {
+      const target = state.touchR - PAD_H / 2;
+      state.rPad += (target - state.rPad) * 0.18;
+      state.rPad = Math.max(0, Math.min(H - PAD_H, state.rPad));
+    }
+
+    // ball
+    state.bx += state.vx;
+    state.by += state.vy;
+
+    // top/bottom bounce
+    if (state.by - BALL_R <= 0) { state.by = BALL_R; state.vy = Math.abs(state.vy); }
+    if (state.by + BALL_R >= H) { state.by = H - BALL_R; state.vy = -Math.abs(state.vy); }
+
+    // left pad collision
+    if (state.bx - BALL_R <= 10 + PAD_W &&
+        state.by >= state.lPad && state.by <= state.lPad + PAD_H) {
+      state.bx = 10 + PAD_W + BALL_R;
+      const rel = (state.by - (state.lPad + PAD_H/2)) / (PAD_H/2);
+      const angle = rel * (Math.PI / 3.5);
+      const spd = Math.min(Math.hypot(state.vx, state.vy) * 1.04, 12);
+      state.vx =  Math.abs(Math.cos(angle) * spd);
+      state.vy =  Math.sin(angle) * spd;
+    }
+
+    // right pad collision
+    if (state.bx + BALL_R >= W - 10 - PAD_W &&
+        state.by >= state.rPad && state.by <= state.rPad + PAD_H) {
+      state.bx = W - 10 - PAD_W - BALL_R;
+      const rel = (state.by - (state.rPad + PAD_H/2)) / (PAD_H/2);
+      const angle = rel * (Math.PI / 3.5);
+      const spd = Math.min(Math.hypot(state.vx, state.vy) * 1.04, 12);
+      state.vx = -Math.abs(Math.cos(angle) * spd);
+      state.vy =  Math.sin(angle) * spd;
+    }
+
+    // scoring
+    if (state.bx < 0) {
+      sr++;
+      scoreRight.textContent = sr;
+      resetBall(1);
+    }
+    if (state.bx > W) {
+      sl++;
+      scoreLeft.textContent = sl;
+      resetBall(-1);
+    }
+
+    drawFrame();
+    animId = requestAnimationFrame(stepPong);
+  }
+
+  function resetBall(dir) {
+    state.bx = canvas.width / 2;
+    state.by = canvas.height / 2;
+    state.vx = dir * SPEED_INIT;
+    state.vy = (Math.random() > 0.5 ? 1 : -1) * SPEED_INIT * 0.7;
+    state.started = false;
+    cancelAnimationFrame(animId);
+    pongRunning = false;
+    drawFrame();
+  }
+
+  function startPong() {
+    if (!pongRunning) {
+      pongRunning = true;
+      state.started = true;
+      hint.textContent = '';
+      animId = requestAnimationFrame(stepPong);
+    }
+  }
+
+  // open
+  document.getElementById('footer-logo').addEventListener('click', () => {
+    pongOverlay.classList.add('open');
+    initPong();
+  });
+
+  // close
+  pongClose.addEventListener('click', () => {
+    pongOverlay.classList.remove('open');
+    cancelAnimationFrame(animId);
+    pongRunning = false;
+  });
+
+  // canvas tap / click to start
+  canvas.addEventListener('click', startPong);
+
+  // keyboard
+  document.addEventListener('keydown', e => {
+    if (!pongOverlay.classList.contains('open')) return;
+    if (e.code === 'Space') { e.preventDefault(); startPong(); }
+    if (e.code === 'KeyW')     state.keys.w  = true;
+    if (e.code === 'KeyS')     state.keys.s  = true;
+    if (e.code === 'ArrowUp')  { e.preventDefault(); state.keys.up = true; }
+    if (e.code === 'ArrowDown'){ e.preventDefault(); state.keys.dn = true; }
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code === 'KeyW')     state.keys.w  = false;
+    if (e.code === 'KeyS')     state.keys.s  = false;
+    if (e.code === 'ArrowUp')  state.keys.up = false;
+    if (e.code === 'ArrowDown') state.keys.dn = false;
+  });
+
+  // touch controls — left half = left pad, right half = right pad
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    startPong();
+    for (const t of e.changedTouches) {
+      const rect = canvas.getBoundingClientRect();
+      const x = t.clientX - rect.left;
+      const y = t.clientY - rect.top;
+      if (x < canvas.width / 2) state.touchL = y;
+      else                       state.touchR = y;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      const rect = canvas.getBoundingClientRect();
+      const x = t.clientX - rect.left;
+      const y = t.clientY - rect.top;
+      if (x < canvas.width / 2) state.touchL = y;
+      else                       state.touchR = y;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', e => {
+    for (const t of e.changedTouches) {
+      const rect = canvas.getBoundingClientRect();
+      const x = t.clientX - rect.left;
+      if (x < canvas.width / 2) state.touchL = null;
+      else                       state.touchR = null;
+    }
+  });
+</script>
 </body>
 </html>
