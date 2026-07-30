@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Spotlight: Clinical Case Writing for Beginners — MedicineBank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Merriweather:ital,wght@1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0b0b0b;
+      --carbon-90: #1a1a1a;
+      --carbon-80: #2b2b2b;
+      --carbon-60: #58585b;
+      --carbon-40: #8e8e8e;
+      --carbon-30: #b9b9bb;
+      --carbon-20: #d9d9d9;
+      --carbon-05: #f5f5f5;
+      --white: #f7f5f4;
+
+      --blue:      #1a5fa8;
+      --blue-dark: #134a85;
+      --champ:     #b8973a;
+      --champ-dark:#9a7d2e;
+      --burg:      #7d2040;
+      --burg-dark: #621832;
+      --orange:    #c4601a;
+      --orange-dark:#a34e14;
+    }
+
+    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+
+    /* ── HEADER (unchanged) ── */
+    .site-header {
+      background: var(--black);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 56px;
+    }
+
+    .logo img { height: 28px; width: auto; display: block; }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2px;
+      padding: 6px 12px;
+      cursor: text;
+      transition: background .2s;
+    }
+    .search-wrap:hover { background: rgba(255,255,255,0.11); }
+    .search-wrap svg { fill: var(--carbon-40); flex-shrink: 0; }
+    .search-wrap input {
+      background: none; border: none; outline: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; color: var(--white);
+      width: 160px;
+    }
+    .search-wrap input::placeholder { color: var(--carbon-40); }
+
+    /* ── SECONDARY NAV (unchanged) ── */
+    .secondary-nav {
+      background: var(--carbon-90);
+      border-bottom: 1px solid var(--carbon-80);
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: 56px;
+      z-index: 999;
+    }
+    .secondary-nav ul { display: inline-flex; padding: 0 32px; }
+    .secondary-nav li a {
+      display: block;
+      padding: 12px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--carbon-30);
+      transition: color .2s;
+      border-bottom: 3px solid transparent;
+    }
+    .secondary-nav li a:hover,
+    .secondary-nav li a.active { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
+
+    /* ══════════════════════════════════════════════
+       ARTICLE PAGE — new for this template
+       ══════════════════════════════════════════════ */
+
+    /* Breadcrumb strip: quiet wayfinding back to the sector + newsletter */
+    .breadcrumb-strip {
+      background: var(--carbon-05);
+      border-bottom: 1px solid var(--carbon-20);
+      padding: 14px 40px;
+    }
+    .breadcrumb-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; color: var(--carbon-60);
+    }
+    .breadcrumb-inner a { color: var(--carbon-60); transition: color .2s; }
+    .breadcrumb-inner a:hover { color: var(--black); text-decoration: underline; }
+    .breadcrumb-sep { color: var(--carbon-30); }
+    .breadcrumb-current { color: var(--black); font-weight: 600; }
+
+    /* Article masthead — the sector tag runs as a rule, not a badge */
+    .article-masthead {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 56px 40px 44px;
+    }
+    .masthead-rule {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 28px;
+    }
+    .masthead-rule .rule-line { flex: 1; height: 1px; background: var(--carbon-20); }
+    .sector-marker {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      padding: 4px 0;
+      border-bottom: 3px solid;
+    }
+    .sector-marker.res { color: var(--blue-dark); border-color: var(--blue); }
+
+    .article-masthead h1 {
+      font-family: 'Merriweather', serif;
+      font-weight: 900;
+      font-size: clamp(1.9rem, 4.2vw, 2.7rem);
+      line-height: 1.18;
+      letter-spacing: -0.01em;
+      margin-bottom: 18px;
+    }
+    .article-dek {
+      font-family: 'Merriweather', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--carbon-60);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .byline-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px;
+      padding-top: 22px;
+      border-top: 1px solid var(--carbon-20);
+    }
+    .byline-left { display: flex; align-items: center; gap: 12px; }
+    .byline-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Merriweather', serif; font-weight: 700; font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .byline-name { font-size: 0.86rem; font-weight: 700; }
+    .byline-meta { font-size: 0.76rem; color: var(--carbon-40); }
+    .byline-actions { display: flex; align-items: center; gap: 16px; font-size: 0.76rem; color: var(--carbon-40); }
+    .byline-actions span { display: flex; align-items: center; gap: 5px; }
+
+    /* Hero figure for the article itself */
+    .article-figure {
+      max-width: 1160px; margin: 0 auto; padding: 0 40px 8px;
+    }
+    .article-figure-frame {
+      width: 100%;
+      aspect-ratio: 21/9;
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 55%, #2c7bc9 100%);
+      border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .article-figure-frame::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 64px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 64px);
+    }
+    .article-figure-mark { font-size: 4.5rem; position: relative; z-index: 1; opacity: 0.92; }
+    .article-figure-caption {
+      font-size: 0.74rem; color: var(--carbon-40);
+      padding: 10px 4px 0;
+      font-style: italic;
+    }
+
+    /* Two-column reading layout: article body + sticky reference rail */
+    .reading-layout {
+      max-width: 1160px; margin: 0 auto;
+      padding: 48px 40px 0;
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 64px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .reading-layout { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px 0; }
+    }
+
+    .article-body {
+      max-width: 640px;
+      font-family: 'Merriweather', serif;
+      font-weight: 300;
+      font-size: 1.02rem;
+      line-height: 1.85;
+      color: var(--carbon-90);
+    }
+    .article-body p { margin-bottom: 24px; }
+    .article-body h2 {
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 0.98rem;
+      letter-spacing: 0.2px;
+      color: var(--black);
+      margin: 44px 0 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--carbon-20);
+    }
+    .article-body h2 .h2-eyebrow {
+      display: block;
+      font-size: 0.66rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 6px;
+    }
+    .article-body strong { font-weight: 700; color: var(--black); }
+    .article-body em { font-style: italic; }
+
+    .article-body blockquote {
+      margin: 32px 0;
+      padding: 4px 0 4px 24px;
+      border-left: 3px solid var(--blue);
+      font-style: italic;
+      color: var(--carbon-60);
+      font-size: 1.05rem;
+    }
+    .article-body blockquote cite {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-style: normal;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--carbon-40);
+      margin-top: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .article-body ul, .article-body ol {
+      margin: 0 0 24px 0;
+      padding-left: 22px;
+    }
+    .article-body ul { list-style: disc; }
+    .article-body ol { list-style: decimal; }
+    .article-body li { margin-bottom: 10px; padding-left: 4px; }
+    .article-body li::marker { color: var(--blue); }
+
+    .callout-box {
+      background: var(--carbon-05);
+      border: 1px solid var(--carbon-20);
+      border-left: 3px solid var(--blue);
+      border-radius: 2px;
+      padding: 20px 24px;
+      margin: 32px 0;
+    }
+    .callout-box .callout-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.66rem; font-weight: 700;
+      letter-spacing: 1.6px; text-transform: uppercase;
+      color: var(--blue-dark); margin-bottom: 8px;
+    }
+    .callout-box p { font-size: 0.92rem; margin-bottom: 0; color: var(--carbon-90); }
+    .callout-box p + p { margin-top: 12px; }
+
+    /* Author closing block */
+    .article-closing {
+      max-width: 640px;
+      margin-top: 48px;
+      padding-top: 28px;
+      border-top: 1px solid var(--carbon-20);
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .closing-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--blue); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .closing-name { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+    .closing-bio { font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--carbon-60); line-height: 1.6; }
+
+    /* Share row */
+    .share-row {
+      max-width: 640px;
+      display: flex; align-items: center; gap: 12px;
+      margin-top: 28px; padding-top: 24px;
+      border-top: 1px solid var(--carbon-20);
+    }
+    .share-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.74rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--carbon-40);
+    }
+    .share-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--carbon-05); border: 1px solid var(--carbon-20);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .2s;
+    }
+    .share-btn:hover { background: var(--carbon-20); }
+    .share-btn svg { width: 14px; height: 14px; fill: var(--carbon-60); }
+
+    /* ── REFERENCE RAIL (signature element) ──
+       An academic paper has a running reference list; this rail is that
+       instinct translated to the web — a citation ledger that sits beside
+       the prose instead of buried in a footer, so it participates in the
+       reading instead of interrupting it. */
+    .reference-rail {
+      position: sticky;
+      top: 130px;
+    }
+    .rail-block { margin-bottom: 36px; }
+    .rail-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.66rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--carbon-40);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .rail-label::after { content: ''; flex: 1; height: 1px; background: var(--carbon-20); }
+
+    .toc-list { display: flex; flex-direction: column; }
+    .toc-list a {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--carbon-60);
+      padding: 8px 0 8px 14px;
+      border-left: 2px solid var(--carbon-20);
+      transition: color .2s, border-color .2s;
+    }
+    .toc-list a:hover, .toc-list a.toc-active {
+      color: var(--blue-dark);
+      border-color: var(--blue);
+    }
+
+    .ref-item {
+      display: flex; gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid var(--carbon-20);
+      font-family: 'Inter', sans-serif;
+    }
+    .ref-item:first-child { border-top: none; }
+    .ref-num {
+      font-family: 'Merriweather', serif;
+      font-size: 0.76rem; font-weight: 700;
+      color: var(--blue);
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .ref-text { font-size: 0.78rem; line-height: 1.55; color: var(--carbon-60); }
+    .ref-text .ref-title { color: var(--black); font-weight: 600; display: block; margin-bottom: 2px; }
+
+    .rail-cta {
+      background: var(--carbon-90);
+      border-radius: 3px;
+      padding: 20px;
+    }
+    .rail-cta p {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; color: var(--carbon-30);
+      line-height: 1.6; margin-bottom: 14px;
+    }
+    .rail-cta .btn { width: 100%; justify-content: center; }
+
+    @media (max-width: 900px) {
+      .reference-rail { position: static; }
+    }
+
+    /* ── RELATED ARTICLES ── */
+    .related-section {
+      background: var(--white);
+      padding: 60px 40px 0;
+    }
+    .related-inner { max-width: 1160px; margin: 0 auto; padding-top: 44px; border-top: 1px solid var(--carbon-20); }
+    .related-header { margin-bottom: 28px; }
+    .related-label {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--carbon-40); margin-bottom: 6px;
+    }
+    .related-title { font-size: 1.2rem; font-weight: 700; }
+
+    .related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    @media (max-width: 820px) { .related-grid { grid-template-columns: 1fr; } }
+
+    .related-card {
+      border: 1px solid var(--carbon-20);
+      border-radius: 3px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .related-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.08); }
+    .related-thumb {
+      height: 120px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+    }
+    .related-body { padding: 18px; }
+    .related-tag {
+      display: inline-block; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #fff; padding: 3px 8px; border-radius: 2px; margin-bottom: 10px;
+    }
+    .related-card-title { font-size: 0.92rem; font-weight: 700; line-height: 1.35; }
+
+    /* ── FOOTER (unchanged) ── */
+    footer { background: var(--black); color: var(--white); padding: 48px 40px 28px; margin-top: 60px; }
+    .footer-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 36px;
+    }
+    @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
+
+    .footer-logo { margin-bottom: 14px; }
+    .footer-logo img { height: 26px; filter: brightness(0) invert(1) opacity(0.65); }
+    .footer-desc { font-size: 0.83rem; color: var(--carbon-40); line-height: 1.7; margin-bottom: 20px; }
+    .footer-accred { font-size: 0.75rem; color: var(--carbon-60); }
+
+    .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-60); margin-bottom: 14px; }
+    .footer-links li { margin-bottom: 9px; }
+    .footer-links a { font-size: 0.83rem; color: var(--carbon-30); transition: color .2s; }
+    .footer-links a:hover { color: var(--white); }
+
+    .social-icons { display: flex; gap: 10px; margin-top: 4px; }
+    .social-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--carbon-80);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s; flex-shrink: 0;
+    }
+    .social-icon:hover { background: var(--carbon-60); }
+    .social-icon svg { width: 16px; height: 16px; fill: var(--white); }
+
+    .footer-divider { max-width: 1160px; margin: 0 auto 18px; border: none; border-top: 1px solid var(--carbon-80); }
+    .footer-bottom {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 10px 24px;
+      font-size: 0.73rem; color: var(--carbon-60);
+    }
+    .footer-bottom a { color: var(--carbon-60); }
+    .footer-bottom a:hover { color: var(--carbon-30); }
+
+    /* ── BUTTONS (shared) ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-weight: 700; font-size: 0.83rem;
+      padding: 9px 18px; border-radius: 2px;
+      transition: opacity .2s; cursor: pointer;
+      border: none; font-family: 'Inter', sans-serif;
+      background: var(--white); color: var(--black);
+    }
+    .btn:hover { opacity: 0.88; }
+
+    @media (max-width: 600px) {
+      .site-header { padding: 0 20px; }
+      .breadcrumb-strip { padding: 12px 20px; }
+      .article-masthead { padding: 40px 20px 32px; }
+      .article-figure { padding: 0 20px 8px; }
+      .related-section { padding: 48px 20px 0; }
+      footer { padding: 48px 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER (unchanged) -->
+<header class="site-header">
+  <a href="/" class="logo">
+    <img src="IMG_3083.png" alt="MedicineBank" />
+  </a>
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="#8e8e8e" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <input type="text" placeholder="Search…" />
+  </div>
+</header>
+
+<!-- SECONDARY NAV (unchanged) -->
+<nav class="secondary-nav" id="secondary-nav">
+  <ul>
+    <li><a href="/#hero"          class="nav-link">Home</a></li>
+    <li><a href="/#newsletter"    class="nav-link active">Newsletter</a></li>
+    <li><a href="/#mission"       class="nav-link">Mission & Vision</a></li>
+    <li><a href="/#sectors"       class="nav-link">Sectors</a></li>
+  </ul>
+</nav>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb-strip">
+  <div class="breadcrumb-inner">
+    <a href="/#newsletter">Newsletter</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/#newsletter">Research</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Clinical Case Writing for Beginners</span>
+  </div>
+</div>
+
+<!-- ARTICLE MASTHEAD -->
+<div class="article-masthead">
+  <div class="masthead-rule">
+    <span class="sector-marker res">Research · RES</span>
+    <span class="rule-line"></span>
+    <span style="font-size:0.76rem;color:var(--carbon-40);font-family:'Inter',sans-serif;">April 2026</span>
+  </div>
+  <h1>Research Spotlight: Clinical Case Writing for Beginners</h1>
+  <p class="article-dek">A practical guide produced by the Research sector on how to structure and submit your first clinical case report — from bedside observation to publication.</p>
+
+  <div class="byline-row">
+    <div class="byline-left">
+      <div class="byline-avatar">RS</div>
+      <div>
+        <div class="byline-name">MedicineBank Research Sector</div>
+        <div class="byline-meta">8 min read · Updated April 2026</div>
+      </div>
+    </div>
+    <div class="byline-actions">
+      <span>👁 4.2K reads</span>
+      <span>💬 12 comments</span>
+    </div>
+  </div>
+</div>
+
+<!-- ARTICLE FIGURE -->
+<div class="article-figure">
+  <div class="article-figure-frame">
+    <span class="article-figure-mark">🔬</span>
+  </div>
+  <p class="article-figure-caption">Case reports remain one of the most accessible entry points into published clinical research for undergraduate students.</p>
+</div>
+
+<!-- READING LAYOUT -->
+<div class="reading-layout">
+  <article class="article-body">
+
+    <p>Every clinician remembers the first patient whose presentation didn't quite fit the textbook. For most, that moment passes as an interesting anecdote shared over lunch. For a small number of medical students, it becomes something more durable: a published clinical case report, and often, a first line on a CV that would otherwise be empty of research experience.</p>
+
+    <p>The clinical case report is the most approachable form of medical literature to write, and also one of the most frequently done badly. This guide exists to close that gap — not by making the process sound simpler than it is, but by mapping the exact sequence a student can follow from the moment they notice something worth writing about to the moment a journal accepts it.</p>
+
+    <h2><span class="h2-eyebrow">Section One</span>What actually makes a case "reportable"</h2>
+
+    <p>Not every unusual patient is a publishable one. Editors are looking for a specific kind of novelty, and it rarely means "a disease I've never heard of." More often, reportable cases fall into one of a few recognizable categories: an atypical presentation of a common condition, an unexpected response to a standard treatment, a diagnostic pathway that took an unusual number of steps to resolve, or a rare adverse event tied to a medication or intervention.</p>
+
+    <p>The single most common rejection reason at this stage isn't poor writing — it's a case that is interesting to the student but not novel to the field. Before drafting a single sentence, a fast literature check answers the only question that matters early on: <strong>has this specific presentation already been described?</strong> If the answer is yes, the case may still be worth writing, but the angle has to shift toward what's genuinely new about this instance.</p>
+
+    <div class="callout-box">
+      <div class="callout-label">Before you start writing</div>
+      <p>Search PubMed and Google Scholar for the condition plus the unusual feature you noticed. If three or more similar reports already exist, your case needs a distinguishing angle — a different demographic, a different complication, or a different diagnostic route — to justify a new submission.</p>
+    </div>
+
+    <h2><span class="h2-eyebrow">Section Two</span>Securing consent and clearance early</h2>
+
+    <p>This is the step students most often defer and most often regret deferring. Patient consent for case report publication is not a formality to collect once the manuscript is finished — it needs to happen as close as possible to the clinical encounter, while the patient (or their guardian) can be properly informed about what will be shared, even in de-identified form.</p>
+
+    <p>Institutional requirements vary, but the underlying principle doesn't: a case report describes a real person, and their right to decline publication has to be respected regardless of how academically valuable the case is. Most journals will not proceed to review without a signed consent form, and a supervising physician's sign-off is typically expected before any drafting begins in earnest.</p>
+
+    <blockquote>
+      Treat consent as the first deliverable of the project, not the last. A compelling case with no consent on file is not a draft — it's a dead end.
+      <cite>— MedicineBank Research Sector, mentorship notes</cite>
+    </blockquote>
+
+    <h2><span class="h2-eyebrow">Section Three</span>Structuring the manuscript</h2>
+
+    <p>Case reports follow a tighter, more predictable structure than most other article types, which is precisely what makes them approachable for a first-time author. Most journals expect some version of the following sequence:</p>
+
+    <ul>
+      <li><strong>Abstract</strong> — a compressed summary, typically under 250 words, stating the presentation, the key finding, and why it matters.</li>
+      <li><strong>Introduction</strong> — brief context on the condition and precisely what makes this instance worth reporting.</li>
+      <li><strong>Case presentation</strong> — the clinical narrative itself: history, examination findings, investigations, and management, told in chronological order.</li>
+      <li><strong>Discussion</strong> — the section where the case is placed in conversation with existing literature, and where its novelty is argued rather than merely asserted.</li>
+      <li><strong>Conclusion</strong> — a short, specific takeaway for the reader, not a restatement of the abstract.</li>
+    </ul>
+
+    <p>The discussion section is where most first drafts fall short. It's tempting to simply retell the case a second time; the section instead needs to do argumentative work, actively drawing on the literature search from Section One to explain exactly what this case adds that prior reports did not.</p>
+
+    <h2><span class="h2-eyebrow">Section Four</span>Choosing where to submit</h2>
+
+    <p>Case reports have a wide range of homes, from dedicated case report journals to case sections within general medical journals. For a first submission, dedicated case report journals are usually the more realistic target — review timelines tend to be shorter, and editorial expectations are calibrated specifically for this format rather than treating it as a lesser cousin of an original research article.</p>
+
+    <p>It's worth checking a target journal's specific case report guidelines before submission, since word counts, required checklists (such as CARE guidelines, which many journals now mandate), and figure requirements differ meaningfully between publications.</p>
+
+    <h2><span class="h2-eyebrow">Section Five</span>What mentorship looks like in practice</h2>
+
+    <p>Nearly every successful first-time case report has a supervising physician attached to it, and that relationship does more than satisfy an institutional requirement. A mentor catches the clinical nuance a student may not yet have the experience to weigh correctly, flags consent and ethical issues before they become submission blockers, and — often most usefully — tells a student honestly when a case isn't yet reportable, saving weeks of drafting a manuscript no journal will accept.</p>
+
+    <p>Students working through MedicineBank's Research sector are paired with a mentor at the literature-review stage specifically so that this feedback arrives before the writing begins, not after.</p>
+
+    <div class="article-closing">
+      <div class="closing-avatar">RS</div>
+      <div>
+        <div class="closing-name">MedicineBank Research Sector</div>
+        <p class="closing-bio">The Research sector advances research capacity for MedicineBank's student community through education, project facilitation, mentorship, and publication support, and oversees MedicineBank's forthcoming research journal.</p>
+      </div>
+    </div>
+
+    <div class="share-row">
+      <span class="share-label">Share</span>
+      <div class="share-btn" aria-label="Share via link">
+        <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+      </div>
+      <div class="share-btn" aria-label="Share to LinkedIn">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </div>
+    </div>
+
+  </article>
+
+  <!-- REFERENCE RAIL — signature element -->
+  <aside class="reference-rail">
+    <div class="rail-block">
+      <div class="rail-label">On this page</div>
+      <nav class="toc-list" id="toc-list">
+        <a href="#" data-section="0">What makes a case reportable</a>
+        <a href="#" data-section="1">Consent and clearance</a>
+        <a href="#" data-section="2">Structuring the manuscript</a>
+        <a href="#" data-section="3">Choosing where to submit</a>
+        <a href="#" data-section="4">Mentorship in practice</a>
+      </nav>
+    </div>
+
+    <div class="rail-block">
+      <div class="rail-label">Cited &amp; referenced</div>
+      <div class="ref-item">
+        <span class="ref-num">01</span>
+        <span class="ref-text"><span class="ref-title">CARE Case Report Guidelines</span>Consensus reporting checklist widely required by case report journals.</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-num">02</span>
+        <span class="ref-text"><span class="ref-title">PubMed / Google Scholar</span>Primary databases for the novelty check described in Section One.</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-num">03</span>
+        <span class="ref-text"><span class="ref-title">Institutional Ethics Board</span>Local point of contact for patient consent and publication clearance.</span>
+      </div>
+    </div>
+
+    <div class="rail-cta">
+      <p>Working on your first case report? MedicineBank's Research sector pairs students with a mentor at the literature-review stage.</p>
+      <a href="mailto:eyadd@icloud.com" class="btn">Request a mentor</a>
+    </div>
+  </aside>
+</div>
+
+<!-- RELATED ARTICLES -->
+<section class="related-section">
+  <div class="related-inner">
+    <div class="related-header">
+      <p class="related-label">Continue Reading</p>
+      <h2 class="related-title">More from the Research Sector</h2>
+    </div>
+    <div class="related-grid">
+      <div class="related-card" onclick="window.open('https://medicinebank.org/News','_blank')">
+        <div class="related-thumb" style="background:var(--carbon-05);">📄</div>
+        <div class="related-body">
+          <span class="related-tag" style="background:var(--blue);">RES</span>
+          <div class="related-card-title">Introducing the MedicineBank Research Journal</div>
+        </div>
+      </div>
+      <div class="related-card" onclick="window.open('https://medicinebank.org/News','_blank')">
+        <div class="related-thumb" style="background:var(--carbon-05);">🎓</div>
+        <div class="related-body">
+          <span class="related-tag" style="background:var(--champ);">LOG</span>
+          <div class="related-card-title">Accreditation by Mansoura National University</div>
+        </div>
+      </div>
+      <div class="related-card" onclick="window.open('https://medicinebank.org/News','_blank')">
+        <div class="related-thumb" style="background:var(--carbon-05);">🤝</div>
+        <div class="related-body">
+          <span class="related-tag" style="background:var(--orange);">REL</span>
+          <div class="related-card-title">New Institutional Partnerships Across the Arab Region</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER (unchanged) -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">
+        <img src="IMG_3083.png" alt="MedicineBank" />
+      </div>
+      <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — serving medical students across Egypt and the Arab region.</p>
+      <p class="footer-accred">Accredited by Mansoura National University · March 2026</p>
+    </div>
+    <div>
+      <p class="footer-col-title">Navigate</p>
+      <ul class="footer-links">
+        <li><a href="/#newsletter"    class="nav-link">Newsletter</a></li>
+        <li><a href="/#mission"       class="nav-link">Mission & Vision</a></li>
+        <li><a href="/#sectors"       class="nav-link">Sectors</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="footer-col-title">Follow Us</p>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/medicinebank.in?igsh=MXUzdmx6YXM3cW1xeQ==" target="_blank" class="social-icon" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.332 3.608 1.308.975.975 1.245 2.242 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.332 2.633-1.308 3.608-.975.975-2.242 1.245-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.332-3.608-1.308C2.495 19.483 2.225 18.216 2.163 16.85 2.105 15.584 2.093 15.204 2.093 12s.012-3.584.07-4.85c.062-1.366.332-2.633 1.308-3.608C4.446 2.495 5.713 2.225 7.079 2.163 8.345 2.105 8.725 2.093 12 2.093zm0-2.163C8.741 0 8.332.013 7.052.072 5.197.157 3.355.673 1.998 2.03.641 3.387.125 5.229.04 7.084-.019 8.364 0 8.773 0 12c0 3.227.013 3.636.072 4.916.085 1.855.601 3.697 1.958 5.054 1.357 1.357 3.199 1.873 5.054 1.958C8.364 23.987 8.773 24 12 24c3.227 0 3.636-.013 4.916-.072 1.855-.085 3.697-.601 5.054-1.958 1.357-1.357 1.873-3.199 1.958-5.054.059-1.28.072-1.689.072-4.916 0-3.227-.013-3.636-.072-4.916-.085-1.855-.601-3.697-1.958-5.054C20.613.673 18.771.157 16.916.072 15.636.013 15.227 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/company/medicinebank/" target="_blank" class="social-icon" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a href="https://discord.gg/jsY3mGPKC4" target="_blank" class="social-icon" aria-label="Discord">
+          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        </a>
+        <a href="https://youtube.com/@medicinebank.initiative?si=7f8DzbPTSvQMQuYL" target="_blank" class="social-icon" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <hr class="footer-divider" />
+  <div class="footer-bottom">
+    <span>© 2026 MedicineBank Initiative</span>
+    <span>Dakahlia, Egypt</span>
+    <a href="mailto:eyadd@icloud.com">Contact Us</a>
+  </div>
+</footer>
+
+<script>
+  // Scroll-spy for the "On this page" reference rail
+  const tocLinks = document.querySelectorAll('#toc-list a');
+  const headings = document.querySelectorAll('.article-body h2');
+
+  tocLinks.forEach((link, i) => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = headings[i];
+      if (!target) return;
+      const top = target.getBoundingClientRect().top + window.scrollY - 130;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+  });
+
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY + 160;
+    let activeIndex = 0;
+    headings.forEach((h, i) => {
+      if (h.offsetTop <= scrollY) activeIndex = i;
+    });
+    tocLinks.forEach((link, i) => link.classList.toggle('toc-active', i === activeIndex));
+  }, { passive: true });
+</script>
+</body>
+</html>
