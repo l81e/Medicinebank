@@ -175,6 +175,7 @@
       letter-spacing: 1.3px; text-transform: uppercase;
       color: var(--carbon-40); margin-bottom: 7px;
     }
+    .picker-row { display: flex; gap: 6px; }
     .picker-field select {
       width: 100%;
       background: rgba(255,255,255,0.06);
@@ -190,6 +191,50 @@
     .picker-field select:focus { border-color: rgba(255,255,255,0.4); }
     .picker-field select:disabled { opacity: 0.35; cursor: not-allowed; }
     .picker-field select option { background: var(--carbon-90); color: var(--white); }
+
+    .add-toggle-btn {
+      flex-shrink: 0;
+      width: 34px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--white);
+      border-radius: 2px;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: background .2s, border-color .2s;
+    }
+    .add-toggle-btn:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); }
+    .add-toggle-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .add-toggle-btn.active { background: var(--blue); border-color: var(--blue); }
+
+    .add-inline {
+      display: none;
+      margin-top: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 2px;
+      padding: 10px;
+    }
+    .add-inline.open { display: block; }
+    .add-inline input, .add-inline select {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--white);
+      padding: 7px 8px;
+      border-radius: 2px;
+      font-size: 0.8rem;
+      outline: none;
+      margin-bottom: 6px;
+    }
+    .add-inline select option { background: var(--carbon-90); color: var(--white); }
+    .add-inline .add-inline-row { display: flex; gap: 6px; }
+    .add-inline .add-inline-row input { flex: 1; }
+    .add-inline-actions { display: flex; gap: 6px; margin-top: 2px; }
+    .add-inline-actions .btn { flex: 1; justify-content: center; padding: 7px 10px; font-size: 0.74rem; }
+    .add-inline-msg { font-size: 0.7rem; margin-top: 6px; font-weight: 600; }
+    .add-inline-msg.err { color: #ff8a8a; }
+    .add-inline-msg.ok { color: #7fd9a3; }
 
     /* ── UPLOAD PANEL ── */
     .panel {
@@ -349,23 +394,93 @@
   <div class="picker-grid">
     <div class="picker-field">
       <label>Academic Year</label>
-      <select id="sel-year" disabled><option value="">—</option></select>
+      <div class="picker-row">
+        <select id="sel-year"><option value="">—</option></select>
+        <button type="button" class="add-toggle-btn" id="add-toggle-year" title="Add academic year">+</button>
+      </div>
+      <div class="add-inline" id="add-inline-year">
+        <input type="text" id="add-year-label" placeholder="Label e.g. 2026/2027" />
+        <div class="add-inline-row">
+          <input type="text" id="add-year-start" placeholder="Start date (YYYY-MM-DD)" />
+          <input type="text" id="add-year-end" placeholder="End date (YYYY-MM-DD)" />
+        </div>
+        <div class="add-inline-actions">
+          <button type="button" class="btn btn-sm btn-accent" id="add-save-year">Save</button>
+          <button type="button" class="btn btn-sm btn-outline" id="add-cancel-year">Cancel</button>
+        </div>
+        <div class="add-inline-msg" id="add-msg-year"></div>
+      </div>
     </div>
+
     <div class="picker-field">
       <label>Semester</label>
-      <select id="sel-semester" disabled><option value="">—</option></select>
+      <div class="picker-row">
+        <select id="sel-semester" disabled><option value="">—</option></select>
+        <button type="button" class="add-toggle-btn" id="add-toggle-semester" title="Add semester" disabled>+</button>
+      </div>
+      <div class="add-inline" id="add-inline-semester">
+        <select id="add-semester-number">
+          <option value="1">Semester 1</option>
+          <option value="2">Semester 2</option>
+        </select>
+        <input type="text" id="add-semester-name" placeholder="Display name (optional)" />
+        <div class="add-inline-actions">
+          <button type="button" class="btn btn-sm btn-accent" id="add-save-semester">Save</button>
+          <button type="button" class="btn btn-sm btn-outline" id="add-cancel-semester">Cancel</button>
+        </div>
+        <div class="add-inline-msg" id="add-msg-semester"></div>
+      </div>
     </div>
+
     <div class="picker-field">
       <label>Module</label>
-      <select id="sel-module" disabled><option value="">—</option></select>
+      <div class="picker-row">
+        <select id="sel-module" disabled><option value="">—</option></select>
+        <button type="button" class="add-toggle-btn" id="add-toggle-module" title="Add module" disabled>+</button>
+      </div>
+      <div class="add-inline" id="add-inline-module">
+        <input type="text" id="add-module-name" placeholder="Module name" />
+        <input type="text" id="add-module-code" placeholder="Code (optional)" />
+        <div class="add-inline-actions">
+          <button type="button" class="btn btn-sm btn-accent" id="add-save-module">Save</button>
+          <button type="button" class="btn btn-sm btn-outline" id="add-cancel-module">Cancel</button>
+        </div>
+        <div class="add-inline-msg" id="add-msg-module"></div>
+      </div>
     </div>
+
     <div class="picker-field">
       <label>Subject</label>
-      <select id="sel-subject" disabled><option value="">—</option></select>
+      <div class="picker-row">
+        <select id="sel-subject" disabled><option value="">—</option></select>
+        <button type="button" class="add-toggle-btn" id="add-toggle-subject" title="Add subject" disabled>+</button>
+      </div>
+      <div class="add-inline" id="add-inline-subject">
+        <input type="text" id="add-subject-name" placeholder="Subject name" />
+        <input type="text" id="add-subject-code" placeholder="Code (optional)" />
+        <div class="add-inline-actions">
+          <button type="button" class="btn btn-sm btn-accent" id="add-save-subject">Save</button>
+          <button type="button" class="btn btn-sm btn-outline" id="add-cancel-subject">Cancel</button>
+        </div>
+        <div class="add-inline-msg" id="add-msg-subject"></div>
+      </div>
     </div>
+
     <div class="picker-field">
       <label>Lecture</label>
-      <select id="sel-lecture" disabled><option value="">—</option></select>
+      <div class="picker-row">
+        <select id="sel-lecture" disabled><option value="">—</option></select>
+        <button type="button" class="add-toggle-btn" id="add-toggle-lecture" title="Add lecture" disabled>+</button>
+      </div>
+      <div class="add-inline" id="add-inline-lecture">
+        <input type="text" id="add-lecture-title" placeholder="Lecture title" />
+        <input type="text" id="add-lecture-date" placeholder="Date (YYYY-MM-DD, optional)" />
+        <div class="add-inline-actions">
+          <button type="button" class="btn btn-sm btn-accent" id="add-save-lecture">Save</button>
+          <button type="button" class="btn btn-sm btn-outline" id="add-cancel-lecture">Cancel</button>
+        </div>
+        <div class="add-inline-msg" id="add-msg-lecture"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -507,6 +622,7 @@
       localStorage.setItem('repo_sb_url', url);
       localStorage.setItem('repo_sb_key', key);
       setStatus('connected', 'Connected');
+      els.addToggleYear.disabled = false;
       await loadYears();
     } catch (err) {
       supabase = null;
@@ -525,69 +641,79 @@
     sel.disabled = true;
   }
 
-  function fillSelect(sel, rows, labelFn) {
+  function fillSelect(sel, rows, labelFn, selectedId) {
     sel.innerHTML = '<option value="">—</option>' +
       rows.map(r => `<option value="${r.id}">${labelFn(r)}</option>`).join('');
-    sel.disabled = rows.length === 0;
+    sel.disabled = false;
+    if (selectedId) sel.value = selectedId;
   }
 
-  async function loadYears() {
-    resetSelect(els.selSemester, '—');
-    resetSelect(els.selModule, '—');
-    resetSelect(els.selSubject, '—');
-    resetSelect(els.selLecture, '—');
+  async function loadYears(selectedId) {
+    resetSelect(els.selSemester, '—'); els.addToggleSemester.disabled = true;
+    resetSelect(els.selModule, '—'); els.addToggleModule.disabled = true;
+    resetSelect(els.selSubject, '—'); els.addToggleSubject.disabled = true;
+    resetSelect(els.selLecture, '—'); els.addToggleLecture.disabled = true;
     const { data, error } = await supabase
       .from('academic_years')
       .select('id, label')
       .order('label');
     if (error) { console.error(error); return; }
-    fillSelect(els.selYear, data || [], r => r.label);
+    fillSelect(els.selYear, data || [], r => r.label, selectedId);
+    if (selectedId) els.selYear.dispatchEvent(new Event('change'));
   }
 
-  async function loadSemesters(yearId) {
-    resetSelect(els.selModule, '—');
-    resetSelect(els.selSubject, '—');
-    resetSelect(els.selLecture, '—');
+  async function loadSemesters(yearId, selectedId) {
+    resetSelect(els.selModule, '—'); els.addToggleModule.disabled = true;
+    resetSelect(els.selSubject, '—'); els.addToggleSubject.disabled = true;
+    resetSelect(els.selLecture, '—'); els.addToggleLecture.disabled = true;
     const { data, error } = await supabase
       .from('semesters')
       .select('id, number, name')
       .eq('academic_year_id', yearId)
       .order('number');
     if (error) { console.error(error); return; }
-    fillSelect(els.selSemester, data || [], r => r.name ? `${r.name} (Sem ${r.number})` : `Semester ${r.number}`);
+    fillSelect(els.selSemester, data || [], r => r.name ? `${r.name} (Sem ${r.number})` : `Semester ${r.number}`, selectedId);
+    els.addToggleSemester.disabled = false;
+    if (selectedId) els.selSemester.dispatchEvent(new Event('change'));
   }
 
-  async function loadModules(semesterId) {
-    resetSelect(els.selSubject, '—');
-    resetSelect(els.selLecture, '—');
+  async function loadModules(semesterId, selectedId) {
+    resetSelect(els.selSubject, '—'); els.addToggleSubject.disabled = true;
+    resetSelect(els.selLecture, '—'); els.addToggleLecture.disabled = true;
     const { data, error } = await supabase
       .from('modules')
       .select('id, name, code')
       .eq('semester_id', semesterId)
       .order('name');
     if (error) { console.error(error); return; }
-    fillSelect(els.selModule, data || [], r => r.code ? `${r.name} (${r.code})` : r.name);
+    fillSelect(els.selModule, data || [], r => r.code ? `${r.name} (${r.code})` : r.name, selectedId);
+    els.addToggleModule.disabled = false;
+    if (selectedId) els.selModule.dispatchEvent(new Event('change'));
   }
 
-  async function loadSubjects(moduleId) {
-    resetSelect(els.selLecture, '—');
+  async function loadSubjects(moduleId, selectedId) {
+    resetSelect(els.selLecture, '—'); els.addToggleLecture.disabled = true;
     const { data, error } = await supabase
       .from('subjects')
       .select('id, name')
       .eq('module_id', moduleId)
       .order('name');
     if (error) { console.error(error); return; }
-    fillSelect(els.selSubject, data || [], r => r.name);
+    fillSelect(els.selSubject, data || [], r => r.name, selectedId);
+    els.addToggleSubject.disabled = false;
+    if (selectedId) els.selSubject.dispatchEvent(new Event('change'));
   }
 
-  async function loadLectures(subjectId) {
+  async function loadLectures(subjectId, selectedId) {
     const { data, error } = await supabase
       .from('lectures')
       .select('id, title, lecture_date')
       .eq('subject_id', subjectId)
       .order('lecture_date', { ascending: false, nullsFirst: false });
     if (error) { console.error(error); return; }
-    fillSelect(els.selLecture, data || [], r => r.lecture_date ? `${r.title} — ${r.lecture_date}` : r.title);
+    fillSelect(els.selLecture, data || [], r => r.lecture_date ? `${r.title} — ${r.lecture_date}` : r.title, selectedId);
+    els.addToggleLecture.disabled = false;
+    if (selectedId) els.selLecture.dispatchEvent(new Event('change'));
   }
 
   els.selYear.addEventListener('change', () => {
@@ -637,6 +763,144 @@
       els.uploadHint.textContent = 'Select a lecture above before uploading.';
     }
   }
+
+  // ============================================================
+  // Quick "add new" controls for each hierarchy level
+  // ============================================================
+  els.addToggleYear = document.getElementById('add-toggle-year');
+  els.addToggleSemester = document.getElementById('add-toggle-semester');
+  els.addToggleModule = document.getElementById('add-toggle-module');
+  els.addToggleSubject = document.getElementById('add-toggle-subject');
+  els.addToggleLecture = document.getElementById('add-toggle-lecture');
+
+  const addPanels = {
+    year: document.getElementById('add-inline-year'),
+    semester: document.getElementById('add-inline-semester'),
+    module: document.getElementById('add-inline-module'),
+    subject: document.getElementById('add-inline-subject'),
+    lecture: document.getElementById('add-inline-lecture'),
+  };
+  const addToggles = {
+    year: els.addToggleYear,
+    semester: els.addToggleSemester,
+    module: els.addToggleModule,
+    subject: els.addToggleSubject,
+    lecture: els.addToggleLecture,
+  };
+
+  function closeAllAddPanels(except) {
+    Object.keys(addPanels).forEach(key => {
+      if (key === except) return;
+      addPanels[key].classList.remove('open');
+      addToggles[key].classList.remove('active');
+    });
+  }
+
+  function toggleAddPanel(key) {
+    const panel = addPanels[key];
+    const isOpen = panel.classList.contains('open');
+    closeAllAddPanels(key);
+    panel.classList.toggle('open', !isOpen);
+    addToggles[key].classList.toggle('active', !isOpen);
+    setAddMsg(key, '', null);
+  }
+
+  els.addToggleYear.addEventListener('click', () => toggleAddPanel('year'));
+  els.addToggleSemester.addEventListener('click', () => toggleAddPanel('semester'));
+  els.addToggleModule.addEventListener('click', () => toggleAddPanel('module'));
+  els.addToggleSubject.addEventListener('click', () => toggleAddPanel('subject'));
+  els.addToggleLecture.addEventListener('click', () => toggleAddPanel('lecture'));
+
+  document.getElementById('add-cancel-year').addEventListener('click', () => toggleAddPanel('year'));
+  document.getElementById('add-cancel-semester').addEventListener('click', () => toggleAddPanel('semester'));
+  document.getElementById('add-cancel-module').addEventListener('click', () => toggleAddPanel('module'));
+  document.getElementById('add-cancel-subject').addEventListener('click', () => toggleAddPanel('subject'));
+  document.getElementById('add-cancel-lecture').addEventListener('click', () => toggleAddPanel('lecture'));
+
+  function setAddMsg(key, text, ok) {
+    const el = document.getElementById(`add-msg-${key}`);
+    el.textContent = text;
+    el.className = 'add-inline-msg' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+  }
+
+  document.getElementById('add-save-year').addEventListener('click', async () => {
+    if (!supabase) { setAddMsg('year', 'Connect first.', false); return; }
+    const label = document.getElementById('add-year-label').value.trim();
+    const start_date = document.getElementById('add-year-start').value.trim() || null;
+    const end_date = document.getElementById('add-year-end').value.trim() || null;
+    if (!label) { setAddMsg('year', 'Label is required.', false); return; }
+    setAddMsg('year', 'Saving…', null);
+    const { data, error } = await supabase.from('academic_years').insert({ label, start_date, end_date }).select('id').single();
+    if (error) { setAddMsg('year', error.message, false); return; }
+    setAddMsg('year', 'Added.', true);
+    document.getElementById('add-year-label').value = '';
+    document.getElementById('add-year-start').value = '';
+    document.getElementById('add-year-end').value = '';
+    await loadYears(data.id);
+    toggleAddPanel('year');
+  });
+
+  document.getElementById('add-save-semester').addEventListener('click', async () => {
+    if (!selection.year) { setAddMsg('semester', 'Select an academic year first.', false); return; }
+    const number = document.getElementById('add-semester-number').value;
+    const name = document.getElementById('add-semester-name').value.trim() || null;
+    setAddMsg('semester', 'Saving…', null);
+    const { data, error } = await supabase.from('semesters')
+      .insert({ academic_year_id: selection.year, number, name }).select('id').single();
+    if (error) { setAddMsg('semester', error.message, false); return; }
+    setAddMsg('semester', 'Added.', true);
+    document.getElementById('add-semester-name').value = '';
+    await loadSemesters(selection.year, data.id);
+    toggleAddPanel('semester');
+  });
+
+  document.getElementById('add-save-module').addEventListener('click', async () => {
+    if (!selection.semester) { setAddMsg('module', 'Select a semester first.', false); return; }
+    const name = document.getElementById('add-module-name').value.trim();
+    const code = document.getElementById('add-module-code').value.trim() || null;
+    if (!name) { setAddMsg('module', 'Module name is required.', false); return; }
+    setAddMsg('module', 'Saving…', null);
+    const { data, error } = await supabase.from('modules')
+      .insert({ semester_id: selection.semester, name, code }).select('id').single();
+    if (error) { setAddMsg('module', error.message, false); return; }
+    setAddMsg('module', 'Added.', true);
+    document.getElementById('add-module-name').value = '';
+    document.getElementById('add-module-code').value = '';
+    await loadModules(selection.semester, data.id);
+    toggleAddPanel('module');
+  });
+
+  document.getElementById('add-save-subject').addEventListener('click', async () => {
+    if (!selection.module) { setAddMsg('subject', 'Select a module first.', false); return; }
+    const name = document.getElementById('add-subject-name').value.trim();
+    const code = document.getElementById('add-subject-code').value.trim() || null;
+    if (!name) { setAddMsg('subject', 'Subject name is required.', false); return; }
+    setAddMsg('subject', 'Saving…', null);
+    const { data, error } = await supabase.from('subjects')
+      .insert({ module_id: selection.module, name, code }).select('id').single();
+    if (error) { setAddMsg('subject', error.message, false); return; }
+    setAddMsg('subject', 'Added.', true);
+    document.getElementById('add-subject-name').value = '';
+    document.getElementById('add-subject-code').value = '';
+    await loadSubjects(selection.module, data.id);
+    toggleAddPanel('subject');
+  });
+
+  document.getElementById('add-save-lecture').addEventListener('click', async () => {
+    if (!selection.subject) { setAddMsg('lecture', 'Select a subject first.', false); return; }
+    const title = document.getElementById('add-lecture-title').value.trim();
+    const lecture_date = document.getElementById('add-lecture-date').value.trim() || null;
+    if (!title) { setAddMsg('lecture', 'Lecture title is required.', false); return; }
+    setAddMsg('lecture', 'Saving…', null);
+    const { data, error } = await supabase.from('lectures')
+      .insert({ subject_id: selection.subject, title, lecture_date }).select('id').single();
+    if (error) { setAddMsg('lecture', error.message, false); return; }
+    setAddMsg('lecture', 'Added.', true);
+    document.getElementById('add-lecture-title').value = '';
+    document.getElementById('add-lecture-date').value = '';
+    await loadLectures(selection.subject, data.id);
+    toggleAddPanel('lecture');
+  });
 
   // ============================================================
   // Browse / view content
