@@ -38,7 +38,7 @@
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
 
-    /* ── HEADER (not sticky — scrolls away) ── */
+    /* ── HEADER (not sticky — scrolls away; never fades / never moves on lang switch) ── */
     .site-header {
       padding: 22px 40px;
       display: flex;
@@ -53,15 +53,24 @@
       border: 1px solid var(--line-soft);
       border-radius: 20px;
       padding: 3px;
+      /* fixed width so the pill never resizes when EN <-> عربي swap */
+      width: 132px;
+      flex-shrink: 0;
     }
     .lang-toggle button {
+      flex: 1;
       font-family: 'Inter', sans-serif;
       font-size: 0.74rem; font-weight: 700;
-      padding: 6px 14px; border-radius: 16px;
+      padding: 6px 0; border-radius: 16px;
       background: none; border: none; color: var(--text-faint);
       cursor: pointer; transition: background .15s, color .15s;
     }
     .lang-toggle button.active { background: var(--accent); color: var(--text); }
+
+    /* ── LANGUAGE FADE ── */
+    /* everything except the header fades out/in on language switch */
+    .fade-region { transition: opacity .15s ease; }
+    .fade-region.fading { opacity: 0; }
 
     /* ── HERO ── */
     .hero {
@@ -220,6 +229,59 @@
     .field-group.invalid select,
     .field-group.invalid textarea { border-color: var(--err); }
 
+    /* ── SECTION HEADERS (basic info / details) ── */
+    .section-heading {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px;
+      color: var(--text-faint); text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    html[dir="rtl"] .section-heading { text-transform: none; }
+
+    /* ── COLLAPSIBLE BASIC-INFO SECTION ── */
+    #basicInfoSection { margin-bottom: 30px; }
+
+    #basicInfoFields {
+      overflow: hidden;
+      max-height: 2000px;
+      opacity: 1;
+      transition: max-height .35s ease, opacity .25s ease, margin .35s ease;
+    }
+    #basicInfoFields.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      pointer-events: none;
+    }
+
+    .summary-bar {
+      display: none;
+      align-items: center; justify-content: space-between;
+      gap: 12px;
+      background: var(--panel);
+      border: 1.5px solid var(--line-soft);
+      border-radius: 4px;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+    }
+    .summary-bar.show { display: flex; }
+    .summary-bar-text { font-size: 0.82rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .summary-bar-text strong { color: var(--text); font-weight: 700; }
+    .summary-edit-btn {
+      flex-shrink: 0;
+      background: none; border: 1.5px solid var(--line-soft); border-radius: 16px;
+      color: var(--accent); font-family: inherit; font-size: 0.76rem; font-weight: 700;
+      padding: 6px 13px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .summary-edit-btn:hover { border-color: var(--accent); }
+
+    #detailsSection {
+      transition: opacity .25s ease;
+    }
+    #detailsSection.hidden-details {
+      display: none;
+    }
+
     /* success state */
     .success-panel {
       display: none;
@@ -257,7 +319,7 @@
 </head>
 <body>
 
-<!-- HEADER (scrolls away with the page) -->
+<!-- HEADER (scrolls away with the page; static position, no fade) -->
 <header class="site-header">
   <a href="/" class="logo">
     <img src="IMG_3083.png" alt="MedicineBank" />
@@ -268,185 +330,212 @@
   </div>
 </header>
 
-<!-- HERO -->
-<section class="hero">
-  <h1 data-en="Apply to MedicineBank Media" data-ar="التقديم على قسم الميديا">التقديم على قسم الميديا</h1>
-  <p data-en="Content creation, script writing, directing, cinematography, filmography, PopScience prep, presenting, and voice-over. Tell us who you are and where you'd fit." data-ar="صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك ووين ممكن تناسب.">صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك ووين ممكن تناسب.</p>
-</section>
+<!-- Everything below the header fades on language switch -->
+<div class="fade-region" id="fadeRegion">
 
-<!-- FORM -->
-<section class="form-section">
-  <div class="form-wrap">
+  <!-- HERO -->
+  <section class="hero">
+    <h1 data-en="Apply to MedicineBank Media" data-ar="التقديم على قسم الميديا">التقديم على قسم الميديا</h1>
+    <p data-en="Content creation, script writing, directing, cinematography, filmography, PopScience prep, presenting, and voice-over. Tell us who you are and where you'd fit." data-ar="صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك وفين ممكن تناسب.">صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك وفين ممكن تناسب.</p>
+  </section>
 
-    <form id="applyForm" novalidate>
+  <!-- FORM -->
+  <section class="form-section">
+    <div class="form-wrap">
 
-      <!-- Basic info -->
-      <div class="field-row">
-        <div class="field-group" data-required="true">
-          <label class="field-label" for="fullName"><span data-en="Full name" data-ar="الاسم بالكامل">الاسم بالكامل</span><span class="req">*</span></label>
-          <input type="text" id="fullName" name="fullName" data-ph-en="e.g. Sara Ahmed" data-ph-ar="مثال: سارة أحمد" placeholder="مثال: سارة أحمد" />
-          <div class="error-msg" data-en="Please enter your name." data-ar="من فضلك اكتب اسمك.">من فضلك اكتب اسمك.</div>
+      <form id="applyForm" novalidate>
+
+        <!-- ── BASIC INFO (collapses automatically once valid) ── -->
+        <div id="basicInfoSection">
+
+          <div class="summary-bar" id="summaryBar">
+            <span class="summary-bar-text" id="summaryBarText"></span>
+            <button type="button" class="summary-edit-btn" id="summaryEditBtn" data-en="Edit" data-ar="تعديل">تعديل</button>
+          </div>
+
+          <div id="basicInfoFields">
+
+            <div class="field-row">
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="fullName"><span data-en="Full name" data-ar="الاسم بالكامل">الاسم بالكامل</span><span class="req">*</span></label>
+                <input type="text" id="fullName" name="fullName" data-ph-en="No funny nicknames" data-ph-ar="بلاش اسامي شهرة الله يخليك" placeholder="بلاش اسامي شهرة الله يخليك" />
+                <div class="error-msg" data-en="Please enter your name." data-ar="من فضلك اكتب اسمك.">من فضلك اكتب اسمك.</div>
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="college"><span data-en="College" data-ar="الكلية">الكلية</span><span class="req">*</span></label>
+                <input type="text" id="college" name="university" data-ph-en="e.g. Faculty of Medicine" data-ph-ar="مثال: كلية الطب" placeholder="مثال: كلية الطب" />
+                <div class="error-msg" data-en="Please enter your college." data-ar="من فضلك اكتب كليتك.">من فضلك اكتب كليتك.</div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="email"><span data-en="Email" data-ar="البريد الإلكتروني">البريد الإلكتروني</span><span class="req">*</span></label>
+                <input type="email" id="email" name="email" data-ph-en="you@example.com" data-ph-ar="you@example.com" placeholder="you@example.com" />
+                <div class="error-msg" data-en="Please enter a valid email." data-ar="من فضلك اكتب بريد إلكتروني صحيح.">من فضلك اكتب بريد إلكتروني صحيح.</div>
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="phone"><span data-en="Phone / WhatsApp" data-ar="رقم الهاتف / واتساب">رقم الهاتف / واتساب</span><span class="req">*</span></label>
+                <input type="tel" id="phone" name="phone" data-ph-en="+20 1xx xxx xxxx" data-ph-ar="+20 1xx xxx xxxx" placeholder="+20 1xx xxx xxxx" />
+                <div class="error-msg" data-en="Please enter a phone number." data-ar="من فضلك اكتب رقم هاتف.">من فضلك اكتب رقم هاتف.</div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="city"><span data-en="City" data-ar="المدينة">المدينة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+                <input type="text" id="city" name="city" data-ph-en="e.g. Mansoura" data-ph-ar="مثال: المنصورة" placeholder="مثال: المنصورة" />
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="year"><span data-en="Academic year" data-ar="السنة الدراسية">السنة الدراسية</span><span class="req">*</span></label>
+                <select id="year" name="year">
+                  <option value="" selected disabled data-en="Select year" data-ar="اختر السنة">اختر السنة</option>
+                  <option data-en="1st year" data-ar="الفرقة الأولى">الفرقة الأولى</option>
+                  <option data-en="2nd year" data-ar="الفرقة الثانية">الفرقة الثانية</option>
+                  <option data-en="3rd year" data-ar="الفرقة الثالثة">الفرقة الثالثة</option>
+                  <option data-en="4th year" data-ar="الفرقة الرابعة">الفرقة الرابعة</option>
+                  <option data-en="5th year" data-ar="الفرقة الخامسة">الفرقة الخامسة</option>
+                  <option data-en="6th year / Intern" data-ar="الفرقة السادسة / امتياز">الفرقة السادسة / امتياز</option>
+                </select>
+                <div class="error-msg" data-en="Please select your academic year." data-ar="من فضلك اختر سنتك الدراسية.">من فضلك اختر سنتك الدراسية.</div>
+              </div>
+            </div>
+
+          </div>
         </div>
-        <div class="field-group" data-required="true">
-          <label class="field-label" for="college"><span data-en="College" data-ar="الكلية">الكلية</span><span class="req">*</span></label>
-          <input type="text" id="college" name="university" data-ph-en="e.g. Faculty of Medicine" data-ph-ar="مثال: كلية الطب" placeholder="مثال: كلية الطب" />
-          <div class="error-msg" data-en="Please enter your college." data-ar="من فضلك اكتب كليتك.">من فضلك اكتب كليتك.</div>
+
+        <!-- ── APPLICATION DETAILS ── -->
+        <div id="detailsSection">
+
+          <!-- Roles -->
+          <div class="field-group" data-required="true" id="roleGroup">
+            <label class="field-label"><span data-en="Which role(s) interest you?" data-ar="أنهي مجال/مجالات مهتم بيها؟">أنهي مجال/مجالات مهتم بيها؟</span><span class="req">*</span></label>
+            <div class="role-checks" id="roleChecks">
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Content Creation" />
+                <span class="role-check-text">
+                  <strong data-en="Content Creation" data-ar="صناعة محتوى">صناعة محتوى</strong>
+                  <span class="desc" data-en="Ideas, formats, series" data-ar="أفكار، فورمات، سلاسل حلقات">أفكار، فورمات، سلاسل حلقات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Script Writing" />
+                <span class="role-check-text">
+                  <strong data-en="Script Writing" data-ar="كتابة سكريبت">كتابة سكريبت</strong>
+                  <span class="desc" data-en="Episode & video scripts" data-ar="سكريبتات الحلقات والفيديوهات">سكريبتات الحلقات والفيديوهات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Directing" />
+                <span class="role-check-text">
+                  <strong data-en="Directing" data-ar="إخراج">إخراج</strong>
+                  <span class="desc" data-en="Shot-calling, pacing, tone" data-ar="اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة">اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Cinematography" />
+                <span class="role-check-text">
+                  <strong data-en="Cinematography" data-ar="تصوير سينمائي">تصوير سينمائي</strong>
+                  <span class="desc" data-en="Camera work, lighting" data-ar="التصوير بالكاميرا والإضاءة">التصوير بالكاميرا والإضاءة</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Filmography" />
+                <span class="role-check-text">
+                  <strong data-en="Filmography" data-ar="فيلموغرافيا">فيلموغرافيا</strong>
+                  <span class="desc" data-en="Filming & editing footage" data-ar="تصوير ومونتاج اللقطات">تصوير ومونتاج اللقطات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="PopScience Prep" />
+                <span class="role-check-text">
+                  <strong>PopScience Prep</strong>
+                  <span class="desc" data-en="Research & fact-checking" data-ar="بحث وتدقيق المعلومات">بحث وتدقيق المعلومات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Presenting" />
+                <span class="role-check-text">
+                  <strong data-en="Presenting" data-ar="تقديم">تقديم</strong>
+                  <span class="desc" data-en="On-camera hosting" data-ar="التقديم أمام الكاميرا">التقديم أمام الكاميرا</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Voice-Over" />
+                <span class="role-check-text">
+                  <strong data-en="Voice-Over" data-ar="تعليق صوتي">تعليق صوتي</strong>
+                  <span class="desc" data-en="Narration & audio" data-ar="السرد الصوتي والأوديو">السرد الصوتي والأوديو</span>
+                </span>
+              </label>
+            </div>
+            <div class="error-msg" id="roleError" data-en="Please select at least one role." data-ar="من فضلك اختر مجال واحد على الأقل.">من فضلك اختر مجال واحد على الأقل.</div>
+          </div>
+
+          <!-- Experience level -->
+          <div class="field-group">
+            <label class="field-label"><span data-en="Experience level" data-ar="مستوى الخبرة">مستوى الخبرة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+            <div class="radio-row" id="expRow">
+              <label class="radio-pill"><input type="radio" name="experience" value="New to this" /><span data-en="New to this" data-ar="لسه بادئ">لسه بادئ</span></label>
+              <label class="radio-pill"><input type="radio" name="experience" value="Some experience" /><span data-en="Some experience" data-ar="عندي خبرة بسيطة">عندي خبرة بسيطة</span></label>
+              <label class="radio-pill"><input type="radio" name="experience" value="Experienced" /><span data-en="Experienced" data-ar="عندي خبرة">عندي خبرة</span></label>
+            </div>
+          </div>
+
+          <!-- Portfolio -->
+          <div class="field-group">
+            <label class="field-label" for="portfolio"><span data-en="Portfolio / sample work link" data-ar="رابط أعمالك السابقة">رابط أعمالك السابقة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+            <input type="url" id="portfolio" name="portfolio" data-ph-en="YouTube, Drive, Instagram, anything showing your work" data-ph-ar="يوتيوب، درايف، إنستجرام، أي حاجة تعرض شغلك" placeholder="يوتيوب، درايف، إنستجرام، أي حاجة تعرض شغلك" />
+            <div class="field-hint" data-en="No polished portfolio yet? Leave it blank — we care more about the answer below." data-ar="لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.">لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.</div>
+          </div>
+
+          <!-- Why -->
+          <div class="field-group" data-required="true">
+            <label class="field-label" for="why"><span data-en="Why do you want to join Media?" data-ar="ليه عايز تنضم لقسم الميديا؟">ليه عايز تنضم لقسم الميديا؟</span><span class="req">*</span></label>
+            <textarea id="why" name="why" maxlength="600" data-ph-en="Tell us what draws you to this — a project you're proud of, a gap you want to fill, anything real." data-ph-ar="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تسدها." placeholder="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تسدها."></textarea>
+            <div class="char-count"><span id="whyCount">0</span>/600</div>
+            <div class="error-msg" data-en="Tell us a bit about why you're applying." data-ar="قولنا كام كلمة ليه بتقدم.">قولنا كام كلمة ليه بتقدم.</div>
+          </div>
+
+          <div class="consent-row">
+            <input type="checkbox" id="consent" name="consent" />
+            <label for="consent" data-en="I'm okay with MedicineBank Media contacting me by email or phone about this application." data-ar="موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.">موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.</label>
+          </div>
+
+          <button type="submit" class="submit-btn" data-en="Submit application" data-ar="إرسال التقديم">إرسال التقديم</button>
+          <p class="form-footnote" data-en="Applications are reviewed on a rolling basis." data-ar="بيتم مراجعة الطلبات أول بأول.">بيتم مراجعة الطلبات أول بأول.</p>
+
         </div>
-      </div>
 
-      <div class="field-row">
-        <div class="field-group" data-required="true">
-          <label class="field-label" for="email"><span data-en="Email" data-ar="البريد الإلكتروني">البريد الإلكتروني</span><span class="req">*</span></label>
-          <input type="email" id="email" name="email" data-ph-en="you@example.com" data-ph-ar="you@example.com" placeholder="you@example.com" />
-          <div class="error-msg" data-en="Please enter a valid email." data-ar="من فضلك اكتب بريد إلكتروني صحيح.">من فضلك اكتب بريد إلكتروني صحيح.</div>
+      </form>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-panel" id="successPanel">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
-        <div class="field-group" data-required="true">
-          <label class="field-label" for="phone"><span data-en="Phone / WhatsApp" data-ar="رقم الهاتف / واتساب">رقم الهاتف / واتساب</span><span class="req">*</span></label>
-          <input type="tel" id="phone" name="phone" data-ph-en="+20 1xx xxx xxxx" data-ph-ar="+20 1xx xxx xxxx" placeholder="+20 1xx xxx xxxx" />
-          <div class="error-msg" data-en="Please enter a phone number." data-ar="من فضلك اكتب رقم هاتف.">من فضلك اكتب رقم هاتف.</div>
-        </div>
+        <h2 data-en="Application received" data-ar="تم استلام طلبك">تم استلام طلبك</h2>
+        <p data-en="Thanks for applying to MedicineBank Media — we've got it. Someone from the team will reach out by email or phone once applications are reviewed." data-ar="شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.">شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.</p>
+        <button class="btn-secondary" id="resetBtn" data-en="Submit another response" data-ar="إرسال طلب تاني">إرسال طلب تاني</button>
       </div>
 
-      <div class="field-row">
-        <div class="field-group" data-required="true">
-          <label class="field-label" for="year"><span data-en="Academic year" data-ar="السنة الدراسية">السنة الدراسية</span><span class="req">*</span></label>
-          <select id="year" name="year">
-            <option value="" selected disabled data-en="Select year" data-ar="اختر السنة">اختر السنة</option>
-            <option data-en="1st year" data-ar="الفرقة الأولى">الفرقة الأولى</option>
-            <option data-en="2nd year" data-ar="الفرقة الثانية">الفرقة الثانية</option>
-            <option data-en="3rd year" data-ar="الفرقة الثالثة">الفرقة الثالثة</option>
-            <option data-en="4th year" data-ar="الفرقة الرابعة">الفرقة الرابعة</option>
-            <option data-en="5th year" data-ar="الفرقة الخامسة">الفرقة الخامسة</option>
-            <option data-en="6th year / Intern" data-ar="الفرقة السادسة / امتياز">الفرقة السادسة / امتياز</option>
-          </select>
-          <div class="error-msg" data-en="Please select your academic year." data-ar="من فضلك اختر سنتك الدراسية.">من فضلك اختر سنتك الدراسية.</div>
-        </div>
-        <div class="field-group">
-          <label class="field-label" for="city"><span data-en="City" data-ar="المدينة">المدينة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
-          <input type="text" id="city" name="city" data-ph-en="e.g. Mansoura" data-ph-ar="مثال: المنصورة" placeholder="مثال: المنصورة" />
-        </div>
-      </div>
-
-      <!-- Roles -->
-      <div class="field-group" data-required="true" id="roleGroup">
-        <label class="field-label"><span data-en="Which role(s) interest you?" data-ar="أنهي مجال/مجالات مهتم بيها؟">أنهي مجال/مجالات مهتم بيها؟</span><span class="req">*</span></label>
-        <div class="role-checks" id="roleChecks">
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Content Creation" />
-            <span class="role-check-text">
-              <strong data-en="Content Creation" data-ar="صناعة محتوى">صناعة محتوى</strong>
-              <span class="desc" data-en="Ideas, formats, series" data-ar="أفكار، فورمات، سلاسل حلقات">أفكار، فورمات، سلاسل حلقات</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Script Writing" />
-            <span class="role-check-text">
-              <strong data-en="Script Writing" data-ar="كتابة سكريبت">كتابة سكريبت</strong>
-              <span class="desc" data-en="Episode & video scripts" data-ar="سكريبتات الحلقات والفيديوهات">سكريبتات الحلقات والفيديوهات</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Directing" />
-            <span class="role-check-text">
-              <strong data-en="Directing" data-ar="إخراج">إخراج</strong>
-              <span class="desc" data-en="Shot-calling, pacing, tone" data-ar="اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة">اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Cinematography" />
-            <span class="role-check-text">
-              <strong data-en="Cinematography" data-ar="تصوير سينمائي">تصوير سينمائي</strong>
-              <span class="desc" data-en="Camera work, lighting" data-ar="التصوير بالكاميرا والإضاءة">التصوير بالكاميرا والإضاءة</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Filmography" />
-            <span class="role-check-text">
-              <strong data-en="Filmography" data-ar="فيلموغرافيا">فيلموغرافيا</strong>
-              <span class="desc" data-en="Filming & editing footage" data-ar="تصوير ومونتاج اللقطات">تصوير ومونتاج اللقطات</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="PopScience Prep" />
-            <span class="role-check-text">
-              <strong>PopScience Prep</strong>
-              <span class="desc" data-en="Research & fact-checking" data-ar="بحث وتدقيق المعلومات">بحث وتدقيق المعلومات</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Presenting" />
-            <span class="role-check-text">
-              <strong data-en="Presenting" data-ar="تقديم">تقديم</strong>
-              <span class="desc" data-en="On-camera hosting" data-ar="التقديم أمام الكاميرا">التقديم أمام الكاميرا</span>
-            </span>
-          </label>
-          <label class="role-check">
-            <input type="checkbox" name="roles" value="Voice-Over" />
-            <span class="role-check-text">
-              <strong data-en="Voice-Over" data-ar="تعليق صوتي">تعليق صوتي</strong>
-              <span class="desc" data-en="Narration & audio" data-ar="السرد الصوتي والأوديو">السرد الصوتي والأوديو</span>
-            </span>
-          </label>
-        </div>
-        <div class="error-msg" id="roleError" data-en="Please select at least one role." data-ar="من فضلك اختر مجال واحد على الأقل.">من فضلك اختر مجال واحد على الأقل.</div>
-      </div>
-
-      <!-- Experience level -->
-      <div class="field-group">
-        <label class="field-label"><span data-en="Experience level" data-ar="مستوى الخبرة">مستوى الخبرة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
-        <div class="radio-row" id="expRow">
-          <label class="radio-pill"><input type="radio" name="experience" value="New to this" /><span data-en="New to this" data-ar="لسه بادئ">لسه بادئ</span></label>
-          <label class="radio-pill"><input type="radio" name="experience" value="Some experience" /><span data-en="Some experience" data-ar="عندي خبرة بسيطة">عندي خبرة بسيطة</span></label>
-          <label class="radio-pill"><input type="radio" name="experience" value="Experienced" /><span data-en="Experienced" data-ar="عندي خبرة">عندي خبرة</span></label>
-        </div>
-      </div>
-
-      <!-- Portfolio -->
-      <div class="field-group">
-        <label class="field-label" for="portfolio"><span data-en="Portfolio / sample work link" data-ar="رابط أعمالك السابقة">رابط أعمالك السابقة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
-        <input type="url" id="portfolio" name="portfolio" data-ph-en="YouTube, Drive, Instagram, anything showing your work" data-ph-ar="يوتيوب، درايف، إنستجرام، أي حاجة تعرض شغلك" placeholder="يوتيوب، درايف، إنستجرام، أي حاجة تعرض شغلك" />
-        <div class="field-hint" data-en="No polished portfolio yet? Leave it blank — we care more about the answer below." data-ar="لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.">لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.</div>
-      </div>
-
-      <!-- Why -->
-      <div class="field-group" data-required="true">
-        <label class="field-label" for="why"><span data-en="Why do you want to join Media?" data-ar="ليه عايز تنضم لقسم الميديا؟">ليه عايز تنضم لقسم الميديا؟</span><span class="req">*</span></label>
-        <textarea id="why" name="why" maxlength="600" data-ph-en="Tell us what draws you to this — a project you're proud of, a gap you want to fill, anything real." data-ph-ar="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تسدها." placeholder="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تسدها."></textarea>
-        <div class="char-count"><span id="whyCount">0</span>/600</div>
-        <div class="error-msg" data-en="Tell us a bit about why you're applying." data-ar="قولنا كام كلمة ليه بتقدم.">قولنا كام كلمة ليه بتقدم.</div>
-      </div>
-
-      <div class="consent-row">
-        <input type="checkbox" id="consent" name="consent" />
-        <label for="consent" data-en="I'm okay with MedicineBank Media contacting me by email or phone about this application." data-ar="موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.">موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.</label>
-      </div>
-
-      <button type="submit" class="submit-btn" data-en="Submit application" data-ar="إرسال التقديم">إرسال التقديم</button>
-      <p class="form-footnote" data-en="Applications are reviewed on a rolling basis." data-ar="بيتم مراجعة الطلبات أول بأول.">بيتم مراجعة الطلبات أول بأول.</p>
-    </form>
-
-    <!-- SUCCESS STATE -->
-    <div class="success-panel" id="successPanel">
-      <div class="success-icon">
-        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-      </div>
-      <h2 data-en="Application received" data-ar="تم استلام طلبك">تم استلام طلبك</h2>
-      <p data-en="Thanks for applying to MedicineBank Media — we've got it. Someone from the team will reach out by email or phone once applications are reviewed." data-ar="شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.">شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.</p>
-      <button class="btn-secondary" id="resetBtn" data-en="Submit another response" data-ar="إرسال طلب تاني">إرسال طلب تاني</button>
     </div>
+  </section>
 
-  </div>
-</section>
+</div><!-- /fade-region -->
 
 <script>
   const form = document.getElementById('applyForm');
   const successPanel = document.getElementById('successPanel');
   const resetBtn = document.getElementById('resetBtn');
   const htmlEl = document.documentElement;
+  const fadeRegion = document.getElementById('fadeRegion');
 
-  /* ── Language toggle ── */
+  let currentLang = 'ar';
+
+  /* ── Language toggle with fade ── */
   const langButtons = document.querySelectorAll('.lang-toggle button');
-  function setLang(lang) {
+
+  function applyLangText(lang) {
     htmlEl.setAttribute('lang', lang);
     htmlEl.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     langButtons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
@@ -459,7 +548,22 @@
       const ph = lang === 'ar' ? el.dataset.phAr : el.dataset.phEn;
       if (ph != null) el.setAttribute('placeholder', ph);
     });
+
+    // re-render dynamic summary bar text in the new language, if visible
+    updateSummaryBar();
   }
+
+  function setLang(lang) {
+    if (lang === currentLang) return;
+    currentLang = lang;
+
+    fadeRegion.classList.add('fading');
+    window.setTimeout(() => {
+      applyLangText(lang);
+      fadeRegion.classList.remove('fading');
+    }, 150);
+  }
+
   langButtons.forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
 
   /* ── role checkbox ── */
@@ -492,34 +596,112 @@
     if (err) err.classList.add('show');
   }
 
-  form.querySelectorAll('.field-group[data-required="true"] input, .field-group[data-required="true"] select, .field-group[data-required="true"] textarea').forEach(el => {
-    el.addEventListener('input', () => clearFieldError(el.closest('.field-group')));
-    el.addEventListener('change', () => clearFieldError(el.closest('.field-group')));
+  form.querySelectorAll('#basicInfoFields [data-required] input, #basicInfoFields [data-required] select').forEach(() => {});
+
+  const basicRequiredNames = ['fullName', 'university', 'email', 'phone', 'year'];
+
+  function basicInfoIsValid() {
+    return basicRequiredNames.every(name => {
+      const el = form.elements[name];
+      let ok = el.value.trim().length > 0;
+      if (name === 'email' && ok) ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+      return ok;
+    });
+  }
+
+  function validateBasicField(el) {
+    const group = el.closest('.field-group');
+    let ok = el.value.trim().length > 0;
+    if (el.name === 'email' && ok) ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+    if (ok) clearFieldError(group); else setFieldError(group);
+    return ok;
+  }
+
+  // clear-on-input for basic fields, plus check for auto-collapse
+  basicRequiredNames.forEach(name => {
+    const el = form.elements[name];
+    const evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(evt, () => {
+      clearFieldError(el.closest('.field-group'));
+      maybeAutoCollapse();
+    });
   });
 
+  const basicInfoFields = document.getElementById('basicInfoFields');
+  const summaryBar = document.getElementById('summaryBar');
+  const summaryBarText = document.getElementById('summaryBarText');
+  const summaryEditBtn = document.getElementById('summaryEditBtn');
+
+  let basicInfoCollapsed = false;
+  let userReopened = false; // once reopened manually, don't auto-recollapse while editing
+
+  function updateSummaryBar() {
+    if (!basicInfoCollapsed) return;
+    const name = form.fullName.value.trim();
+    const college = form.university.value.trim();
+    const label = currentLang === 'ar'
+      ? `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(college)}`
+      : `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(college)}`;
+    summaryBarText.innerHTML = label;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function collapseBasicInfo() {
+    basicInfoCollapsed = true;
+    basicInfoFields.classList.add('collapsed');
+    summaryBar.classList.add('show');
+    updateSummaryBar();
+  }
+
+  function expandBasicInfo() {
+    basicInfoCollapsed = false;
+    userReopened = true;
+    basicInfoFields.classList.remove('collapsed');
+    summaryBar.classList.remove('show');
+  }
+
+  function maybeAutoCollapse() {
+    if (basicInfoCollapsed || userReopened) return;
+    if (basicInfoIsValid()) {
+      collapseBasicInfo();
+    }
+  }
+
+  summaryEditBtn.addEventListener('click', expandBasicInfo);
+
+  /* ── submit ── */
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     let valid = true;
 
-    const requiredFields = ['fullName', 'university', 'email', 'phone', 'year', 'why'];
-    requiredFields.forEach(name => {
+    // basic info fields — validate regardless of collapsed state
+    basicRequiredNames.forEach(name => {
       const el = form.elements[name];
-      const group = el.closest('.field-group');
-      let ok = el.value.trim().length > 0;
-      if (name === 'email' && ok) {
-        ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
-      }
-      if (!ok) { setFieldError(group); valid = false; }
-      else clearFieldError(group);
+      if (!validateBasicField(el)) valid = false;
     });
 
+    // why field
+    const whyGroup = whyField.closest('.field-group');
+    if (whyField.value.trim().length === 0) { setFieldError(whyGroup); valid = false; }
+    else clearFieldError(whyGroup);
+
+    // roles
     const roleGroup = document.getElementById('roleGroup');
     const anyRole = Array.from(form.querySelectorAll('input[name="roles"]')).some(cb => cb.checked);
     if (!anyRole) { setFieldError(roleGroup); valid = false; }
     else clearFieldError(roleGroup);
 
     if (!valid) {
+      // if the invalid field lives in a collapsed basic-info section, reopen it first
       const firstInvalid = form.querySelector('.field-group.invalid');
+      if (firstInvalid && basicInfoFields.contains(firstInvalid) && basicInfoCollapsed) {
+        expandBasicInfo();
+      }
       if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -568,6 +750,12 @@
     form.querySelectorAll('.field-group.invalid').forEach(g => clearFieldError(g));
     successPanel.classList.remove('show');
     form.classList.remove('hide');
+
+    // reset basic-info collapse state too
+    basicInfoCollapsed = false;
+    userReopened = false;
+    basicInfoFields.classList.remove('collapsed');
+    summaryBar.classList.remove('show');
   });
 </script>
 </body>
