@@ -310,6 +310,20 @@
 
     #applyForm.hide { display: none; }
 
+    /* ── SUBMIT ERROR STATE ── */
+    .submit-error {
+      display: none;
+      font-size: 0.79rem;
+      color: var(--err);
+      background: rgba(226,100,111,0.1);
+      border: 1.5px solid rgba(226,100,111,0.35);
+      border-radius: 4px;
+      padding: 10px 13px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .submit-error.show { display: block; }
+
     @media (max-width: 600px) {
       .site-header { padding: 18px 20px; }
       .hero { padding: 24px 20px 36px; }
@@ -344,6 +358,8 @@
     <div class="form-wrap">
 
       <form id="applyForm" novalidate>
+
+        <div class="submit-error" id="submitError" data-en="Something went wrong sending your application. Please check your connection and try again." data-ar="حصلت مشكلة في إرسال طلبك. تأكد من الاتصال بالإنترنت وحاول تاني.">حصلت مشكلة في إرسال طلبك. تأكد من الاتصال بالإنترنت وحاول تاني.</div>
 
         <!-- ── BASIC INFO (collapses automatically once valid) ── -->
         <div id="basicInfoSection">
@@ -491,7 +507,7 @@
           <!-- Why -->
           <div class="field-group" data-required="true">
             <label class="field-label" for="why"><span data-en="Why do you want to join Media?" data-ar="ليه عايز تنضم لقسم الميديا؟">ليه عايز تنضم لقسم الميديا؟</span><span class="req">*</span></label>
-            <textarea id="why" name="why" maxlength="600" data-ph-en="Tell us what draws you to this — a project you're proud of, a gap you want to fill, anything real." data-ph-ar="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تسدها." placeholder="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تسدها."></textarea>
+            <textarea id="why" name="why" maxlength="600" data-ph-en="Tell us what draws you to this — a project you're proud of, a gap you want to fill, anything real." data-ph-ar="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تقدمها." placeholder="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تقدمها."></textarea>
             <div class="char-count"><span id="whyCount">0</span>/600</div>
             <div class="error-msg" data-en="Tell us a bit about why you're applying." data-ar="قولنا كام كلمة ليه بتقدم.">قولنا كام كلمة ليه بتقدم.</div>
           </div>
@@ -501,7 +517,7 @@
             <label for="consent" data-en="I'm okay with MedicineBank Media contacting me by email or phone about this application." data-ar="موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.">موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.</label>
           </div>
 
-          <button type="submit" class="submit-btn" data-en="Submit application" data-ar="إرسال التقديم">إرسال التقديم</button>
+          <button type="submit" class="submit-btn" id="submitBtn" data-en="Submit application" data-ar="إرسال التقديم">إرسال التقديم</button>
           <p class="form-footnote" data-en="Applications are reviewed on a rolling basis." data-ar="بيتم مراجعة الطلبات أول بأول.">بيتم مراجعة الطلبات أول بأول.</p>
 
         </div>
@@ -529,6 +545,11 @@
   const resetBtn = document.getElementById('resetBtn');
   const htmlEl = document.documentElement;
   const fadeRegion = document.getElementById('fadeRegion');
+  const submitBtn = document.getElementById('submitBtn');
+  const submitError = document.getElementById('submitError');
+
+  // Formspree endpoint for MedicineBank Media applications
+  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xwlkpgvp';
 
   let currentLang = 'ar';
 
@@ -679,6 +700,8 @@
     e.preventDefault();
     let valid = true;
 
+    submitError.classList.remove('show');
+
     // basic info fields — validate regardless of collapsed state
     basicRequiredNames.forEach(name => {
       const el = form.elements[name];
@@ -721,19 +744,33 @@
     };
 
     // ── SUBMISSION HANDLER ──────────────────────────────────────────
-    // Wire this to wherever app.medicinebank.org actually collects
-    // responses (a Google Form endpoint, Formspree, your own API, etc).
-    //
-    // fetch('https://your-endpoint.example.com/apply', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data)
-    // })
-    //   .then(res => { if (!res.ok) throw new Error('Submit failed'); showSuccess(); })
-    //   .catch(err => { console.error(err); });
-    //
-    console.log('Application payload:', data);
-    showSuccess();
+    // Sends the application to Formspree. Formspree emails you each
+    // submission and keeps a copy in your dashboard at formspree.io.
+    submitBtn.disabled = true;
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.textContent = currentLang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
+
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Submit failed');
+        showSuccess();
+      })
+      .catch(err => {
+        console.error('Application submission error:', err);
+        submitError.classList.add('show');
+        submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      });
     // ─────────────────────────────────────────────────────────────────
   });
 
@@ -750,6 +787,7 @@
     form.querySelectorAll('.field-group.invalid').forEach(g => clearFieldError(g));
     successPanel.classList.remove('show');
     form.classList.remove('hide');
+    submitError.classList.remove('show');
 
     // reset basic-info collapse state too
     basicInfoCollapsed = false;
