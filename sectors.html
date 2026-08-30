@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedicineBank — Who We Are</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#0e0d0a;
+  --surface:#161409;
+  --surface-2:#1c1a10;
+  --border:#2c2717;
+  --text:#f2ede1;
+  --text-dim:#9a917c;
+  --text-faint:#6e6656;
+  --brass:#c9a35e;
+  --brass-soft:rgba(201,163,94,0.10);
+
+  /* sector colors — used as the encoded signal throughout */
+  --research:#3a6fd6;      /* Egyptian blue */
+  --research-soft:rgba(58,111,214,0.10);
+  --media:#c0475a;         /* burgundy */
+  --media-soft:rgba(192,71,90,0.10);
+  --logistics:#ecdfb4;     /* champagne, lifted for contrast on charcoal */
+  --logistics-soft:rgba(236,223,180,0.16);
+  --relations:#e8863f;     /* orange */
+  --relations-soft:rgba(232,134,63,0.10);
+
+  --serif:'Source Serif 4', Georgia, serif;
+  --sans:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto;}
+  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+}
+
+::selection{ background:var(--brass-soft); color:var(--brass); }
+
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--brass); outline-offset:3px; border-radius:2px; }
+
+.wrap{
+  max-width:760px;
+  margin:0 auto;
+  padding:0 24px;
+}
+
+/* ══ HERO ══ */
+.hero{
+  padding:88px 0 56px;
+  border-bottom:1px solid var(--border);
+}
+.hero-eyebrow{
+  display:flex; align-items:center; gap:10px;
+  font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--text-faint); margin-bottom:28px;
+}
+.hero-eyebrow .dot{ width:5px; height:5px; border-radius:50%; background:var(--brass); flex-shrink:0; }
+.hero h1{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:clamp(38px, 6.4vw, 58px);
+  line-height:1.08;
+  letter-spacing:-0.01em;
+  margin-bottom:22px;
+}
+.hero h1 em{
+  font-style:italic;
+  color:var(--brass);
+}
+.hero-lede{
+  font-size:16.5px;
+  color:var(--text-dim);
+  max-width:56ch;
+  margin-bottom:14px;
+}
+.hero-lede strong{ color:var(--text); font-weight:600; }
+
+.hero-strip{
+  display:flex; gap:0; margin-top:36px;
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+}
+.hero-strip-item{
+  flex:1; padding:16px 18px; position:relative;
+}
+.hero-strip-item + .hero-strip-item::before{
+  content:''; position:absolute; left:0; top:22%; bottom:22%; width:1px; background:var(--border);
+}
+.hero-strip-num{
+  font-family:var(--serif); font-weight:700; font-size:22px; color:var(--brass); line-height:1;
+}
+.hero-strip-label{
+  font-size:11px; color:var(--text-faint); margin-top:6px; letter-spacing:0.01em;
+}
+
+/* ══ SECTION SHELL ══ */
+section{ padding:64px 0; border-bottom:1px solid var(--border); }
+section:last-of-type{ border-bottom:none; }
+
+.section-eyebrow{
+  font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--text-faint); margin-bottom:14px;
+}
+h2{
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(26px, 3.6vw, 32px);
+  letter-spacing:-0.01em;
+  margin-bottom:18px;
+}
+.section-lede{
+  font-size:15.5px; color:var(--text-dim); max-width:62ch; margin-bottom:8px;
+}
+.section-lede strong{ color:var(--text); font-weight:600; }
+
+/* ══ REACH BAND (no sector color — it's the initiative as a whole) ══ */
+.reach-band{
+  margin-top:28px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:26px 26px 22px;
+}
+.reach-row{
+  display:grid; grid-template-columns:1fr 1fr; gap:20px 24px;
+}
+@media (max-width:520px){ .reach-row{ grid-template-columns:1fr; } }
+.reach-figure{ font-family:var(--serif); font-weight:700; font-size:26px; color:var(--text); }
+.reach-caption{ font-size:12.5px; color:var(--text-dim); margin-top:4px; line-height:1.5; }
+.reach-note{
+  font-size:13px; color:var(--text-faint); margin-top:20px; padding-top:18px;
+  border-top:1px solid var(--border); line-height:1.6;
+}
+
+/* ══ SECTOR BLOCKS ══
+   Each sector carries its own color as: the left rule, the eyebrow
+   tag, and the stat figures inside it. Everything else — heading
+   weight, body copy color, spacing — stays identical across all
+   four, so the color is the only thing that differs between them. */
+.sector-list{ margin-top:8px; }
+.sector{
+  border-left:3px solid var(--sc);
+  padding:26px 0 26px 24px;
+  margin-bottom:4px;
+}
+.sector:last-child{ margin-bottom:0; }
+
+.sector-tag{
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:10.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--sc); background:var(--sc-soft);
+  border:1px solid color-mix(in srgb, var(--sc) 35%, transparent);
+  border-radius:20px; padding:5px 12px 5px 10px;
+  margin-bottom:14px;
+}
+.sector-tag .sw{ width:7px; height:7px; border-radius:50%; background:var(--sc); flex-shrink:0; }
+
+.sector h3{
+  font-family:var(--serif); font-weight:600; font-size:19px;
+  color:var(--text); margin-bottom:10px;
+}
+.sector p{
+  font-size:14.5px; color:var(--text-dim); max-width:60ch;
+}
+.sector p + p{ margin-top:10px; }
+.sector strong{ color:var(--text); font-weight:600; }
+.sector .stat{ color:var(--sc); font-weight:700; }
+
+.sector--research  { --sc:var(--research);  --sc-soft:var(--research-soft); }
+.sector--media     { --sc:var(--media);     --sc-soft:var(--media-soft); }
+.sector--logistics { --sc:var(--logistics); --sc-soft:var(--logistics-soft); }
+.sector--relations { --sc:var(--relations); --sc-soft:var(--relations-soft); }
+
+/* Logistics' champagne is light — needs a darker text tone on its own
+   tag background to stay legible, rather than the pale-on-pale every
+   other sector's tag would give it if it inherited --sc directly. */
+.sector--logistics .sector-tag{
+  color:#2e2914;
+  background:var(--logistics);
+  border-color:var(--logistics);
+}
+.sector--logistics .sector-tag .sw{ background:#2e2914; }
+
+/* ══ SECTOR LEGEND (quiet key at the top of the section, so the
+   colors are introduced once before the reader meets them again in
+   each block) ══ */
+.legend{
+  display:flex; flex-wrap:wrap; gap:10px 18px;
+  margin:22px 0 6px;
+}
+.legend-item{
+  display:flex; align-items:center; gap:7px;
+  font-size:12px; color:var(--text-dim); font-weight:500;
+}
+.legend-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* ══ CLOSE ══ */
+.close{
+  padding:56px 0 80px;
+  text-align:center;
+}
+.close-mark{
+  font-family:var(--serif); font-style:italic; font-size:20px; color:var(--brass);
+  margin-bottom:10px;
+}
+.close p{ font-size:13.5px; color:var(--text-faint); max-width:44ch; margin:0 auto; }
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ══ HERO ══ -->
+  <header class="hero">
+    <div class="hero-eyebrow"><span class="dot"></span>Student-Led Academic Society · MNU</div>
+    <h1>Who We <em>Are</em></h1>
+    <p class="hero-lede">
+      Field-focused student societies are standard practice at leading international universities —
+      they give students a structured way to collaborate on academic work outside the formal curriculum.
+      <strong>MedicineBank</strong> was founded to bring that model to MNU, as a student-led academic
+      collaboration society spanning the colleges of Medicine, Pharmacy, and Dentistry.
+    </p>
+    <p class="hero-lede">
+      We are not a social club. Every activity we run is designed to build a concrete academic skill,
+      publication, or resource that students take with them into their careers.
+    </p>
+    <p class="hero-lede">
+      We operate through four sectors — <strong>Research</strong>, <strong>Media</strong>,
+      <strong>Logistics</strong>, and <strong>Relations</strong> — each with a specific mandate and
+      a track record to show for it.
+    </p>
+
+    <div class="hero-strip">
+      <div class="hero-strip-item">
+        <div class="hero-strip-num">2,000+</div>
+        <div class="hero-strip-label">students on MedicineBank.org</div>
+      </div>
+      <div class="hero-strip-item">
+        <div class="hero-strip-num">3</div>
+        <div class="hero-strip-label">colleges — Medicine, Pharmacy, Dentistry</div>
+      </div>
+      <div class="hero-strip-item">
+        <div class="hero-strip-num">4</div>
+        <div class="hero-strip-label">operating sectors</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ WHAT WE'VE BUILT ══ -->
+  <section id="built">
+    <div class="section-eyebrow">What We've Built</div>
+    <h2>A record across four sectors</h2>
+    <p class="section-lede">
+      Every medical student at MNU is listed in our community — <strong>1,949 members</strong> across
+      our 2nd and 3rd cohorts, <strong>1,230</strong> across our 4th and 5th.
+    </p>
+
+    <div class="reach-band">
+      <div class="reach-row">
+        <div>
+          <div class="reach-figure">2,000+</div>
+          <div class="reach-caption">MNU medical students use MedicineBank.org — the primary
+            resource-sharing archive for the faculty</div>
+        </div>
+        <div>
+          <div class="reach-figure">3,179</div>
+          <div class="reach-caption">total members listed across our 2nd–5th year cohorts</div>
+        </div>
+      </div>
+      <div class="reach-note">
+        The platform addresses a gap the university's Moodle LMS was not built to fill.
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:var(--research)"></span>Research</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--media)"></span>Media</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--logistics)"></span>Logistics</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--relations)"></span>Relations</div>
+    </div>
+  </section>
+
+  <!-- ══ SECTORS ══ -->
+  <section id="sectors">
+    <div class="sector-list">
+
+      <div class="sector sector--research">
+        <div class="sector-tag"><span class="sw"></span>Research</div>
+        <h3>Peer-to-peer training, real output</h3>
+        <p>
+          We ran a <strong>4-part peer-to-peer research training series</strong> covering research
+          question formulation, research methods, and medical statistics (parts I &amp; II) —
+          consistently well-attended, and directly resulting in
+          <span class="stat">7 completed student research methodologies</span>.
+        </p>
+        <p>
+          We also hosted a joint research Q&amp;A with Leicester University's medical association,
+          drawing <span class="stat">450+ student attendees</span> across multiple countries.
+        </p>
+      </div>
+
+      <div class="sector sector--media">
+        <div class="sector-tag"><span class="sw"></span>Media</div>
+        <h3>MedBank Records and beyond</h3>
+        <p>
+          Our podcast arm, <strong>MedBank Records</strong>, has generated
+          <span class="stat">147,000 all-time plays and downloads</span> with
+          <span class="stat">4,690 Spotify followers</span>, alongside a growing YouTube presence.
+        </p>
+        <p>
+          We've hosted guest interviews — including a former national handball player now completing
+          his medical degree in the US, talking about personal experience in that regard — and continue
+          to cover MedicineBank's campaigns and public events.
+        </p>
+      </div>
+
+      <div class="sector sector--logistics">
+        <div class="sector-tag"><span class="sw"></span>Logistics</div>
+        <h3>The technical backbone</h3>
+        <p>
+          This sector runs <strong>MedicineBank.org</strong>, arranges every event we host — online
+          and in-person — and manages podcast production.
+        </p>
+        <p>
+          It's also the sector that incubated <strong>Patholytica</strong>, an academic content platform
+          for medical students that went on to win recognition at Startup Grind MNU, and now stands as
+          a live example of the kind of outcome this initiative is capable of producing when given room
+          to build.
+        </p>
+      </div>
+
+      <div class="sector sector--relations">
+        <div class="sector-tag"><span class="sw"></span>Relations</div>
+        <h3>Every partnership, secured here</h3>
+        <p>
+          We currently have verbal agreements in place with the student union at
+          <strong>LKC School of Medicine, Singapore</strong> (a top-ranked institution) and with the
+          <strong>REACT initiative at Al-Kafeel University, Iraq</strong>, both aimed at joint student
+          research publications — pending formal university endorsement.
+        </p>
+        <p>
+          We are also partnering with <strong>Triviadox</strong>, a student society at the Medical
+          University of Cairo, to make MedicineBank.org more personalized for each student.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ CLOSE ══ -->
+  <div class="close">
+    <div class="close-mark">MedicineBank</div>
+    <p>A student-led academic society across Medicine, Pharmacy, and Dentistry at MNU.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
