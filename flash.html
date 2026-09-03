@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    .header { text-align: center; color: white; margin-bottom: 30px; }
+    .header h1 { font-size: 2.4em; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+    .header p { opacity: 0.95; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+
+    .tab-btn {
+        padding: 12px 26px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 2px solid white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1em;
+        transition: all .25s ease;
+        backdrop-filter: blur(10px);
+    }
+    .tab-btn.active { background: white; color: #667eea; }
+    .tab-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .panel {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        margin-bottom: 20px;
+    }
+    .panel h2 { color: #667eea; margin-bottom: 15px; font-size: 1.4em; }
+
+    .hint {
+        background: #f0f4ff;
+        padding: 15px;
+        border-left: 4px solid #667eea;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        color: #333;
+        font-size: 0.9em;
+        line-height: 1.6;
+    }
+    .hint code {
+        background: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        color: #667eea;
+        font-weight: bold;
+    }
+
+    /* Dropzone */
+    .dropzone {
+        border: 3px dashed #c8d0f0;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all .2s ease;
+        color: #667eea;
+        font-weight: 600;
+        background: #fafbff;
+    }
+    .dropzone.dragover { background: #eef1ff; border-color: #667eea; }
+    .dropzone .sub { display: block; margin-top: 8px; color: #888; font-weight: 400; font-size: 0.85em; }
+    .dropzone input { display: none; }
+    .file-badge {
+        margin-top: 15px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        background: #f0f4ff;
+        border-radius: 8px;
+        padding: 10px 15px;
+        color: #333;
+        font-size: 0.9em;
+    }
+    .file-badge .remove { color: #cc4444; cursor: pointer; font-weight: 700; }
+
+    textarea {
+        width: 100%;
+        min-height: 280px;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1em;
+        font-family: 'Courier New', monospace;
+        resize: vertical;
+    }
+    textarea:focus { outline: none; border-color: #667eea; }
+
+    .button-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+    button {
+        padding: 12px 28px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1em;
+        transition: all .2s ease;
+    }
+    button:hover:not(:disabled) { background: #764ba2; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .btn-secondary:hover:not(:disabled) { background: #e0e0e0; }
+
+    .msg { padding: 14px; border-radius: 8px; margin-top: 18px; font-size: 0.95em; line-height: 1.5; }
+    .msg.error { background: #ffecec; color: #a33; border: 1px solid #f5b8b8; }
+    .msg.success { background: #eafaf0; color: #2a7a4a; border: 1px solid #b8e8c8; }
+    .msg.info { background: #eef1ff; color: #4a4aa0; border: 1px solid #c8d0f0; }
+
+    .deck-list { margin-top: 15px; }
+    .deck-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        color: #333;
+    }
+    .deck-row span.count { color: #888; }
+
+    .spinner {
+        display: inline-block;
+        width: 16px; height: 16px;
+        border: 2px solid rgba(102,126,234,0.3);
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Study */
+    .progress-bar {
+        width: 100%; height: 8px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        margin-bottom: 25px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,#4CAF50,#45a049); transition: width .3s ease; }
+
+    .stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 25px; flex-wrap: wrap; }
+    .stat-box {
+        background: rgba(255,255,255,0.2);
+        padding: 14px 22px;
+        border-radius: 10px;
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+        text-align: center;
+    }
+    .stat-label { font-size: 0.85em; opacity: .9; display: block; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6em; font-weight: bold; }
+
+    .deck-filter {
+        display: flex; justify-content: center; gap: 10px;
+        margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .deck-chip {
+        padding: 8px 16px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 2px solid white;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.85em;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+    .deck-chip.active { background: white; color: #667eea; }
+
+    .flashcard-container {
+        perspective: 1000px;
+        margin-bottom: 25px;
+        min-height: 340px;
+        display: flex; justify-content: center; align-items: center;
+    }
+    .flashcard {
+        width: 100%; height: 340px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        cursor: pointer;
+        position: relative;
+        transition: transform .6s;
+        transform-style: preserve-3d;
+        padding: 40px;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        text-align: center;
+    }
+    .flashcard.flipped { transform: rotateY(180deg); }
+    .card-side { backface-visibility: hidden; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .card-back { transform: rotateY(180deg); }
+    .card-label { font-size: 0.8em; color: #667eea; font-weight: 700; margin-bottom: 18px; letter-spacing: 1px; text-transform: uppercase; }
+    .card-text { font-size: 1.35em; color: #333; font-weight: 500; line-height: 1.6; max-height: 100%; overflow-y: auto; padding-right: 6px; }
+    .card-text::-webkit-scrollbar { width: 6px; }
+    .card-text::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .card-text::-webkit-scrollbar-thumb { background: #667eea; border-radius: 10px; }
+    .flip-hint { position: absolute; bottom: 14px; font-size: 0.78em; color: #999; font-style: italic; }
+    .deck-tag { position: absolute; top: 14px; font-size: 0.72em; color: #aaa; text-transform: uppercase; letter-spacing: .5px; }
+
+    .controls { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+
+    .empty-state { text-align: center; color: white; padding: 40px; }
+    .empty-state h2 { font-size: 1.4em; margin-bottom: 8px; }
+
+    @media (max-width: 768px) {
+        .header h1 { font-size: 1.7em; }
+        .flashcard { height: 300px; padding: 24px; }
+        .card-text { font-size: 1.1em; }
+        .panel { padding: 20px; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>📚 Flashcard Studio</h1>
+        <p>Import an Anki .apkg deck, or paste Q&amp;A text — then study</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="apkg">Import .apkg</button>
+        <button class="tab-btn" data-tab="text">Paste Text</button>
+        <button class="tab-btn" data-tab="study">Study</button>
+    </div>
+
+    <!-- APKG TAB -->
+    <div id="apkg" class="tab-content active">
+        <div class="panel">
+            <h2>Import an Anki Deck</h2>
+            <div class="hint">
+                An <code>.apkg</code> file is an Anki export — a zipped SQLite database. This reads
+                <strong>Basic</strong> and <strong>Basic (and reversed)</strong> note types, which cover the
+                large majority of decks. Cloze deletions and card types with extra template logic are
+                imported using their raw field text, since re-deriving Anki's cloze rendering isn't reliable
+                outside Anki itself.
+            </div>
+            <div class="dropzone" id="apkgDrop">
+                <div id="apkgDropLabel">Drop your .apkg file here, or click to browse
+                    <span class="sub">Only .apkg files are accepted</span>
+                </div>
+                <input type="file" id="apkgInput" accept=".apkg">
+            </div>
+            <div class="file-badge" id="apkgBadge">
+                <span id="apkgFileName"></span>
+                <span class="remove" id="apkgRemove">✕ remove</span>
+            </div>
+            <div class="button-group">
+                <button id="apkgParseBtn" disabled>Import Deck</button>
+                <button class="btn-secondary" id="apkgClearBtn">Clear</button>
+            </div>
+            <div id="apkgMsg"></div>
+            <div id="apkgDeckList" class="deck-list"></div>
+        </div>
+    </div>
+
+    <!-- TEXT TAB -->
+    <div id="text" class="tab-content">
+        <div class="panel">
+            <h2>Paste Your Q&amp;A Content</h2>
+            <div class="hint">
+                <strong>Format:</strong> each question on its own line, its answer on the line(s) after it.<br>
+                Questions start with <code>Q:</code> or a question word (What / How / Why / Does / Is / Are / Which / Where / When / Can / Should).<br>
+                Answers start with <code>A:</code> or a bullet (<code>-</code>, <code>•</code>, <code>*</code>) — or just follow directly on the next line.<br><br>
+                <strong>Example:</strong><br>
+                <code>What causes fever?</code><br>
+                <code>Infection, inflammation, or malignancy</code>
+            </div>
+            <textarea id="textInput" placeholder="Paste your Q&amp;A content here..."></textarea>
+            <div class="button-group">
+                <button id="textParseBtn">Create Flashcards</button>
+                <button class="btn-secondary" id="textClearBtn">Clear</button>
+            </div>
+            <div id="textMsg"></div>
+        </div>
+    </div>
+
+    <!-- STUDY TAB -->
+    <div id="study" class="tab-content">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+        <div class="stats">
+            <div class="stat-box"><span class="stat-label">Current Card</span><span class="stat-value" id="currentCard">-</span></div>
+            <div class="stat-box"><span class="stat-label">Total Cards</span><span class="stat-value" id="totalCards">0</span></div>
+            <div class="stat-box"><span class="stat-label">Progress</span><span class="stat-value" id="progressPercent">0%</span></div>
+        </div>
+
+        <div class="deck-filter" id="deckFilter"></div>
+
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="empty-state">
+                <h2>No flashcards yet</h2>
+                <p>Import a .apkg file or paste Q&amp;A text to get started.</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-secondary" id="prevBtn" disabled>← Previous</button>
+            <button id="shuffleBtn">🔀 Shuffle</button>
+            <button class="btn-secondary" id="resetBtn">Reset</button>
+            <button id="nextBtn">Next →</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ---------- shared state ----------
+let cards = [];          // {q, a, deck}
+let currentIndex = 0;
+let activeDeckFilter = null; // null = all decks
+let sqlPromise = null;
+
+// ---------- tab switching ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tab).classList.add('active');
+        if (tab === 'study') { buildDeckFilter(); updateDisplay(); }
+    });
+});
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function goToStudyTab() {
+    document.querySelector('.tab-btn[data-tab="study"]').click();
+}
+
+// =====================================================================
+// APKG IMPORT
+// =====================================================================
+const apkgDrop = document.getElementById('apkgDrop');
+const apkgInput = document.getElementById('apkgInput');
+const apkgBadge = document.getElementById('apkgBadge');
+const apkgFileName = document.getElementById('apkgFileName');
+const apkgRemove = document.getElementById('apkgRemove');
+const apkgParseBtn = document.getElementById('apkgParseBtn');
+const apkgClearBtn = document.getElementById('apkgClearBtn');
+const apkgMsg = document.getElementById('apkgMsg');
+const apkgDeckList = document.getElementById('apkgDeckList');
+
+let pendingApkgFile = null;
+
+apkgDrop.addEventListener('click', () => apkgInput.click());
+apkgDrop.addEventListener('dragover', e => { e.preventDefault(); apkgDrop.classList.add('dragover'); });
+apkgDrop.addEventListener('dragleave', () => apkgDrop.classList.remove('dragover'));
+apkgDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    apkgDrop.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleApkgFile(e.dataTransfer.files[0]);
+});
+apkgInput.addEventListener('change', e => {
+    if (e.target.files.length) handleApkgFile(e.target.files[0]);
+});
+apkgRemove.addEventListener('click', e => {
+    e.stopPropagation();
+    resetApkgFile();
+});
+apkgClearBtn.addEventListener('click', resetApkgFile);
+
+function handleApkgFile(file) {
+    apkgMsg.innerHTML = '';
+    if (!file.name.toLowerCase().endsWith('.apkg')) {
+        apkgMsg.innerHTML = '<div class="msg error">That doesn\'t look like a .apkg file. Please choose the file Anki exported (File → Export → Anki Deck Package).</div>';
+        return;
+    }
+    pendingApkgFile = file;
+    apkgFileName.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+    apkgBadge.style.display = 'flex';
+    apkgParseBtn.disabled = false;
+}
+
+function resetApkgFile() {
+    pendingApkgFile = null;
+    apkgInput.value = '';
+    apkgBadge.style.display = 'none';
+    apkgParseBtn.disabled = true;
+    apkgMsg.innerHTML = '';
+    apkgDeckList.innerHTML = '';
+}
+
+function getSqlJs() {
+    if (!sqlPromise) {
+        sqlPromise = initSqlJs({
+            locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+        });
+    }
+    return sqlPromise;
+}
+
+apkgParseBtn.addEventListener('click', async () => {
+    if (!pendingApkgFile) return;
+    apkgParseBtn.disabled = true;
+    apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Reading deck file…</div>';
+    apkgDeckList.innerHTML = '';
+
+    try {
+        const zipBuffer = await pendingApkgFile.arrayBuffer();
+        const zip = await JSZip.loadAsync(zipBuffer);
+
+        // Anki uses collection.anki21 (newer) or collection.anki2 (older) or
+        // collection.anki21b (zstd-compressed, newest — not supported here).
+        let dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2');
+        if (!dbEntry) {
+            if (zip.file('collection.anki21b')) {
+                throw new Error(
+                    'This deck uses Anki\'s newer zstd-compressed format (collection.anki21b), ' +
+                    'which needs a decompression step this browser-only tool doesn\'t include. ' +
+                    'In Anki, try re-exporting with "Support older Anki versions" checked — that ' +
+                    'produces a collection.anki21 or collection.anki2 file this tool can read.'
+                );
+            }
+            throw new Error('Couldn\'t find a collection database inside this .apkg file. It may be corrupted or not a valid Anki export.');
+        }
+
+        apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Loading database engine…</div>';
+        const SQL = await getSqlJs();
+
+        apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Parsing notes and cards…</div>';
+        const dbBuffer = await dbEntry.async('uint8array');
+        const db = new SQL.Database(dbBuffer);
+
+        // decks: col.decks is a JSON blob keyed by deck id -> {name, ...}
+        const colRes = db.exec('SELECT decks FROM col LIMIT 1');
+        let deckNames = {};
+        if (colRes.length) {
+            const decksJson = JSON.parse(colRes[0].values[0][0]);
+            for (const id in decksJson) {
+                deckNames[id] = decksJson[id].name || 'Default';
+            }
+        }
+
+        // notes: id, flds (fields separated by \x1f), mid (model/note-type id), sfld
+        // cards: nid (note id), did (deck id), ord (which template on the note)
+        const notesRes = db.exec('SELECT id, mid, flds FROM notes');
+        const cardsRes = db.exec('SELECT id, nid, did, ord FROM cards');
+        const modelsRes = db.exec('SELECT models FROM col LIMIT 1');
+
+        if (!notesRes.length) {
+            throw new Error('This deck doesn\'t contain any notes.');
+        }
+
+        const models = modelsRes.length ? JSON.parse(modelsRes[0].values[0][0]) : {};
+
+        // note id -> {mid, fields[]}
+        const noteMap = {};
+        for (const row of notesRes[0].values) {
+            const [id, mid, flds] = row;
+            noteMap[id] = { mid: String(mid), fields: flds.split('\x1f') };
+        }
+
+        // card id -> deck name (via card.did), and card -> note
+        const cardRows = cardsRes.length ? cardsRes[0].values : [];
+
+        const importedCards = [];
+        let skippedCloze = 0;
+        let skippedUnknown = 0;
+
+        for (const row of cardRows) {
+            const [cardId, nid, did, ord] = row;
+            const note = noteMap[nid];
+            if (!note) continue;
+            const model = models[note.mid];
+            const deckName = deckNames[did] || 'Default';
+
+            if (!model) { skippedUnknown++; continue; }
+
+            const modelName = (model.name || '').toLowerCase();
+            const fieldNames = (model.flds || []).map(f => f.name.toLowerCase());
+
+            if (modelName.includes('cloze')) {
+                // Cloze notes: field 0 is Text with {{c1::...}} markers, field 1 is Extra.
+                // We can't reliably re-render Anki's cloze template logic here, so we
+                // surface the raw field text and let the user see it's a cloze card.
+                const text = note.fields[0] || '';
+                const extra = note.fields[1] || '';
+                const q = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '[...]');
+                const a = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '$1') +
+                          (extra ? '\n\n' + stripHtml(extra) : '');
+                if (q.trim() && a.trim()) {
+                    importedCards.push({ q, a, deck: deckName });
+                } else {
+                    skippedCloze++;
+                }
+                continue;
+            }
+
+            // Basic / Basic (and reversed) / most simple two-field templates:
+            // template ord 0 = Front->Back, ord 1 (if present, on reversed types) = Back->Front
+            let frontIdx = 0, backIdx = 1;
+            const frontFieldIdx = fieldNames.indexOf('front');
+            const backFieldIdx = fieldNames.indexOf('back');
+            if (frontFieldIdx !== -1) frontIdx = frontFieldIdx;
+            if (backFieldIdx !== -1) backIdx = backFieldIdx;
+
+            if (note.fields.length < 2) { skippedUnknown++; continue; }
+
+            const frontText = stripHtml(note.fields[frontIdx] ?? note.fields[0]);
+            const backText = stripHtml(note.fields[backIdx] ?? note.fields[1]);
+
+            if (!frontText.trim() || !backText.trim()) { skippedUnknown++; continue; }
+
+            if (ord === 1 && modelName.includes('reversed')) {
+                // reversed card: swap front/back
+                importedCards.push({ q: backText, a: frontText, deck: deckName });
+            } else {
+                importedCards.push({ q: frontText, a: backText, deck: deckName });
+            }
+        }
+
+        db.close();
+
+        if (importedCards.length === 0) {
+            apkgMsg.innerHTML = '<div class="msg error">Found the deck, but couldn\'t extract any readable cards from it. ' +
+                'This can happen with heavily customized note types or image-only cards.</div>';
+            apkgParseBtn.disabled = false;
+            return;
+        }
+
+        cards = cards.concat(importedCards);
+
+        const deckCounts = {};
+        importedCards.forEach(c => { deckCounts[c.deck] = (deckCounts[c.deck] || 0) + 1; });
+
+        let summary = `<div class="msg success">✓ Imported ${importedCards.length} card${importedCards.length === 1 ? '' : 's'}`;
+        if (skippedCloze || skippedUnknown) {
+            const skippedTotal = skippedCloze + skippedUnknown;
+            summary += ` (${skippedTotal} card${skippedTotal === 1 ? '' : 's'} skipped — unreadable or unsupported note type)`;
+        }
+        summary += '. Switch to the Study tab to begin.</div>';
+        apkgMsg.innerHTML = summary;
+
+        apkgDeckList.innerHTML = '<div class="deck-list">' +
+            Object.entries(deckCounts).map(([name, count]) =>
+                `<div class="deck-row"><span>${escapeHtml(name)}</span><span class="count">${count} card${count === 1 ? '' : 's'}</span></div>`
+            ).join('') + '</div>';
+
+        resetApkgFile();
+        apkgDeckList.style.display = 'block';
+
+    } catch (err) {
+        console.error(err);
+        apkgMsg.innerHTML = `<div class="msg error">Couldn't import this deck: ${escapeHtml(err.message || String(err))}</div>`;
+        apkgParseBtn.disabled = false;
+    }
+});
+
+function stripHtml(html) {
+    if (!html) return '';
+    // Anki fields are HTML. Convert common line-break tags to \n first, then strip tags.
+    const withBreaks = html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/p>/gi, '\n');
+    const div = document.createElement('div');
+    div.innerHTML = withBreaks;
+    // Drop sound/image refs like [sound:x.mp3] — no audio/image playback in this tool.
+    let text = (div.textContent || div.innerText || '').replace(/\[sound:[^\]]*\]/g, '');
+    return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// =====================================================================
+// TEXT PARSE (from the previous tool)
+// =====================================================================
+const textInput = document.getElementById('textInput');
+const textMsg = document.getElementById('textMsg');
+
+document.getElementById('textParseBtn').addEventListener('click', () => {
+    const text = textInput.value.trim();
+    textMsg.innerHTML = '';
+
+    if (!text) {
+        textMsg.innerHTML = '<div class="msg error">Please paste some content first.</div>';
+        return;
+    }
+
+    const parsed = [];
+    const lines = text.split('\n');
+    let currentQ = '';
+    let currentA = '';
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        if (line.match(/^(Q:|What|Which|How|Why|Where|When|Does|Is|Are|Can|Should)/i)) {
+            if (currentQ && currentA) parsed.push({ q: currentQ, a: currentA, deck: 'Pasted Text' });
+            currentQ = line.replace(/^Q:\s*/i, '');
+            currentA = '';
+        } else if (line.match(/^(A:|[-•*])/)) {
+            currentA = line.replace(/^(A:|[-•*])\s*/i, '');
+        } else if (currentQ) {
+            currentA = currentA ? currentA + '\n' + line : line;
+        }
+    }
+    if (currentQ && currentA) parsed.push({ q: currentQ, a: currentA, deck: 'Pasted Text' });
+
+    if (parsed.length === 0) {
+        textMsg.innerHTML = '<div class="msg error">Couldn\'t find any Q&amp;A pairs in that text. Check the format and try again.</div>';
+        return;
+    }
+
+    cards = cards.concat(parsed);
+    textMsg.innerHTML = `<div class="msg success">✓ Created ${parsed.length} flashcard${parsed.length === 1 ? '' : 's'}. Switch to the Study tab to begin.</div>`;
+});
+
+document.getElementById('textClearBtn').addEventListener('click', () => {
+    textInput.value = '';
+    textMsg.innerHTML = '';
+});
+
+// =====================================================================
+// STUDY
+// =====================================================================
+function buildDeckFilter() {
+    const filterEl = document.getElementById('deckFilter');
+    const deckNames = [...new Set(cards.map(c => c.deck))];
+
+    if (deckNames.length <= 1) {
+        filterEl.innerHTML = '';
+        activeDeckFilter = null;
+        return;
+    }
+
+    if (activeDeckFilter && !deckNames.includes(activeDeckFilter)) activeDeckFilter = null;
+
+    filterEl.innerHTML = `<div class="deck-chip ${activeDeckFilter === null ? 'active' : ''}" data-deck="">All decks</div>` +
+        deckNames.map(name =>
+            `<div class="deck-chip ${activeDeckFilter === name ? 'active' : ''}" data-deck="${escapeHtml(name)}">${escapeHtml(name)}</div>`
+        ).join('');
+
+    filterEl.querySelectorAll('.deck-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            activeDeckFilter = chip.dataset.deck || null;
+            currentIndex = 0;
+            buildDeckFilter();
+            updateDisplay();
+        });
+    });
+}
+
+function currentDeckCards() {
+    return activeDeckFilter ? cards.filter(c => c.deck === activeDeckFilter) : cards;
+}
+
+function updateDisplay() {
+    const container = document.getElementById('flashcardContainer');
+    const deckCards = currentDeckCards();
+    document.getElementById('totalCards').textContent = deckCards.length;
+
+    if (deckCards.length === 0) {
+        container.innerHTML = '<div class="empty-state"><h2>No flashcards yet</h2><p>Import a .apkg file or paste Q&amp;A text to get started.</p></div>';
+        document.getElementById('currentCard').textContent = '-';
+        document.getElementById('progressPercent').textContent = '0%';
+        document.getElementById('progressFill').style.width = '0%';
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+        return;
+    }
+
+    if (currentIndex >= deckCards.length) currentIndex = deckCards.length - 1;
+    if (currentIndex < 0) currentIndex = 0;
+
+    const card = deckCards[currentIndex];
+    const progressPercent = Math.round(((currentIndex + 1) / deckCards.length) * 100);
+
+    document.getElementById('currentCard').textContent = currentIndex + 1;
+    document.getElementById('progressPercent').textContent = progressPercent + '%';
+    document.getElementById('progressFill').style.width = progressPercent + '%';
+
+    container.innerHTML = `
+        <div class="flashcard" id="card">
+            <div class="card-side">
+                <span class="deck-tag">${escapeHtml(card.deck)}</span>
+                <span class="card-label">Question</span>
+                <div class="card-text">${escapeHtml(card.q).replace(/\n/g, '<br>')}</div>
+                <div class="flip-hint">Click to reveal answer</div>
+            </div>
+            <div class="card-side card-back">
+                <span class="deck-tag">${escapeHtml(card.deck)}</span>
+                <span class="card-label">Answer</span>
+                <div class="card-text">${escapeHtml(card.a).replace(/\n/g, '<br>')}</div>
+                <div class="flip-hint">Click to see question</div>
+            </div>
+        </div>
+    `;
+    document.getElementById('card').addEventListener('click', flipCard);
+
+    document.getElementById('prevBtn').disabled = currentIndex === 0;
+    document.getElementById('nextBtn').disabled = currentIndex === deckCards.length - 1;
+}
+
+function flipCard() {
+    const card = document.getElementById('card');
+    if (card) card.classList.toggle('flipped');
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    const deckCards = currentDeckCards();
+    if (currentIndex < deckCards.length - 1) { currentIndex++; updateDisplay(); }
+});
+document.getElementById('prevBtn').addEventListener('click', () => {
+    if (currentIndex > 0) { currentIndex--; updateDisplay(); }
+});
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+    const deckCards = currentDeckCards();
+    for (let i = deckCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deckCards[i], deckCards[j]] = [deckCards[j], deckCards[i]];
+    }
+    // write shuffled order back into the master array for this deck's cards
+    if (activeDeckFilter) {
+        let k = 0;
+        cards = cards.map(c => c.deck === activeDeckFilter ? deckCards[k++] : c);
+    } else {
+        cards = deckCards;
+    }
+    currentIndex = 0;
+    updateDisplay();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+    currentIndex = 0;
+    updateDisplay();
+});
+</script>
+</body>
+</html>
