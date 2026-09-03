@@ -11,21 +11,21 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #1c0d10;
-      --bg-deep:     #140809;
-      --panel:       #3a1a1f;
-      --panel-hi:    #4a2229;
-      --line:        #562832;
-      --line-soft:   #4a222a;
+      --bg:          #f6ecd9;
+      --bg-deep:     #efe0c4;
+      --panel:       #f1e3c8;
+      --panel-hi:    #ead5ac;
+      --line:        #ddc294;
+      --line-soft:   #e3cca3;
 
-      --text:        #f7efec;
-      --text-dim:    #d8bcbc;
-      --text-faint:  #a3797d;
+      --text:        #4a3b22;
+      --text-dim:    #7a6541;
+      --text-faint:  #a8926a;
 
-      --accent:      #c9a96e;
-      --accent-dark: #a3854f;
-      --accent-text: #2a1c0d;
-      --err:         #e2646f;
+      --accent:      #c9a463;
+      --accent-dark: #a9834a;
+      --accent-text: #3a2b12;
+      --err:         #b3453f;
     }
 
     body {
@@ -45,7 +45,7 @@
       align-items: center;
       justify-content: space-between;
     }
-    .logo img { height: 26px; width: auto; display: block; filter: brightness(0) invert(1) opacity(0.92); }
+    .logo img { height: 26px; width: auto; display: block; filter: brightness(0) opacity(0.82); }
 
     .lang-toggle {
       display: flex; align-items: center; gap: 2px;
@@ -122,7 +122,7 @@
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(201,169,110,0.22);
+      box-shadow: 0 0 0 3px rgba(201,164,99,0.22);
     }
     textarea { resize: vertical; min-height: 92px; line-height: 1.6; }
 
@@ -281,8 +281,8 @@
       display: none;
       font-size: 0.79rem;
       color: var(--err);
-      background: rgba(226,100,111,0.1);
-      border: 1.5px solid rgba(226,100,111,0.35);
+      background: rgba(179,69,63,0.08);
+      border: 1.5px solid rgba(179,69,63,0.3);
       border-radius: 4px;
       padding: 10px 13px;
       margin-bottom: 16px;
@@ -312,8 +312,8 @@
 <div class="fade-region" id="fadeRegion">
 
   <section class="hero">
-    <h1 data-en="Apply to MedicineBank Publications" data-ar="التقديم على قسم النشر">التقديم على قسم النشر</h1>
-    <p data-en="Year 2 applications — flashcard making (Anki) or website data management. Tell us a bit about yourself and what you're looking for." data-ar="تقديم الفرقة الثانية — إعداد فلاش كاردز (Anki) أو إدارة بيانات الموقع. عرّفنا على نفسك وإيه اللي بتدور عليه.">تقديم الفرقة الثانية — إعداد فلاش كاردز (Anki) أو إدارة بيانات الموقع. عرّفنا على نفسك وإيه اللي بتدور عليه.</p>
+    <h1 data-en="Apply to Publications — Year 2" data-ar="التقديم لل publications في سنة تانية">التقديم لل publications في سنة تانية</h1>
+    <p data-en="Year 2 applications — flashcard making (Anki), website data management, or data collection. Tell us a bit about yourself and what you're looking for." data-ar="تقديم الفرقة الثانية — إعداد فلاش كاردز (Anki)، إدارة بيانات الموقع، أو جمع بيانات. عرّفنا على نفسك وإيه اللي بتدور عليه.">تقديم الفرقة الثانية — إعداد فلاش كاردز (Anki)، إدارة بيانات الموقع، أو جمع بيانات. عرّفنا على نفسك وإيه اللي بتدور عليه.</p>
   </section>
 
   <section class="form-section">
@@ -365,6 +365,13 @@
                 <span class="role-check-text">
                   <strong data-en="Website Data Managing" data-ar="إدارة بيانات الموقع">إدارة بيانات الموقع</strong>
                   <span class="desc" data-en="Organizing and maintaining site content" data-ar="تنظيم ومتابعة محتوى الموقع">تنظيم ومتابعة محتوى الموقع</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="radio" name="role" value="Data Collection" />
+                <span class="role-check-text">
+                  <strong data-en="Data Collection" data-ar="جمع بيانات">جمع بيانات</strong>
+                  <span class="desc" data-en="Gathering and compiling source material" data-ar="تجميع المصادر والمعلومات">تجميع المصادر والمعلومات</span>
                 </span>
               </label>
             </div>
