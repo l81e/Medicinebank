@@ -3,667 +3,353 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flashcard Studio — MedicineBank</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Merriweather:ital,wght@1,300&display=swap" rel="stylesheet" />
+<title>Flashcard Studio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    :root {
-      --black: #0b0b0b;
-      --carbon-90: #1a1a1a;
-      --carbon-80: #2b2b2b;
-      --carbon-60: #58585b;
-      --carbon-40: #8e8e8e;
-      --carbon-30: #b9b9bb;
-      --carbon-20: #d9d9d9;
-      --carbon-05: #f5f5f5;
-      --white: #f7f5f4;
-
-      --blue:      #1a5fa8;
-      --blue-dark: #134a85;
-      --champ:     #b8973a;
-      --champ-dark:#9a7d2e;
-      --burg:      #7d2040;
-      --burg-dark: #621832;
-      --orange:    #c4601a;
-      --orange-dark:#a34e14;
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
     }
 
-    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); line-height: 1.6; }
-    a { color: inherit; text-decoration: none; }
-    ul { list-style: none; }
+    .container { max-width: 1000px; margin: 0 auto; }
 
-    /* ── HEADER ── */
-    .site-header {
-      background: var(--black);
-      padding: 0 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      height: 56px;
-    }
-    .logo img { height: 28px; width: auto; display: block; }
-    .search-wrap {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 2px; padding: 6px 12px; cursor: text;
-      transition: background .2s;
-    }
-    .search-wrap:hover { background: rgba(255,255,255,0.11); }
-    .search-wrap svg { fill: var(--carbon-40); flex-shrink: 0; }
-    .search-wrap input {
-      background: none; border: none; outline: none;
-      font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--white);
-      width: 160px;
-    }
-    .search-wrap input::placeholder { color: var(--carbon-40); }
+    .header { text-align: center; color: white; margin-bottom: 30px; }
+    .header h1 { font-size: 2.4em; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+    .header p { opacity: 0.95; }
 
-    /* ── SECONDARY NAV ── */
-    .secondary-nav {
-      background: var(--carbon-90);
-      border-bottom: 1px solid var(--carbon-80);
-      overflow-x: auto; white-space: nowrap;
-      position: sticky; top: 56px; z-index: 999;
-    }
-    .secondary-nav ul { display: inline-flex; padding: 0 32px; }
-    .secondary-nav li a {
-      display: block; padding: 12px 18px;
-      font-size: 0.82rem; font-weight: 600; color: var(--carbon-30);
-      transition: color .2s; border-bottom: 3px solid transparent;
-    }
-    .secondary-nav li a:hover, .secondary-nav li a.active { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
+    .tabs { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
 
-    /* ── BREADCRUMB ── */
-    .breadcrumb-strip {
-      background: var(--carbon-05);
-      border-bottom: 1px solid var(--carbon-20);
-      padding: 14px 40px;
+    .tab-btn {
+        padding: 12px 26px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 2px solid white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1em;
+        transition: all .25s ease;
+        backdrop-filter: blur(10px);
     }
-    .breadcrumb-inner {
-      max-width: 1160px; margin: 0 auto;
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.78rem; color: var(--carbon-60);
-    }
-    .breadcrumb-inner a { color: var(--carbon-60); transition: color .2s; }
-    .breadcrumb-inner a:hover { color: var(--black); text-decoration: underline; }
-    .breadcrumb-sep { color: var(--carbon-30); }
-    .breadcrumb-current { color: var(--black); font-weight: 600; }
+    .tab-btn.active { background: white; color: #667eea; }
+    .tab-btn:hover { background: rgba(255,255,255,0.3); }
 
-    /* ── MASTHEAD ── */
-    .article-masthead {
-      max-width: 780px; margin: 0 auto;
-      padding: 56px 40px 36px;
-    }
-    .masthead-rule {
-      display: flex; align-items: center; gap: 14px;
-      margin-bottom: 28px;
-    }
-    .masthead-rule .rule-line { flex: 1; height: 1px; background: var(--carbon-20); }
-    .sector-marker {
-      font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      padding: 4px 0; border-bottom: 3px solid;
-    }
-    .sector-marker.tool { color: var(--champ-dark); border-color: var(--champ); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-    .article-masthead h1 {
-      font-family: 'Merriweather', serif;
-      font-weight: 900;
-      font-size: clamp(1.9rem, 4.2vw, 2.7rem);
-      line-height: 1.18; letter-spacing: -0.01em;
-      margin-bottom: 18px;
+    .panel {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        margin-bottom: 20px;
     }
-    .article-dek {
-      font-family: 'Merriweather', serif;
-      font-weight: 300; font-style: italic;
-      font-size: 1.15rem; color: var(--carbon-60);
-      line-height: 1.6;
-    }
+    .panel h2 { color: #667eea; margin-bottom: 15px; font-size: 1.4em; }
 
-    /* ── SECTION NAV (replaces old tabs) ── */
-    .section-nav {
-      max-width: 780px; margin: 0 auto;
-      padding: 0 40px 40px;
-      display: flex; gap: 10px; flex-wrap: wrap;
-      border-bottom: 1px solid var(--carbon-20);
-      padding-bottom: 0;
+    .hint {
+        background: #f0f4ff;
+        padding: 15px;
+        border-left: 4px solid #667eea;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        color: #333;
+        font-size: 0.9em;
+        line-height: 1.6;
     }
-    .section-btn {
-      background: none; border: none; cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.78rem; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-      color: var(--carbon-40);
-      padding: 12px 4px; margin-right: 22px;
-      border-bottom: 3px solid transparent;
-      transition: color .2s, border-color .2s;
-    }
-    .section-btn:hover { color: var(--carbon-90); }
-    .section-btn.active { color: var(--black); border-color: var(--champ); }
-
-    .section-content { display: none; }
-    .section-content.active { display: block; }
-
-    /* ── READING LAYOUT (body + rail) ── */
-    .reading-layout {
-      max-width: 1160px; margin: 0 auto;
-      padding: 44px 40px 0;
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 64px; align-items: start;
-    }
-    @media (max-width: 900px) {
-      .reading-layout { grid-template-columns: 1fr; gap: 40px; padding: 36px 24px 0; }
-    }
-
-    .article-body { max-width: 640px; }
-
-    /* ── PANEL (import / paste sections) ── */
-    .panel-heading {
-      font-family: 'Inter', sans-serif; font-weight: 700;
-      font-size: 0.98rem; color: var(--black);
-      margin-bottom: 18px; padding-bottom: 12px;
-      border-bottom: 1px solid var(--carbon-20);
-    }
-    .panel-heading .h2-eyebrow {
-      display: block; font-size: 0.66rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--champ-dark); margin-bottom: 6px;
-    }
-
-    .callout-box {
-      background: var(--carbon-05);
-      border: 1px solid var(--carbon-20);
-      border-left: 3px solid var(--champ);
-      border-radius: 2px;
-      padding: 18px 22px;
-      margin-bottom: 28px;
-      font-family: 'Inter', sans-serif;
-    }
-    .callout-box .callout-label {
-      font-size: 0.66rem; font-weight: 700;
-      letter-spacing: 1.6px; text-transform: uppercase;
-      color: var(--champ-dark); margin-bottom: 8px;
-    }
-    .callout-box p { font-size: 0.85rem; color: var(--carbon-90); line-height: 1.65; }
-    .callout-box code {
-      background: var(--white); border: 1px solid var(--carbon-20);
-      padding: 1px 6px; border-radius: 2px;
-      font-family: 'Courier New', monospace; font-size: 0.82em;
-      color: var(--blue-dark); font-weight: 700;
+    .hint code {
+        background: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        color: #667eea;
+        font-weight: bold;
     }
 
     /* Dropzone */
     .dropzone {
-      border: 1px dashed var(--carbon-30);
-      border-radius: 2px;
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-      font-family: 'Inter', sans-serif;
-      color: var(--carbon-60); font-weight: 600;
-      background: var(--carbon-05);
+        border: 3px dashed #c8d0f0;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all .2s ease;
+        color: #667eea;
+        font-weight: 600;
+        background: #fafbff;
     }
-    .dropzone.dragover { background: #eef2f6; border-color: var(--blue); }
-    .dropzone .sub { display: block; margin-top: 8px; color: var(--carbon-40); font-weight: 400; font-size: 0.82em; }
+    .dropzone.dragover { background: #eef1ff; border-color: #667eea; }
+    .dropzone .sub { display: block; margin-top: 8px; color: #888; font-weight: 400; font-size: 0.85em; }
     .dropzone input { display: none; }
     .file-badge {
-      margin-top: 15px; display: none;
-      align-items: center; justify-content: space-between;
-      background: var(--carbon-05); border: 1px solid var(--carbon-20);
-      border-radius: 2px; padding: 10px 15px;
-      color: var(--carbon-90); font-size: 0.85em; font-family: 'Inter', sans-serif;
+        margin-top: 15px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        background: #f0f4ff;
+        border-radius: 8px;
+        padding: 10px 15px;
+        color: #333;
+        font-size: 0.9em;
     }
-    .file-badge .remove { color: var(--burg); cursor: pointer; font-weight: 700; }
+    .file-badge .remove { color: #cc4444; cursor: pointer; font-weight: 700; }
 
     textarea {
-      width: 100%; min-height: 260px;
-      padding: 15px; border: 1px solid var(--carbon-20); border-radius: 2px;
-      font-size: 0.92em; font-family: 'Courier New', monospace;
-      resize: vertical; background: var(--carbon-05); color: var(--black);
+        width: 100%;
+        min-height: 280px;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1em;
+        font-family: 'Courier New', monospace;
+        resize: vertical;
     }
-    textarea:focus { outline: none; border-color: var(--blue); background: var(--white); }
-    textarea::placeholder { color: var(--carbon-40); }
+    textarea:focus { outline: none; border-color: #667eea; }
 
     .button-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-weight: 700; font-size: 0.83rem;
-      padding: 10px 20px; border-radius: 2px;
-      transition: opacity .2s, transform .1s; cursor: pointer;
-      border: none; font-family: 'Inter', sans-serif;
-      background: var(--black); color: var(--white);
+    button {
+        padding: 12px 28px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1em;
+        transition: all .2s ease;
     }
-    .btn:hover:not(:disabled) { opacity: 0.85; }
-    .btn:disabled { background: var(--carbon-20); color: var(--carbon-40); cursor: not-allowed; }
-    .btn-secondary { background: var(--white); color: var(--black); border: 1px solid var(--carbon-30); }
-    .btn-secondary:hover:not(:disabled) { background: var(--carbon-05); opacity: 1; }
-    .btn-full { width: 100%; justify-content: center; }
+    button:hover:not(:disabled) { background: #764ba2; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .btn-secondary:hover:not(:disabled) { background: #e0e0e0; }
 
-    .msg { padding: 13px 16px; border-radius: 2px; margin-top: 18px; font-size: 0.85em; line-height: 1.55; font-family: 'Inter', sans-serif; border: 1px solid; }
-    .msg.error { background: #fbecec; color: var(--burg-dark); border-color: #eec6cf; }
-    .msg.success { background: #eef6f0; color: #1f6b3f; border-color: #c3e2cd; }
-    .msg.info { background: #eef2f7; color: var(--blue-dark); border-color: #c9d8ea; }
+    .msg { padding: 14px; border-radius: 8px; margin-top: 18px; font-size: 0.95em; line-height: 1.5; }
+    .msg.error { background: #ffecec; color: #a33; border: 1px solid #f5b8b8; }
+    .msg.success { background: #eafaf0; color: #2a7a4a; border: 1px solid #b8e8c8; }
+    .msg.info { background: #eef1ff; color: #4a4aa0; border: 1px solid #c8d0f0; }
 
     .deck-list { margin-top: 15px; }
     .deck-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-top: 1px solid var(--carbon-20);
-      font-size: 0.85em; color: var(--carbon-90); font-family: 'Inter', sans-serif;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        color: #333;
     }
-    .deck-row:first-child { border-top: none; }
-    .deck-row span.count { color: var(--carbon-40); font-weight: 600; }
+    .deck-row span.count { color: #888; }
 
     .spinner {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(26,95,168,0.25);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle; margin-right: 8px;
+        display: inline-block;
+        width: 16px; height: 16px;
+        border: 2px solid rgba(102,126,234,0.3);
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── STUDY: progress + stats ── */
-    .study-meta {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 14px;
-      padding-bottom: 22px; margin-bottom: 28px;
-      border-bottom: 1px solid var(--carbon-20);
-      font-family: 'Inter', sans-serif;
+    /* Study */
+    .progress-bar {
+        width: 100%; height: 8px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        margin-bottom: 25px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
     }
-    .study-stats { display: flex; gap: 26px; flex-wrap: wrap; }
-    .study-stat { }
-    .study-stat-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--carbon-40); display: block; margin-bottom: 4px; }
-    .study-stat-value { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.3rem; color: var(--black); }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,#4CAF50,#45a049); transition: width .3s ease; }
 
-    .progress-track { width: 100%; height: 3px; background: var(--carbon-20); margin-bottom: 28px; }
-    .progress-fill { height: 100%; background: var(--champ); transition: width .3s ease; }
+    .stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 25px; flex-wrap: wrap; }
+    .stat-box {
+        background: rgba(255,255,255,0.2);
+        padding: 14px 22px;
+        border-radius: 10px;
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+        text-align: center;
+    }
+    .stat-label { font-size: 0.85em; opacity: .9; display: block; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6em; font-weight: bold; }
 
-    .deck-filter { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
+    .deck-filter {
+        display: flex; justify-content: center; gap: 10px;
+        margin-bottom: 20px; flex-wrap: wrap;
+    }
     .deck-chip {
-      padding: 6px 14px; background: var(--white);
-      color: var(--carbon-60); border: 1px solid var(--carbon-30);
-      border-radius: 20px; cursor: pointer;
-      font-size: 0.76rem; font-weight: 600; font-family: 'Inter', sans-serif;
-      transition: all .2s;
+        padding: 8px 16px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 2px solid white;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.85em;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
     }
-    .deck-chip.active { background: var(--black); color: var(--white); border-color: var(--black); }
-    .deck-chip:hover:not(.active) { border-color: var(--carbon-60); color: var(--carbon-90); }
+    .deck-chip.active { background: white; color: #667eea; }
 
-    /* ── FLASHCARD ── fixed flip: both faces absolutely stacked */
     .flashcard-container {
-      perspective: 1400px;
-      margin-bottom: 28px;
-      min-height: 360px;
-      display: flex; justify-content: center; align-items: center;
+        perspective: 1000px;
+        margin-bottom: 25px;
+        min-height: 340px;
+        display: flex; justify-content: center; align-items: center;
     }
     .flashcard {
-      width: 100%; height: 360px;
-      position: relative;
-      cursor: pointer;
-      transform-style: preserve-3d;
-      transition: transform .5s cubic-bezier(.4,.2,.2,1);
+        width: 100%; height: 340px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        cursor: pointer;
+        position: relative;
+        transition: transform .6s;
+        transform-style: preserve-3d;
+        padding: 40px;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        text-align: center;
     }
     .flashcard.flipped { transform: rotateY(180deg); }
+    .card-side { backface-visibility: hidden; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .card-back { transform: rotateY(180deg); }
+    .card-label { font-size: 0.8em; color: #667eea; font-weight: 700; margin-bottom: 18px; letter-spacing: 1px; text-transform: uppercase; }
+    .card-text { font-size: 1.35em; color: #333; font-weight: 500; line-height: 1.6; max-height: 100%; overflow-y: auto; padding-right: 6px; }
+    .card-text::-webkit-scrollbar { width: 6px; }
+    .card-text::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .card-text::-webkit-scrollbar-thumb { background: #667eea; border-radius: 10px; }
+    .flip-hint { position: absolute; bottom: 14px; font-size: 0.78em; color: #999; font-style: italic; }
+    .deck-tag { position: absolute; top: 14px; font-size: 0.72em; color: #aaa; text-transform: uppercase; letter-spacing: .5px; }
 
-    .card-side {
-      position: absolute;
-      inset: 0;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      background: var(--white);
-      border: 1px solid var(--carbon-20);
-      border-top: 3px solid var(--blue);
-      border-radius: 2px;
-      padding: 36px 40px;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      text-align: center;
-      overflow: hidden;
-    }
-    .card-back { transform: rotateY(180deg); border-top-color: var(--champ); }
+    .controls { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
 
-    .deck-tag {
-      position: absolute; top: 18px; left: 40px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.66rem; color: var(--carbon-40);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    .card-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.66rem; font-weight: 700;
-      color: var(--blue-dark); margin-bottom: 20px;
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-    .card-back .card-label { color: var(--champ-dark); }
+    .empty-state { text-align: center; color: white; padding: 40px; }
+    .empty-state h2 { font-size: 1.4em; margin-bottom: 8px; }
 
-    .card-text {
-      font-family: 'Merriweather', serif;
-      font-weight: 300;
-      font-size: 1.2em; color: var(--carbon-90);
-      line-height: 1.65;
-      max-height: 100%;
-      max-width: 100%;
-      overflow-y: auto;
-      padding: 0 6px;
-    }
-    .card-text::-webkit-scrollbar { width: 5px; }
-    .card-text::-webkit-scrollbar-track { background: transparent; }
-    .card-text::-webkit-scrollbar-thumb { background: var(--carbon-20); border-radius: 10px; }
-
-    .flip-hint {
-      position: absolute; bottom: 16px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.72rem; color: var(--carbon-40); font-style: italic;
-    }
-
-    .controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-
-    .empty-state {
-      text-align: center; color: var(--carbon-40);
-      padding: 50px 20px; font-family: 'Inter', sans-serif;
-      border: 1px dashed var(--carbon-20); width: 100%;
-    }
-    .empty-state h2 { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.15em; margin-bottom: 8px; color: var(--carbon-60); }
-    .empty-state p { font-size: 0.88em; }
-
-    /* ── REFERENCE RAIL ── */
-    .reference-rail { position: sticky; top: 130px; }
-    .rail-block { margin-bottom: 32px; }
-    .rail-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.66rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--carbon-40); margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .rail-label::after { content: ''; flex: 1; height: 1px; background: var(--carbon-20); }
-
-    .ref-item { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--carbon-20); font-family: 'Inter', sans-serif; }
-    .ref-item:first-child { border-top: none; }
-    .ref-num { font-family: 'Merriweather', serif; font-size: 0.76rem; font-weight: 700; color: var(--champ-dark); flex-shrink: 0; padding-top: 1px; }
-    .ref-text { font-size: 0.78rem; line-height: 1.55; color: var(--carbon-60); }
-    .ref-text .ref-title { color: var(--black); font-weight: 600; display: block; margin-bottom: 2px; }
-
-    .rail-cta { background: var(--carbon-90); border-radius: 3px; padding: 20px; }
-    .rail-cta p { font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--carbon-30); line-height: 1.6; margin-bottom: 14px; }
-    .rail-cta .btn { background: var(--white); color: var(--black); }
-
-    @media (max-width: 900px) { .reference-rail { position: static; } }
-
-    /* ── FOOTER ── */
-    footer { background: var(--black); color: var(--white); padding: 48px 40px 28px; margin-top: 60px; }
-    .footer-inner {
-      max-width: 1160px; margin: 0 auto;
-      display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 36px;
-    }
-    @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
-    .footer-logo { margin-bottom: 14px; }
-    .footer-logo img { height: 26px; filter: brightness(0) invert(1) opacity(0.65); }
-    .footer-desc { font-size: 0.83rem; color: var(--carbon-40); line-height: 1.7; margin-bottom: 20px; }
-    .footer-accred { font-size: 0.75rem; color: var(--carbon-60); }
-    .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-60); margin-bottom: 14px; }
-    .footer-links li { margin-bottom: 9px; }
-    .footer-links a { font-size: 0.83rem; color: var(--carbon-30); transition: color .2s; }
-    .footer-links a:hover { color: var(--white); }
-    .social-icons { display: flex; gap: 10px; margin-top: 4px; }
-    .social-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--carbon-80); display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
-    .social-icon:hover { background: var(--carbon-60); }
-    .social-icon svg { width: 16px; height: 16px; fill: var(--white); }
-    .footer-divider { max-width: 1160px; margin: 0 auto 18px; border: none; border-top: 1px solid var(--carbon-80); }
-    .footer-bottom { max-width: 1160px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 0.73rem; color: var(--carbon-60); }
-    .footer-bottom a { color: var(--carbon-60); }
-    .footer-bottom a:hover { color: var(--carbon-30); }
-
-    @media (max-width: 600px) {
-      .site-header { padding: 0 20px; }
-      .breadcrumb-strip { padding: 12px 20px; }
-      .article-masthead { padding: 40px 20px 28px; }
-      .section-nav { padding: 0 20px 0; }
-      .reading-layout { padding: 32px 20px 0; }
-      .flashcard { height: 320px; padding: 24px; }
-      .card-side { padding: 26px 22px; }
-      .card-text { font-size: 1.05em; }
-      footer { padding: 48px 20px 24px; }
+    @media (max-width: 768px) {
+        .header h1 { font-size: 1.7em; }
+        .flashcard { height: 300px; padding: 24px; }
+        .card-text { font-size: 1.1em; }
+        .panel { padding: 20px; }
     }
 </style>
 </head>
 <body>
+<div class="container">
 
-<!-- HEADER -->
-<header class="site-header">
-  <a href="/" class="logo">
-    <img src="IMG_3083.png" alt="MedicineBank" />
-  </a>
-  <div class="search-wrap">
-    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="#8e8e8e" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-    <input type="text" placeholder="Search…" />
-  </div>
-</header>
+    <div class="header">
+        <h1>📚 Flashcard Studio</h1>
+        <p>Import an Anki .apkg deck, or paste Q&amp;A text — then study</p>
+    </div>
 
-<!-- SECONDARY NAV -->
-<nav class="secondary-nav">
-  <ul>
-    <li><a href="/#hero"       class="nav-link">Home</a></li>
-    <li><a href="/#newsletter" class="nav-link">Newsletter</a></li>
-    <li><a href="/#mission"    class="nav-link">Mission & Vision</a></li>
-    <li><a href="/#sectors"    class="nav-link">Sectors</a></li>
-  </ul>
-</nav>
-
-<!-- BREADCRUMB -->
-<div class="breadcrumb-strip">
-  <div class="breadcrumb-inner">
-    <a href="/#sectors">Tools</a>
-    <span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">Flashcard Studio</span>
-  </div>
-</div>
-
-<!-- MASTHEAD -->
-<div class="article-masthead">
-  <div class="masthead-rule">
-    <span class="sector-marker tool">Tool · STUDY</span>
-    <span class="rule-line"></span>
-  </div>
-  <h1>Flashcard Studio</h1>
-  <p class="article-dek">Import an Anki .apkg deck, or paste Q&amp;A text — then study.</p>
-</div>
-
-<!-- SECTION NAV -->
-<div class="section-nav">
-  <button class="section-btn active" data-tab="apkg">Import .apkg</button>
-  <button class="section-btn" data-tab="text">Paste Text</button>
-  <button class="section-btn" data-tab="study">Study</button>
-</div>
-
-<!-- READING LAYOUT -->
-<div class="reading-layout">
-  <div class="article-body">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="apkg">Import .apkg</button>
+        <button class="tab-btn" data-tab="text">Paste Text</button>
+        <button class="tab-btn" data-tab="study">Study</button>
+    </div>
 
     <!-- APKG TAB -->
-    <div id="apkg" class="section-content active">
-      <div class="panel-heading"><span class="h2-eyebrow">Section One</span>Import an Anki Deck</div>
-      <div class="callout-box">
-        <div class="callout-label">Format notes</div>
-        <p>An <code>.apkg</code> file is an Anki export — a zipped SQLite database. This reads <strong>Basic</strong> and <strong>Basic (and reversed)</strong> note types, which cover the large majority of decks. Cloze deletions and card types with extra template logic are imported using their raw field text, since re-deriving Anki's cloze rendering isn't reliable outside Anki itself.</p>
-      </div>
-      <div class="dropzone" id="apkgDrop">
-        <div id="apkgDropLabel">Drop your .apkg file here, or click to browse
-          <span class="sub">Only .apkg files are accepted</span>
+    <div id="apkg" class="tab-content active">
+        <div class="panel">
+            <h2>Import an Anki Deck</h2>
+            <div class="hint">
+                An <code>.apkg</code> file is an Anki export — a zipped SQLite database. This reads
+                <strong>Basic</strong> and <strong>Basic (and reversed)</strong> note types, which cover the
+                large majority of decks. Cloze deletions and card types with extra template logic are
+                imported using their raw field text, since re-deriving Anki's cloze rendering isn't reliable
+                outside Anki itself.
+            </div>
+            <div class="dropzone" id="apkgDrop">
+                <div id="apkgDropLabel">Drop your .apkg file here, or click to browse
+                    <span class="sub">Only .apkg files are accepted</span>
+                </div>
+                <input type="file" id="apkgInput" accept=".apkg">
+            </div>
+            <div class="file-badge" id="apkgBadge">
+                <span id="apkgFileName"></span>
+                <span class="remove" id="apkgRemove">✕ remove</span>
+            </div>
+            <div class="button-group">
+                <button id="apkgParseBtn" disabled>Import Deck</button>
+                <button class="btn-secondary" id="apkgClearBtn">Clear</button>
+            </div>
+            <div id="apkgMsg"></div>
+            <div id="apkgDeckList" class="deck-list"></div>
         </div>
-        <input type="file" id="apkgInput" accept=".apkg">
-      </div>
-      <div class="file-badge" id="apkgBadge">
-        <span id="apkgFileName"></span>
-        <span class="remove" id="apkgRemove">✕ remove</span>
-      </div>
-      <div class="button-group">
-        <button class="btn" id="apkgParseBtn" disabled>Import Deck</button>
-        <button class="btn btn-secondary" id="apkgClearBtn">Clear</button>
-      </div>
-      <div id="apkgMsg"></div>
-      <div id="apkgDeckList" class="deck-list"></div>
     </div>
 
     <!-- TEXT TAB -->
-    <div id="text" class="section-content">
-      <div class="panel-heading"><span class="h2-eyebrow">Section Two</span>Paste Your Q&amp;A Content</div>
-      <div class="callout-box">
-        <div class="callout-label">Format notes</div>
-        <p><strong>Format:</strong> each question on its own line, its answer on the line(s) after it.<br>
-        Questions start with <code>Q:</code> or a question word (What / How / Why / Does / Is / Are / Which / Where / When / Can / Should).<br>
-        Answers start with <code>A:</code> or a bullet (<code>-</code>, <code>•</code>, <code>*</code>) — or just follow directly on the next line.</p>
-        <p><strong>Example:</strong><br><code>What causes fever?</code><br><code>Infection, inflammation, or malignancy</code></p>
-      </div>
-      <textarea id="textInput" placeholder="Paste your Q&A content here..."></textarea>
-      <div class="button-group">
-        <button class="btn" id="textParseBtn">Create Flashcards</button>
-        <button class="btn btn-secondary" id="textClearBtn">Clear</button>
-      </div>
-      <div id="textMsg"></div>
+    <div id="text" class="tab-content">
+        <div class="panel">
+            <h2>Paste Your Q&amp;A Content</h2>
+            <div class="hint">
+                <strong>Format:</strong> each question on its own line, its answer on the line(s) after it.<br>
+                Questions start with <code>Q:</code> or a question word (What / How / Why / Does / Is / Are / Which / Where / When / Can / Should).<br>
+                Answers start with <code>A:</code> or a bullet (<code>-</code>, <code>•</code>, <code>*</code>) — or just follow directly on the next line.<br><br>
+                <strong>Example:</strong><br>
+                <code>What causes fever?</code><br>
+                <code>Infection, inflammation, or malignancy</code>
+            </div>
+            <textarea id="textInput" placeholder="Paste your Q&amp;A content here..."></textarea>
+            <div class="button-group">
+                <button id="textParseBtn">Create Flashcards</button>
+                <button class="btn-secondary" id="textClearBtn">Clear</button>
+            </div>
+            <div id="textMsg"></div>
+        </div>
     </div>
 
     <!-- STUDY TAB -->
-    <div id="study" class="section-content">
-      <div class="study-meta">
-        <div class="study-stats">
-          <div class="study-stat"><span class="study-stat-label">Current</span><span class="study-stat-value" id="currentCard">–</span></div>
-          <div class="study-stat"><span class="study-stat-label">Total</span><span class="study-stat-value" id="totalCards">0</span></div>
-          <div class="study-stat"><span class="study-stat-label">Progress</span><span class="study-stat-value" id="progressPercent">0%</span></div>
+    <div id="study" class="tab-content">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+        <div class="stats">
+            <div class="stat-box"><span class="stat-label">Current Card</span><span class="stat-value" id="currentCard">-</span></div>
+            <div class="stat-box"><span class="stat-label">Total Cards</span><span class="stat-value" id="totalCards">0</span></div>
+            <div class="stat-box"><span class="stat-label">Progress</span><span class="stat-value" id="progressPercent">0%</span></div>
         </div>
-      </div>
 
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="deck-filter" id="deckFilter"></div>
 
-      <div class="deck-filter" id="deckFilter"></div>
-
-      <div class="flashcard-container" id="flashcardContainer">
-        <div class="empty-state">
-          <h2>No flashcards yet</h2>
-          <p>Import a .apkg file or paste Q&amp;A text to get started.</p>
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="empty-state">
+                <h2>No flashcards yet</h2>
+                <p>Import a .apkg file or paste Q&amp;A text to get started.</p>
+            </div>
         </div>
-      </div>
 
-      <div class="controls">
-        <button class="btn btn-secondary" id="prevBtn" disabled>← Previous</button>
-        <button class="btn" id="shuffleBtn">Shuffle</button>
-        <button class="btn btn-secondary" id="resetBtn">Reset</button>
-        <button class="btn" id="nextBtn">Next →</button>
-      </div>
+        <div class="controls">
+            <button class="btn-secondary" id="prevBtn" disabled>← Previous</button>
+            <button id="shuffleBtn">🔀 Shuffle</button>
+            <button class="btn-secondary" id="resetBtn">Reset</button>
+            <button id="nextBtn">Next →</button>
+        </div>
     </div>
 
-  </div>
-
-  <!-- REFERENCE RAIL -->
-  <aside class="reference-rail">
-    <div class="rail-block">
-      <div class="rail-label">How it works</div>
-      <div class="ref-item">
-        <span class="ref-num">01</span>
-        <span class="ref-text"><span class="ref-title">Import or paste</span>Bring in an Anki deck or your own Q&amp;A text.</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">02</span>
-        <span class="ref-text"><span class="ref-title">Filter by deck</span>Study everything at once, or isolate one deck.</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">03</span>
-        <span class="ref-text"><span class="ref-title">Click to flip</span>Reveal the answer, then step through with Next.</span>
-      </div>
-    </div>
-
-    <div class="rail-block">
-      <div class="rail-label">Supported formats</div>
-      <div class="ref-item">
-        <span class="ref-num">·</span>
-        <span class="ref-text"><span class="ref-title">.apkg (Basic)</span>Front/Back note types, incl. reversed cards.</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">·</span>
-        <span class="ref-text"><span class="ref-title">.apkg (Cloze)</span>Raw field text, deletions marked as [...].</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">·</span>
-        <span class="ref-text"><span class="ref-title">Plain text</span>Q:/A: pairs or question-word detection.</span>
-      </div>
-    </div>
-
-    <div class="rail-cta">
-      <p>Have a deck you'd like to see supported better? Let the Research sector know.</p>
-      <a href="mailto:eyadd@icloud.com" class="btn btn-full">Send feedback</a>
-    </div>
-  </aside>
 </div>
-
-<!-- FOOTER -->
-<footer id="contact">
-  <div class="footer-inner">
-    <div>
-      <div class="footer-logo">
-        <img src="IMG_3083.png" alt="MedicineBank" />
-      </div>
-      <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — serving medical students across Egypt and the Arab region.</p>
-      <p class="footer-accred">Accredited by Mansoura National University · March 2026</p>
-    </div>
-    <div>
-      <p class="footer-col-title">Navigate</p>
-      <ul class="footer-links">
-        <li><a href="/#newsletter" class="nav-link">Newsletter</a></li>
-        <li><a href="/#mission"    class="nav-link">Mission & Vision</a></li>
-        <li><a href="/#sectors"    class="nav-link">Sectors</a></li>
-      </ul>
-    </div>
-    <div>
-      <p class="footer-col-title">Follow Us</p>
-      <div class="social-icons">
-        <a href="https://www.instagram.com/medicinebank.in?igsh=MXUzdmx6YXM3cW1xeQ==" target="_blank" class="social-icon" aria-label="Instagram">
-          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.332 3.608 1.308.975.975 1.245 2.242 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.332 2.633-1.308 3.608-.975.975-2.242 1.245-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.332-3.608-1.308C2.495 19.483 2.225 18.216 2.163 16.85 2.105 15.584 2.093 15.204 2.093 12s.012-3.584.07-4.85c.062-1.366.332-2.633 1.308-3.608C4.446 2.495 5.713 2.225 7.079 2.163 8.345 2.105 8.725 2.093 12 2.093zm0-2.163C8.741 0 8.332.013 7.052.072 5.197.157 3.355.673 1.998 2.03.641 3.387.125 5.229.04 7.084-.019 8.364 0 8.773 0 12c0 3.227.013 3.636.072 4.916.085 1.855.601 3.697 1.958 5.054 1.357 1.357 3.199 1.873 5.054 1.958C8.364 23.987 8.773 24 12 24c3.227 0 3.636-.013 4.916-.072 1.855-.085 3.697-.601 5.054-1.958 1.357-1.357 1.873-3.199 1.958-5.054.059-1.28.072-1.689.072-4.916 0-3.227-.013-3.636-.072-4.916-.085-1.855-.601-3.697-1.958-5.054C20.613.673 18.771.157 16.916.072 15.636.013 15.227 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
-        </a>
-        <a href="https://www.linkedin.com/company/medicinebank/" target="_blank" class="social-icon" aria-label="LinkedIn">
-          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-        </a>
-        <a href="https://discord.gg/jsY3mGPKC4" target="_blank" class="social-icon" aria-label="Discord">
-          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-        </a>
-        <a href="https://youtube.com/@medicinebank.initiative?si=7f8DzbPTSvQMQuYL" target="_blank" class="social-icon" aria-label="YouTube">
-          <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-        </a>
-      </div>
-    </div>
-  </div>
-  <hr class="footer-divider" />
-  <div class="footer-bottom">
-    <span>© 2026 MedicineBank Initiative</span>
-    <span>Dakahlia, Egypt</span>
-    <a href="mailto:eyadd@icloud.com">Contact Us</a>
-  </div>
-</footer>
 
 <script>
 // ---------- shared state ----------
-let cards = [];
+let cards = [];          // {q, a, deck}
 let currentIndex = 0;
-let activeDeckFilter = null;
+let activeDeckFilter = null; // null = all decks
 let sqlPromise = null;
 
 // ---------- tab switching ----------
-document.querySelectorAll('.section-btn').forEach(btn => {
+document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const tab = btn.dataset.tab;
-        document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(tab).classList.add('active');
         if (tab === 'study') { buildDeckFilter(); updateDisplay(); }
@@ -674,6 +360,10 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function goToStudyTab() {
+    document.querySelector('.tab-btn[data-tab="study"]').click();
 }
 
 // =====================================================================
@@ -748,6 +438,8 @@ apkgParseBtn.addEventListener('click', async () => {
         const zipBuffer = await pendingApkgFile.arrayBuffer();
         const zip = await JSZip.loadAsync(zipBuffer);
 
+        // Anki uses collection.anki21 (newer) or collection.anki2 (older) or
+        // collection.anki21b (zstd-compressed, newest — not supported here).
         let dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2');
         if (!dbEntry) {
             if (zip.file('collection.anki21b')) {
@@ -768,6 +460,7 @@ apkgParseBtn.addEventListener('click', async () => {
         const dbBuffer = await dbEntry.async('uint8array');
         const db = new SQL.Database(dbBuffer);
 
+        // decks: col.decks is a JSON blob keyed by deck id -> {name, ...}
         const colRes = db.exec('SELECT decks FROM col LIMIT 1');
         let deckNames = {};
         if (colRes.length) {
@@ -777,6 +470,8 @@ apkgParseBtn.addEventListener('click', async () => {
             }
         }
 
+        // notes: id, flds (fields separated by \x1f), mid (model/note-type id), sfld
+        // cards: nid (note id), did (deck id), ord (which template on the note)
         const notesRes = db.exec('SELECT id, mid, flds FROM notes');
         const cardsRes = db.exec('SELECT id, nid, did, ord FROM cards');
         const modelsRes = db.exec('SELECT models FROM col LIMIT 1');
@@ -787,12 +482,14 @@ apkgParseBtn.addEventListener('click', async () => {
 
         const models = modelsRes.length ? JSON.parse(modelsRes[0].values[0][0]) : {};
 
+        // note id -> {mid, fields[]}
         const noteMap = {};
         for (const row of notesRes[0].values) {
             const [id, mid, flds] = row;
             noteMap[id] = { mid: String(mid), fields: flds.split('\x1f') };
         }
 
+        // card id -> deck name (via card.did), and card -> note
         const cardRows = cardsRes.length ? cardsRes[0].values : [];
 
         const importedCards = [];
@@ -812,6 +509,9 @@ apkgParseBtn.addEventListener('click', async () => {
             const fieldNames = (model.flds || []).map(f => f.name.toLowerCase());
 
             if (modelName.includes('cloze')) {
+                // Cloze notes: field 0 is Text with {{c1::...}} markers, field 1 is Extra.
+                // We can't reliably re-render Anki's cloze template logic here, so we
+                // surface the raw field text and let the user see it's a cloze card.
                 const text = note.fields[0] || '';
                 const extra = note.fields[1] || '';
                 const q = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '[...]');
@@ -825,6 +525,8 @@ apkgParseBtn.addEventListener('click', async () => {
                 continue;
             }
 
+            // Basic / Basic (and reversed) / most simple two-field templates:
+            // template ord 0 = Front->Back, ord 1 (if present, on reversed types) = Back->Front
             let frontIdx = 0, backIdx = 1;
             const frontFieldIdx = fieldNames.indexOf('front');
             const backFieldIdx = fieldNames.indexOf('back');
@@ -839,6 +541,7 @@ apkgParseBtn.addEventListener('click', async () => {
             if (!frontText.trim() || !backText.trim()) { skippedUnknown++; continue; }
 
             if (ord === 1 && modelName.includes('reversed')) {
+                // reversed card: swap front/back
                 importedCards.push({ q: backText, a: frontText, deck: deckName });
             } else {
                 importedCards.push({ q: frontText, a: backText, deck: deckName });
@@ -867,12 +570,13 @@ apkgParseBtn.addEventListener('click', async () => {
         summary += '. Switch to the Study tab to begin.</div>';
         apkgMsg.innerHTML = summary;
 
-        apkgDeckList.innerHTML =
+        apkgDeckList.innerHTML = '<div class="deck-list">' +
             Object.entries(deckCounts).map(([name, count]) =>
                 `<div class="deck-row"><span>${escapeHtml(name)}</span><span class="count">${count} card${count === 1 ? '' : 's'}</span></div>`
-            ).join('');
+            ).join('') + '</div>';
 
         resetApkgFile();
+        apkgDeckList.style.display = 'block';
 
     } catch (err) {
         console.error(err);
@@ -883,18 +587,20 @@ apkgParseBtn.addEventListener('click', async () => {
 
 function stripHtml(html) {
     if (!html) return '';
+    // Anki fields are HTML. Convert common line-break tags to \n first, then strip tags.
     const withBreaks = html
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/div>/gi, '\n')
         .replace(/<\/p>/gi, '\n');
     const div = document.createElement('div');
     div.innerHTML = withBreaks;
+    // Drop sound/image refs like [sound:x.mp3] — no audio/image playback in this tool.
     let text = (div.textContent || div.innerText || '').replace(/\[sound:[^\]]*\]/g, '');
     return text.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // =====================================================================
-// TEXT PARSE
+// TEXT PARSE (from the previous tool)
 // =====================================================================
 const textInput = document.getElementById('textInput');
 const textMsg = document.getElementById('textMsg');
@@ -984,7 +690,7 @@ function updateDisplay() {
 
     if (deckCards.length === 0) {
         container.innerHTML = '<div class="empty-state"><h2>No flashcards yet</h2><p>Import a .apkg file or paste Q&amp;A text to get started.</p></div>';
-        document.getElementById('currentCard').textContent = '–';
+        document.getElementById('currentCard').textContent = '-';
         document.getElementById('progressPercent').textContent = '0%';
         document.getElementById('progressFill').style.width = '0%';
         document.getElementById('prevBtn').disabled = true;
@@ -1004,7 +710,7 @@ function updateDisplay() {
 
     container.innerHTML = `
         <div class="flashcard" id="card">
-            <div class="card-side card-front">
+            <div class="card-side">
                 <span class="deck-tag">${escapeHtml(card.deck)}</span>
                 <span class="card-label">Question</span>
                 <div class="card-text">${escapeHtml(card.q).replace(/\n/g, '<br>')}</div>
@@ -1042,6 +748,7 @@ document.getElementById('shuffleBtn').addEventListener('click', () => {
         const j = Math.floor(Math.random() * (i + 1));
         [deckCards[i], deckCards[j]] = [deckCards[j], deckCards[i]];
     }
+    // write shuffled order back into the master array for this deck's cards
     if (activeDeckFilter) {
         let k = 0;
         cards = cards.map(c => c.deck === activeDeckFilter ? deckCards[k++] : c);
