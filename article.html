@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Research Spotlight: Clinical Case Writing for Beginners — MedicineBank</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Merriweather:ital,wght@1,300&display=swap" rel="stylesheet" />
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard Studio — MedicineBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Merriweather:ital,wght@1,300&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -35,7 +37,7 @@
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
 
-    /* ── HEADER (unchanged) ── */
+    /* ── HEADER ── */
     .site-header {
       background: var(--black);
       padding: 0 32px;
@@ -47,58 +49,39 @@
       z-index: 1000;
       height: 56px;
     }
-
     .logo img { height: 28px; width: auto; display: block; }
-
     .search-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 2px;
-      padding: 6px 12px;
-      cursor: text;
+      border-radius: 2px; padding: 6px 12px; cursor: text;
       transition: background .2s;
     }
     .search-wrap:hover { background: rgba(255,255,255,0.11); }
     .search-wrap svg { fill: var(--carbon-40); flex-shrink: 0; }
     .search-wrap input {
       background: none; border: none; outline: none;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.82rem; color: var(--white);
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--white);
       width: 160px;
     }
     .search-wrap input::placeholder { color: var(--carbon-40); }
 
-    /* ── SECONDARY NAV (unchanged) ── */
+    /* ── SECONDARY NAV ── */
     .secondary-nav {
       background: var(--carbon-90);
       border-bottom: 1px solid var(--carbon-80);
-      overflow-x: auto;
-      white-space: nowrap;
-      position: sticky;
-      top: 56px;
-      z-index: 999;
+      overflow-x: auto; white-space: nowrap;
+      position: sticky; top: 56px; z-index: 999;
     }
     .secondary-nav ul { display: inline-flex; padding: 0 32px; }
     .secondary-nav li a {
-      display: block;
-      padding: 12px 18px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--carbon-30);
-      transition: color .2s;
-      border-bottom: 3px solid transparent;
+      display: block; padding: 12px 18px;
+      font-size: 0.82rem; font-weight: 600; color: var(--carbon-30);
+      transition: color .2s; border-bottom: 3px solid transparent;
     }
-    .secondary-nav li a:hover,
-    .secondary-nav li a.active { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
+    .secondary-nav li a:hover, .secondary-nav li a.active { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
 
-    /* ══════════════════════════════════════════════
-       ARTICLE PAGE — new for this template
-       ══════════════════════════════════════════════ */
-
-    /* Breadcrumb strip: quiet wayfinding back to the sector + newsletter */
+    /* ── BREADCRUMB ── */
     .breadcrumb-strip {
       background: var(--carbon-05);
       border-bottom: 1px solid var(--carbon-20);
@@ -114,11 +97,10 @@
     .breadcrumb-sep { color: var(--carbon-30); }
     .breadcrumb-current { color: var(--black); font-weight: 600; }
 
-    /* Article masthead — the sector tag runs as a rule, not a badge */
+    /* ── MASTHEAD ── */
     .article-masthead {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 56px 40px 44px;
+      max-width: 780px; margin: 0 auto;
+      padding: 56px 40px 36px;
     }
     .masthead-rule {
       display: flex; align-items: center; gap: 14px;
@@ -128,368 +110,338 @@
     .sector-marker {
       font-size: 0.68rem; font-weight: 700;
       letter-spacing: 2px; text-transform: uppercase;
-      padding: 4px 0;
-      border-bottom: 3px solid;
+      padding: 4px 0; border-bottom: 3px solid;
     }
-    .sector-marker.res { color: var(--blue-dark); border-color: var(--blue); }
+    .sector-marker.tool { color: var(--champ-dark); border-color: var(--champ); }
 
     .article-masthead h1 {
       font-family: 'Merriweather', serif;
       font-weight: 900;
       font-size: clamp(1.9rem, 4.2vw, 2.7rem);
-      line-height: 1.18;
-      letter-spacing: -0.01em;
+      line-height: 1.18; letter-spacing: -0.01em;
       margin-bottom: 18px;
     }
     .article-dek {
       font-family: 'Merriweather', serif;
-      font-weight: 300;
-      font-style: italic;
-      font-size: 1.15rem;
-      color: var(--carbon-60);
+      font-weight: 300; font-style: italic;
+      font-size: 1.15rem; color: var(--carbon-60);
       line-height: 1.6;
-      margin-bottom: 28px;
     }
 
-    .byline-row {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 14px;
-      padding-top: 22px;
-      border-top: 1px solid var(--carbon-20);
+    /* ── SECTION NAV (replaces old tabs) ── */
+    .section-nav {
+      max-width: 780px; margin: 0 auto;
+      padding: 0 40px 40px;
+      display: flex; gap: 10px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--carbon-20);
+      padding-bottom: 0;
     }
-    .byline-left { display: flex; align-items: center; gap: 12px; }
-    .byline-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: var(--blue);
-      color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Merriweather', serif; font-weight: 700; font-size: 0.95rem;
-      flex-shrink: 0;
+    .section-btn {
+      background: none; border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--carbon-40);
+      padding: 12px 4px; margin-right: 22px;
+      border-bottom: 3px solid transparent;
+      transition: color .2s, border-color .2s;
     }
-    .byline-name { font-size: 0.86rem; font-weight: 700; }
-    .byline-meta { font-size: 0.76rem; color: var(--carbon-40); }
-    .byline-actions { display: flex; align-items: center; gap: 16px; font-size: 0.76rem; color: var(--carbon-40); }
-    .byline-actions span { display: flex; align-items: center; gap: 5px; }
+    .section-btn:hover { color: var(--carbon-90); }
+    .section-btn.active { color: var(--black); border-color: var(--champ); }
 
-    /* Hero figure for the article itself */
-    .article-figure {
-      max-width: 1160px; margin: 0 auto; padding: 0 40px 8px;
-    }
-    .article-figure-frame {
-      width: 100%;
-      aspect-ratio: 21/9;
-      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 55%, #2c7bc9 100%);
-      border-radius: 3px;
-      display: flex; align-items: center; justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .article-figure-frame::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 64px),
-        repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 64px);
-    }
-    .article-figure-mark { font-size: 4.5rem; position: relative; z-index: 1; opacity: 0.92; }
-    .article-figure-caption {
-      font-size: 0.74rem; color: var(--carbon-40);
-      padding: 10px 4px 0;
-      font-style: italic;
-    }
+    .section-content { display: none; }
+    .section-content.active { display: block; }
 
-    /* Two-column reading layout: article body + sticky reference rail */
+    /* ── READING LAYOUT (body + rail) ── */
     .reading-layout {
       max-width: 1160px; margin: 0 auto;
-      padding: 48px 40px 0;
+      padding: 44px 40px 0;
       display: grid;
       grid-template-columns: 1fr 280px;
-      gap: 64px;
-      align-items: start;
+      gap: 64px; align-items: start;
     }
     @media (max-width: 900px) {
-      .reading-layout { grid-template-columns: 1fr; gap: 40px; padding: 40px 24px 0; }
+      .reading-layout { grid-template-columns: 1fr; gap: 40px; padding: 36px 24px 0; }
     }
 
-    .article-body {
-      max-width: 640px;
-      font-family: 'Merriweather', serif;
-      font-weight: 300;
-      font-size: 1.02rem;
-      line-height: 1.85;
-      color: var(--carbon-90);
-    }
-    .article-body p { margin-bottom: 24px; }
-    .article-body h2 {
-      font-family: 'Inter', sans-serif;
-      font-weight: 700;
-      font-size: 0.98rem;
-      letter-spacing: 0.2px;
-      color: var(--black);
-      margin: 44px 0 18px;
-      padding-bottom: 12px;
+    .article-body { max-width: 640px; }
+
+    /* ── PANEL (import / paste sections) ── */
+    .panel-heading {
+      font-family: 'Inter', sans-serif; font-weight: 700;
+      font-size: 0.98rem; color: var(--black);
+      margin-bottom: 18px; padding-bottom: 12px;
       border-bottom: 1px solid var(--carbon-20);
     }
-    .article-body h2 .h2-eyebrow {
-      display: block;
-      font-size: 0.66rem; font-weight: 700;
+    .panel-heading .h2-eyebrow {
+      display: block; font-size: 0.66rem; font-weight: 700;
       letter-spacing: 2px; text-transform: uppercase;
-      color: var(--blue); margin-bottom: 6px;
+      color: var(--champ-dark); margin-bottom: 6px;
     }
-    .article-body strong { font-weight: 700; color: var(--black); }
-    .article-body em { font-style: italic; }
-
-    .article-body blockquote {
-      margin: 32px 0;
-      padding: 4px 0 4px 24px;
-      border-left: 3px solid var(--blue);
-      font-style: italic;
-      color: var(--carbon-60);
-      font-size: 1.05rem;
-    }
-    .article-body blockquote cite {
-      display: block;
-      font-family: 'Inter', sans-serif;
-      font-style: normal;
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: var(--carbon-40);
-      margin-top: 10px;
-      letter-spacing: 0.3px;
-    }
-
-    .article-body ul, .article-body ol {
-      margin: 0 0 24px 0;
-      padding-left: 22px;
-    }
-    .article-body ul { list-style: disc; }
-    .article-body ol { list-style: decimal; }
-    .article-body li { margin-bottom: 10px; padding-left: 4px; }
-    .article-body li::marker { color: var(--blue); }
 
     .callout-box {
       background: var(--carbon-05);
       border: 1px solid var(--carbon-20);
-      border-left: 3px solid var(--blue);
+      border-left: 3px solid var(--champ);
       border-radius: 2px;
-      padding: 20px 24px;
-      margin: 32px 0;
+      padding: 18px 22px;
+      margin-bottom: 28px;
+      font-family: 'Inter', sans-serif;
     }
     .callout-box .callout-label {
-      font-family: 'Inter', sans-serif;
       font-size: 0.66rem; font-weight: 700;
       letter-spacing: 1.6px; text-transform: uppercase;
-      color: var(--blue-dark); margin-bottom: 8px;
+      color: var(--champ-dark); margin-bottom: 8px;
     }
-    .callout-box p { font-size: 0.92rem; margin-bottom: 0; color: var(--carbon-90); }
-    .callout-box p + p { margin-top: 12px; }
+    .callout-box p { font-size: 0.85rem; color: var(--carbon-90); line-height: 1.65; }
+    .callout-box code {
+      background: var(--white); border: 1px solid var(--carbon-20);
+      padding: 1px 6px; border-radius: 2px;
+      font-family: 'Courier New', monospace; font-size: 0.82em;
+      color: var(--blue-dark); font-weight: 700;
+    }
 
-    /* Author closing block */
-    .article-closing {
-      max-width: 640px;
-      margin-top: 48px;
-      padding-top: 28px;
-      border-top: 1px solid var(--carbon-20);
-      display: flex; gap: 16px; align-items: flex-start;
-    }
-    .closing-avatar {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: var(--blue); color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.15rem;
-      flex-shrink: 0;
-    }
-    .closing-name { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
-    .closing-bio { font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--carbon-60); line-height: 1.6; }
-
-    /* Share row */
-    .share-row {
-      max-width: 640px;
-      display: flex; align-items: center; gap: 12px;
-      margin-top: 28px; padding-top: 24px;
-      border-top: 1px solid var(--carbon-20);
-    }
-    .share-label {
+    /* Dropzone */
+    .dropzone {
+      border: 1px dashed var(--carbon-30);
+      border-radius: 2px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
       font-family: 'Inter', sans-serif;
-      font-size: 0.74rem; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--carbon-40);
+      color: var(--carbon-60); font-weight: 600;
+      background: var(--carbon-05);
     }
-    .share-btn {
-      width: 32px; height: 32px; border-radius: 50%;
+    .dropzone.dragover { background: #eef2f6; border-color: var(--blue); }
+    .dropzone .sub { display: block; margin-top: 8px; color: var(--carbon-40); font-weight: 400; font-size: 0.82em; }
+    .dropzone input { display: none; }
+    .file-badge {
+      margin-top: 15px; display: none;
+      align-items: center; justify-content: space-between;
       background: var(--carbon-05); border: 1px solid var(--carbon-20);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: background .2s;
+      border-radius: 2px; padding: 10px 15px;
+      color: var(--carbon-90); font-size: 0.85em; font-family: 'Inter', sans-serif;
     }
-    .share-btn:hover { background: var(--carbon-20); }
-    .share-btn svg { width: 14px; height: 14px; fill: var(--carbon-60); }
+    .file-badge .remove { color: var(--burg); cursor: pointer; font-weight: 700; }
 
-    /* ── REFERENCE RAIL (signature element) ──
-       An academic paper has a running reference list; this rail is that
-       instinct translated to the web — a citation ledger that sits beside
-       the prose instead of buried in a footer, so it participates in the
-       reading instead of interrupting it. */
-    .reference-rail {
-      position: sticky;
-      top: 130px;
+    textarea {
+      width: 100%; min-height: 260px;
+      padding: 15px; border: 1px solid var(--carbon-20); border-radius: 2px;
+      font-size: 0.92em; font-family: 'Courier New', monospace;
+      resize: vertical; background: var(--carbon-05); color: var(--black);
     }
-    .rail-block { margin-bottom: 36px; }
+    textarea:focus { outline: none; border-color: var(--blue); background: var(--white); }
+    textarea::placeholder { color: var(--carbon-40); }
+
+    .button-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-weight: 700; font-size: 0.83rem;
+      padding: 10px 20px; border-radius: 2px;
+      transition: opacity .2s, transform .1s; cursor: pointer;
+      border: none; font-family: 'Inter', sans-serif;
+      background: var(--black); color: var(--white);
+    }
+    .btn:hover:not(:disabled) { opacity: 0.85; }
+    .btn:disabled { background: var(--carbon-20); color: var(--carbon-40); cursor: not-allowed; }
+    .btn-secondary { background: var(--white); color: var(--black); border: 1px solid var(--carbon-30); }
+    .btn-secondary:hover:not(:disabled) { background: var(--carbon-05); opacity: 1; }
+    .btn-full { width: 100%; justify-content: center; }
+
+    .msg { padding: 13px 16px; border-radius: 2px; margin-top: 18px; font-size: 0.85em; line-height: 1.55; font-family: 'Inter', sans-serif; border: 1px solid; }
+    .msg.error { background: #fbecec; color: var(--burg-dark); border-color: #eec6cf; }
+    .msg.success { background: #eef6f0; color: #1f6b3f; border-color: #c3e2cd; }
+    .msg.info { background: #eef2f7; color: var(--blue-dark); border-color: #c9d8ea; }
+
+    .deck-list { margin-top: 15px; }
+    .deck-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border-top: 1px solid var(--carbon-20);
+      font-size: 0.85em; color: var(--carbon-90); font-family: 'Inter', sans-serif;
+    }
+    .deck-row:first-child { border-top: none; }
+    .deck-row span.count { color: var(--carbon-40); font-weight: 600; }
+
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(26,95,168,0.25);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── STUDY: progress + stats ── */
+    .study-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px;
+      padding-bottom: 22px; margin-bottom: 28px;
+      border-bottom: 1px solid var(--carbon-20);
+      font-family: 'Inter', sans-serif;
+    }
+    .study-stats { display: flex; gap: 26px; flex-wrap: wrap; }
+    .study-stat { }
+    .study-stat-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--carbon-40); display: block; margin-bottom: 4px; }
+    .study-stat-value { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.3rem; color: var(--black); }
+
+    .progress-track { width: 100%; height: 3px; background: var(--carbon-20); margin-bottom: 28px; }
+    .progress-fill { height: 100%; background: var(--champ); transition: width .3s ease; }
+
+    .deck-filter { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
+    .deck-chip {
+      padding: 6px 14px; background: var(--white);
+      color: var(--carbon-60); border: 1px solid var(--carbon-30);
+      border-radius: 20px; cursor: pointer;
+      font-size: 0.76rem; font-weight: 600; font-family: 'Inter', sans-serif;
+      transition: all .2s;
+    }
+    .deck-chip.active { background: var(--black); color: var(--white); border-color: var(--black); }
+    .deck-chip:hover:not(.active) { border-color: var(--carbon-60); color: var(--carbon-90); }
+
+    /* ── FLASHCARD ── fixed flip: both faces absolutely stacked */
+    .flashcard-container {
+      perspective: 1400px;
+      margin-bottom: 28px;
+      min-height: 360px;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .flashcard {
+      width: 100%; height: 360px;
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform .5s cubic-bezier(.4,.2,.2,1);
+    }
+    .flashcard.flipped { transform: rotateY(180deg); }
+
+    .card-side {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: var(--white);
+      border: 1px solid var(--carbon-20);
+      border-top: 3px solid var(--blue);
+      border-radius: 2px;
+      padding: 36px 40px;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .card-back { transform: rotateY(180deg); border-top-color: var(--champ); }
+
+    .deck-tag {
+      position: absolute; top: 18px; left: 40px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.66rem; color: var(--carbon-40);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .card-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.66rem; font-weight: 700;
+      color: var(--blue-dark); margin-bottom: 20px;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .card-back .card-label { color: var(--champ-dark); }
+
+    .card-text {
+      font-family: 'Merriweather', serif;
+      font-weight: 300;
+      font-size: 1.2em; color: var(--carbon-90);
+      line-height: 1.65;
+      max-height: 100%;
+      max-width: 100%;
+      overflow-y: auto;
+      padding: 0 6px;
+    }
+    .card-text::-webkit-scrollbar { width: 5px; }
+    .card-text::-webkit-scrollbar-track { background: transparent; }
+    .card-text::-webkit-scrollbar-thumb { background: var(--carbon-20); border-radius: 10px; }
+
+    .flip-hint {
+      position: absolute; bottom: 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem; color: var(--carbon-40); font-style: italic;
+    }
+
+    .controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    .empty-state {
+      text-align: center; color: var(--carbon-40);
+      padding: 50px 20px; font-family: 'Inter', sans-serif;
+      border: 1px dashed var(--carbon-20); width: 100%;
+    }
+    .empty-state h2 { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.15em; margin-bottom: 8px; color: var(--carbon-60); }
+    .empty-state p { font-size: 0.88em; }
+
+    /* ── REFERENCE RAIL ── */
+    .reference-rail { position: sticky; top: 130px; }
+    .rail-block { margin-bottom: 32px; }
     .rail-label {
       font-family: 'Inter', sans-serif;
       font-size: 0.66rem; font-weight: 700;
       letter-spacing: 2px; text-transform: uppercase;
-      color: var(--carbon-40);
-      margin-bottom: 14px;
+      color: var(--carbon-40); margin-bottom: 14px;
       display: flex; align-items: center; gap: 8px;
     }
     .rail-label::after { content: ''; flex: 1; height: 1px; background: var(--carbon-20); }
 
-    .toc-list { display: flex; flex-direction: column; }
-    .toc-list a {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.82rem; font-weight: 600;
-      color: var(--carbon-60);
-      padding: 8px 0 8px 14px;
-      border-left: 2px solid var(--carbon-20);
-      transition: color .2s, border-color .2s;
-    }
-    .toc-list a:hover, .toc-list a.toc-active {
-      color: var(--blue-dark);
-      border-color: var(--blue);
-    }
-
-    .ref-item {
-      display: flex; gap: 10px;
-      padding: 12px 0;
-      border-top: 1px solid var(--carbon-20);
-      font-family: 'Inter', sans-serif;
-    }
+    .ref-item { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--carbon-20); font-family: 'Inter', sans-serif; }
     .ref-item:first-child { border-top: none; }
-    .ref-num {
-      font-family: 'Merriweather', serif;
-      font-size: 0.76rem; font-weight: 700;
-      color: var(--blue);
-      flex-shrink: 0;
-      padding-top: 1px;
-    }
+    .ref-num { font-family: 'Merriweather', serif; font-size: 0.76rem; font-weight: 700; color: var(--champ-dark); flex-shrink: 0; padding-top: 1px; }
     .ref-text { font-size: 0.78rem; line-height: 1.55; color: var(--carbon-60); }
     .ref-text .ref-title { color: var(--black); font-weight: 600; display: block; margin-bottom: 2px; }
 
-    .rail-cta {
-      background: var(--carbon-90);
-      border-radius: 3px;
-      padding: 20px;
-    }
-    .rail-cta p {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.82rem; color: var(--carbon-30);
-      line-height: 1.6; margin-bottom: 14px;
-    }
-    .rail-cta .btn { width: 100%; justify-content: center; }
+    .rail-cta { background: var(--carbon-90); border-radius: 3px; padding: 20px; }
+    .rail-cta p { font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--carbon-30); line-height: 1.6; margin-bottom: 14px; }
+    .rail-cta .btn { background: var(--white); color: var(--black); }
 
-    @media (max-width: 900px) {
-      .reference-rail { position: static; }
-    }
+    @media (max-width: 900px) { .reference-rail { position: static; } }
 
-    /* ── RELATED ARTICLES ── */
-    .related-section {
-      background: var(--white);
-      padding: 60px 40px 0;
-    }
-    .related-inner { max-width: 1160px; margin: 0 auto; padding-top: 44px; border-top: 1px solid var(--carbon-20); }
-    .related-header { margin-bottom: 28px; }
-    .related-label {
-      font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--carbon-40); margin-bottom: 6px;
-    }
-    .related-title { font-size: 1.2rem; font-weight: 700; }
-
-    .related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    @media (max-width: 820px) { .related-grid { grid-template-columns: 1fr; } }
-
-    .related-card {
-      border: 1px solid var(--carbon-20);
-      border-radius: 3px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform .2s, box-shadow .2s;
-    }
-    .related-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.08); }
-    .related-thumb {
-      height: 120px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.2rem;
-    }
-    .related-body { padding: 18px; }
-    .related-tag {
-      display: inline-block; font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      color: #fff; padding: 3px 8px; border-radius: 2px; margin-bottom: 10px;
-    }
-    .related-card-title { font-size: 0.92rem; font-weight: 700; line-height: 1.35; }
-
-    /* ── FOOTER (unchanged) ── */
+    /* ── FOOTER ── */
     footer { background: var(--black); color: var(--white); padding: 48px 40px 28px; margin-top: 60px; }
     .footer-inner {
       max-width: 1160px; margin: 0 auto;
       display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 36px;
     }
     @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
-
     .footer-logo { margin-bottom: 14px; }
     .footer-logo img { height: 26px; filter: brightness(0) invert(1) opacity(0.65); }
     .footer-desc { font-size: 0.83rem; color: var(--carbon-40); line-height: 1.7; margin-bottom: 20px; }
     .footer-accred { font-size: 0.75rem; color: var(--carbon-60); }
-
     .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-60); margin-bottom: 14px; }
     .footer-links li { margin-bottom: 9px; }
     .footer-links a { font-size: 0.83rem; color: var(--carbon-30); transition: color .2s; }
     .footer-links a:hover { color: var(--white); }
-
     .social-icons { display: flex; gap: 10px; margin-top: 4px; }
-    .social-icon {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--carbon-80);
-      display: flex; align-items: center; justify-content: center;
-      transition: background .2s; flex-shrink: 0;
-    }
+    .social-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--carbon-80); display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
     .social-icon:hover { background: var(--carbon-60); }
     .social-icon svg { width: 16px; height: 16px; fill: var(--white); }
-
     .footer-divider { max-width: 1160px; margin: 0 auto 18px; border: none; border-top: 1px solid var(--carbon-80); }
-    .footer-bottom {
-      max-width: 1160px; margin: 0 auto;
-      display: flex; flex-wrap: wrap; gap: 10px 24px;
-      font-size: 0.73rem; color: var(--carbon-60);
-    }
+    .footer-bottom { max-width: 1160px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 0.73rem; color: var(--carbon-60); }
     .footer-bottom a { color: var(--carbon-60); }
     .footer-bottom a:hover { color: var(--carbon-30); }
-
-    /* ── BUTTONS (shared) ── */
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-weight: 700; font-size: 0.83rem;
-      padding: 9px 18px; border-radius: 2px;
-      transition: opacity .2s; cursor: pointer;
-      border: none; font-family: 'Inter', sans-serif;
-      background: var(--white); color: var(--black);
-    }
-    .btn:hover { opacity: 0.88; }
 
     @media (max-width: 600px) {
       .site-header { padding: 0 20px; }
       .breadcrumb-strip { padding: 12px 20px; }
-      .article-masthead { padding: 40px 20px 32px; }
-      .article-figure { padding: 0 20px 8px; }
-      .related-section { padding: 48px 20px 0; }
+      .article-masthead { padding: 40px 20px 28px; }
+      .section-nav { padding: 0 20px 0; }
+      .reading-layout { padding: 32px 20px 0; }
+      .flashcard { height: 320px; padding: 24px; }
+      .card-side { padding: 26px 22px; }
+      .card-text { font-size: 1.05em; }
       footer { padding: 48px 20px 24px; }
     }
-  </style>
+</style>
 </head>
 <body>
 
-<!-- HEADER (unchanged) -->
+<!-- HEADER -->
 <header class="site-header">
   <a href="/" class="logo">
     <img src="IMG_3083.png" alt="MedicineBank" />
@@ -500,206 +452,162 @@
   </div>
 </header>
 
-<!-- SECONDARY NAV (unchanged) -->
-<nav class="secondary-nav" id="secondary-nav">
+<!-- SECONDARY NAV -->
+<nav class="secondary-nav">
   <ul>
-    <li><a href="/#hero"          class="nav-link">Home</a></li>
-    <li><a href="/#newsletter"    class="nav-link active">Newsletter</a></li>
-    <li><a href="/#mission"       class="nav-link">Mission & Vision</a></li>
-    <li><a href="/#sectors"       class="nav-link">Sectors</a></li>
+    <li><a href="/#hero"       class="nav-link">Home</a></li>
+    <li><a href="/#newsletter" class="nav-link">Newsletter</a></li>
+    <li><a href="/#mission"    class="nav-link">Mission & Vision</a></li>
+    <li><a href="/#sectors"    class="nav-link">Sectors</a></li>
   </ul>
 </nav>
 
 <!-- BREADCRUMB -->
 <div class="breadcrumb-strip">
   <div class="breadcrumb-inner">
-    <a href="/#newsletter">Newsletter</a>
+    <a href="/#sectors">Tools</a>
     <span class="breadcrumb-sep">/</span>
-    <a href="/#newsletter">Research</a>
-    <span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">Clinical Case Writing for Beginners</span>
+    <span class="breadcrumb-current">Flashcard Studio</span>
   </div>
 </div>
 
-<!-- ARTICLE MASTHEAD -->
+<!-- MASTHEAD -->
 <div class="article-masthead">
   <div class="masthead-rule">
-    <span class="sector-marker res">Research · RES</span>
+    <span class="sector-marker tool">Tool · STUDY</span>
     <span class="rule-line"></span>
-    <span style="font-size:0.76rem;color:var(--carbon-40);font-family:'Inter',sans-serif;">April 2026</span>
   </div>
-  <h1>Research Spotlight: Clinical Case Writing for Beginners</h1>
-  <p class="article-dek">A practical guide produced by the Research sector on how to structure and submit your first clinical case report — from bedside observation to publication.</p>
-
-  <div class="byline-row">
-    <div class="byline-left">
-      <div class="byline-avatar">RS</div>
-      <div>
-        <div class="byline-name">MedicineBank Research Sector</div>
-        <div class="byline-meta">8 min read · Updated April 2026</div>
-      </div>
-    </div>
-    <div class="byline-actions">
-      <span>👁 4.2K reads</span>
-      <span>💬 12 comments</span>
-    </div>
-  </div>
+  <h1>Flashcard Studio</h1>
+  <p class="article-dek">Import an Anki .apkg deck, or paste Q&amp;A text — then study.</p>
 </div>
 
-<!-- ARTICLE FIGURE -->
-<div class="article-figure">
-  <div class="article-figure-frame">
-    <span class="article-figure-mark">🔬</span>
-  </div>
-  <p class="article-figure-caption">Case reports remain one of the most accessible entry points into published clinical research for undergraduate students.</p>
+<!-- SECTION NAV -->
+<div class="section-nav">
+  <button class="section-btn active" data-tab="apkg">Import .apkg</button>
+  <button class="section-btn" data-tab="text">Paste Text</button>
+  <button class="section-btn" data-tab="study">Study</button>
 </div>
 
 <!-- READING LAYOUT -->
 <div class="reading-layout">
-  <article class="article-body">
+  <div class="article-body">
 
-    <p>Every clinician remembers the first patient whose presentation didn't quite fit the textbook. For most, that moment passes as an interesting anecdote shared over lunch. For a small number of medical students, it becomes something more durable: a published clinical case report, and often, a first line on a CV that would otherwise be empty of research experience.</p>
-
-    <p>The clinical case report is the most approachable form of medical literature to write, and also one of the most frequently done badly. This guide exists to close that gap — not by making the process sound simpler than it is, but by mapping the exact sequence a student can follow from the moment they notice something worth writing about to the moment a journal accepts it.</p>
-
-    <h2><span class="h2-eyebrow">Section One</span>What actually makes a case "reportable"</h2>
-
-    <p>Not every unusual patient is a publishable one. Editors are looking for a specific kind of novelty, and it rarely means "a disease I've never heard of." More often, reportable cases fall into one of a few recognizable categories: an atypical presentation of a common condition, an unexpected response to a standard treatment, a diagnostic pathway that took an unusual number of steps to resolve, or a rare adverse event tied to a medication or intervention.</p>
-
-    <p>The single most common rejection reason at this stage isn't poor writing — it's a case that is interesting to the student but not novel to the field. Before drafting a single sentence, a fast literature check answers the only question that matters early on: <strong>has this specific presentation already been described?</strong> If the answer is yes, the case may still be worth writing, but the angle has to shift toward what's genuinely new about this instance.</p>
-
-    <div class="callout-box">
-      <div class="callout-label">Before you start writing</div>
-      <p>Search PubMed and Google Scholar for the condition plus the unusual feature you noticed. If three or more similar reports already exist, your case needs a distinguishing angle — a different demographic, a different complication, or a different diagnostic route — to justify a new submission.</p>
+    <!-- APKG TAB -->
+    <div id="apkg" class="section-content active">
+      <div class="panel-heading"><span class="h2-eyebrow">Section One</span>Import an Anki Deck</div>
+      <div class="callout-box">
+        <div class="callout-label">Format notes</div>
+        <p>An <code>.apkg</code> file is an Anki export — a zipped SQLite database. This reads <strong>Basic</strong> and <strong>Basic (and reversed)</strong> note types, which cover the large majority of decks. Cloze deletions and card types with extra template logic are imported using their raw field text, since re-deriving Anki's cloze rendering isn't reliable outside Anki itself.</p>
+      </div>
+      <div class="dropzone" id="apkgDrop">
+        <div id="apkgDropLabel">Drop your .apkg file here, or click to browse
+          <span class="sub">Only .apkg files are accepted</span>
+        </div>
+        <input type="file" id="apkgInput" accept=".apkg">
+      </div>
+      <div class="file-badge" id="apkgBadge">
+        <span id="apkgFileName"></span>
+        <span class="remove" id="apkgRemove">✕ remove</span>
+      </div>
+      <div class="button-group">
+        <button class="btn" id="apkgParseBtn" disabled>Import Deck</button>
+        <button class="btn btn-secondary" id="apkgClearBtn">Clear</button>
+      </div>
+      <div id="apkgMsg"></div>
+      <div id="apkgDeckList" class="deck-list"></div>
     </div>
 
-    <h2><span class="h2-eyebrow">Section Two</span>Securing consent and clearance early</h2>
+    <!-- TEXT TAB -->
+    <div id="text" class="section-content">
+      <div class="panel-heading"><span class="h2-eyebrow">Section Two</span>Paste Your Q&amp;A Content</div>
+      <div class="callout-box">
+        <div class="callout-label">Format notes</div>
+        <p><strong>Format:</strong> each question on its own line, its answer on the line(s) after it.<br>
+        Questions start with <code>Q:</code> or a question word (What / How / Why / Does / Is / Are / Which / Where / When / Can / Should).<br>
+        Answers start with <code>A:</code> or a bullet (<code>-</code>, <code>•</code>, <code>*</code>) — or just follow directly on the next line.</p>
+        <p><strong>Example:</strong><br><code>What causes fever?</code><br><code>Infection, inflammation, or malignancy</code></p>
+      </div>
+      <textarea id="textInput" placeholder="Paste your Q&A content here..."></textarea>
+      <div class="button-group">
+        <button class="btn" id="textParseBtn">Create Flashcards</button>
+        <button class="btn btn-secondary" id="textClearBtn">Clear</button>
+      </div>
+      <div id="textMsg"></div>
+    </div>
 
-    <p>This is the step students most often defer and most often regret deferring. Patient consent for case report publication is not a formality to collect once the manuscript is finished — it needs to happen as close as possible to the clinical encounter, while the patient (or their guardian) can be properly informed about what will be shared, even in de-identified form.</p>
+    <!-- STUDY TAB -->
+    <div id="study" class="section-content">
+      <div class="study-meta">
+        <div class="study-stats">
+          <div class="study-stat"><span class="study-stat-label">Current</span><span class="study-stat-value" id="currentCard">–</span></div>
+          <div class="study-stat"><span class="study-stat-label">Total</span><span class="study-stat-value" id="totalCards">0</span></div>
+          <div class="study-stat"><span class="study-stat-label">Progress</span><span class="study-stat-value" id="progressPercent">0%</span></div>
+        </div>
+      </div>
 
-    <p>Institutional requirements vary, but the underlying principle doesn't: a case report describes a real person, and their right to decline publication has to be respected regardless of how academically valuable the case is. Most journals will not proceed to review without a signed consent form, and a supervising physician's sign-off is typically expected before any drafting begins in earnest.</p>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
 
-    <blockquote>
-      Treat consent as the first deliverable of the project, not the last. A compelling case with no consent on file is not a draft — it's a dead end.
-      <cite>— MedicineBank Research Sector, mentorship notes</cite>
-    </blockquote>
+      <div class="deck-filter" id="deckFilter"></div>
 
-    <h2><span class="h2-eyebrow">Section Three</span>Structuring the manuscript</h2>
+      <div class="flashcard-container" id="flashcardContainer">
+        <div class="empty-state">
+          <h2>No flashcards yet</h2>
+          <p>Import a .apkg file or paste Q&amp;A text to get started.</p>
+        </div>
+      </div>
 
-    <p>Case reports follow a tighter, more predictable structure than most other article types, which is precisely what makes them approachable for a first-time author. Most journals expect some version of the following sequence:</p>
-
-    <ul>
-      <li><strong>Abstract</strong> — a compressed summary, typically under 250 words, stating the presentation, the key finding, and why it matters.</li>
-      <li><strong>Introduction</strong> — brief context on the condition and precisely what makes this instance worth reporting.</li>
-      <li><strong>Case presentation</strong> — the clinical narrative itself: history, examination findings, investigations, and management, told in chronological order.</li>
-      <li><strong>Discussion</strong> — the section where the case is placed in conversation with existing literature, and where its novelty is argued rather than merely asserted.</li>
-      <li><strong>Conclusion</strong> — a short, specific takeaway for the reader, not a restatement of the abstract.</li>
-    </ul>
-
-    <p>The discussion section is where most first drafts fall short. It's tempting to simply retell the case a second time; the section instead needs to do argumentative work, actively drawing on the literature search from Section One to explain exactly what this case adds that prior reports did not.</p>
-
-    <h2><span class="h2-eyebrow">Section Four</span>Choosing where to submit</h2>
-
-    <p>Case reports have a wide range of homes, from dedicated case report journals to case sections within general medical journals. For a first submission, dedicated case report journals are usually the more realistic target — review timelines tend to be shorter, and editorial expectations are calibrated specifically for this format rather than treating it as a lesser cousin of an original research article.</p>
-
-    <p>It's worth checking a target journal's specific case report guidelines before submission, since word counts, required checklists (such as CARE guidelines, which many journals now mandate), and figure requirements differ meaningfully between publications.</p>
-
-    <h2><span class="h2-eyebrow">Section Five</span>What mentorship looks like in practice</h2>
-
-    <p>Nearly every successful first-time case report has a supervising physician attached to it, and that relationship does more than satisfy an institutional requirement. A mentor catches the clinical nuance a student may not yet have the experience to weigh correctly, flags consent and ethical issues before they become submission blockers, and — often most usefully — tells a student honestly when a case isn't yet reportable, saving weeks of drafting a manuscript no journal will accept.</p>
-
-    <p>Students working through MedicineBank's Research sector are paired with a mentor at the literature-review stage specifically so that this feedback arrives before the writing begins, not after.</p>
-
-    <div class="article-closing">
-      <div class="closing-avatar">RS</div>
-      <div>
-        <div class="closing-name">MedicineBank Research Sector</div>
-        <p class="closing-bio">The Research sector advances research capacity for MedicineBank's student community through education, project facilitation, mentorship, and publication support, and oversees MedicineBank's forthcoming research journal.</p>
+      <div class="controls">
+        <button class="btn btn-secondary" id="prevBtn" disabled>← Previous</button>
+        <button class="btn" id="shuffleBtn">Shuffle</button>
+        <button class="btn btn-secondary" id="resetBtn">Reset</button>
+        <button class="btn" id="nextBtn">Next →</button>
       </div>
     </div>
 
-    <div class="share-row">
-      <span class="share-label">Share</span>
-      <div class="share-btn" aria-label="Share via link">
-        <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-      </div>
-      <div class="share-btn" aria-label="Share to LinkedIn">
-        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-      </div>
-    </div>
+  </div>
 
-  </article>
-
-  <!-- REFERENCE RAIL — signature element -->
+  <!-- REFERENCE RAIL -->
   <aside class="reference-rail">
     <div class="rail-block">
-      <div class="rail-label">On this page</div>
-      <nav class="toc-list" id="toc-list">
-        <a href="#" data-section="0">What makes a case reportable</a>
-        <a href="#" data-section="1">Consent and clearance</a>
-        <a href="#" data-section="2">Structuring the manuscript</a>
-        <a href="#" data-section="3">Choosing where to submit</a>
-        <a href="#" data-section="4">Mentorship in practice</a>
-      </nav>
-    </div>
-
-    <div class="rail-block">
-      <div class="rail-label">Cited &amp; referenced</div>
+      <div class="rail-label">How it works</div>
       <div class="ref-item">
         <span class="ref-num">01</span>
-        <span class="ref-text"><span class="ref-title">CARE Case Report Guidelines</span>Consensus reporting checklist widely required by case report journals.</span>
+        <span class="ref-text"><span class="ref-title">Import or paste</span>Bring in an Anki deck or your own Q&amp;A text.</span>
       </div>
       <div class="ref-item">
         <span class="ref-num">02</span>
-        <span class="ref-text"><span class="ref-title">PubMed / Google Scholar</span>Primary databases for the novelty check described in Section One.</span>
+        <span class="ref-text"><span class="ref-title">Filter by deck</span>Study everything at once, or isolate one deck.</span>
       </div>
       <div class="ref-item">
         <span class="ref-num">03</span>
-        <span class="ref-text"><span class="ref-title">Institutional Ethics Board</span>Local point of contact for patient consent and publication clearance.</span>
+        <span class="ref-text"><span class="ref-title">Click to flip</span>Reveal the answer, then step through with Next.</span>
+      </div>
+    </div>
+
+    <div class="rail-block">
+      <div class="rail-label">Supported formats</div>
+      <div class="ref-item">
+        <span class="ref-num">·</span>
+        <span class="ref-text"><span class="ref-title">.apkg (Basic)</span>Front/Back note types, incl. reversed cards.</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-num">·</span>
+        <span class="ref-text"><span class="ref-title">.apkg (Cloze)</span>Raw field text, deletions marked as [...].</span>
+      </div>
+      <div class="ref-item">
+        <span class="ref-num">·</span>
+        <span class="ref-text"><span class="ref-title">Plain text</span>Q:/A: pairs or question-word detection.</span>
       </div>
     </div>
 
     <div class="rail-cta">
-      <p>Working on your first case report? MedicineBank's Research sector pairs students with a mentor at the literature-review stage.</p>
-      <a href="mailto:eyadd@icloud.com" class="btn">Request a mentor</a>
+      <p>Have a deck you'd like to see supported better? Let the Research sector know.</p>
+      <a href="mailto:eyadd@icloud.com" class="btn btn-full">Send feedback</a>
     </div>
   </aside>
 </div>
 
-<!-- RELATED ARTICLES -->
-<section class="related-section">
-  <div class="related-inner">
-    <div class="related-header">
-      <p class="related-label">Continue Reading</p>
-      <h2 class="related-title">More from the Research Sector</h2>
-    </div>
-    <div class="related-grid">
-      <div class="related-card" onclick="window.open('https://medicinebank.org/News','_blank')">
-        <div class="related-thumb" style="background:var(--carbon-05);">📄</div>
-        <div class="related-body">
-          <span class="related-tag" style="background:var(--blue);">RES</span>
-          <div class="related-card-title">Introducing the MedicineBank Research Journal</div>
-        </div>
-      </div>
-      <div class="related-card" onclick="window.open('https://medicinebank.org/News','_blank')">
-        <div class="related-thumb" style="background:var(--carbon-05);">🎓</div>
-        <div class="related-body">
-          <span class="related-tag" style="background:var(--champ);">LOG</span>
-          <div class="related-card-title">Accreditation by Mansoura National University</div>
-        </div>
-      </div>
-      <div class="related-card" onclick="window.open('https://medicinebank.org/News','_blank')">
-        <div class="related-thumb" style="background:var(--carbon-05);">🤝</div>
-        <div class="related-body">
-          <span class="related-tag" style="background:var(--orange);">REL</span>
-          <div class="related-card-title">New Institutional Partnerships Across the Arab Region</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER (unchanged) -->
+<!-- FOOTER -->
 <footer id="contact">
   <div class="footer-inner">
     <div>
@@ -712,9 +620,9 @@
     <div>
       <p class="footer-col-title">Navigate</p>
       <ul class="footer-links">
-        <li><a href="/#newsletter"    class="nav-link">Newsletter</a></li>
-        <li><a href="/#mission"       class="nav-link">Mission & Vision</a></li>
-        <li><a href="/#sectors"       class="nav-link">Sectors</a></li>
+        <li><a href="/#newsletter" class="nav-link">Newsletter</a></li>
+        <li><a href="/#mission"    class="nav-link">Mission & Vision</a></li>
+        <li><a href="/#sectors"    class="nav-link">Sectors</a></li>
       </ul>
     </div>
     <div>
@@ -744,28 +652,409 @@
 </footer>
 
 <script>
-  // Scroll-spy for the "On this page" reference rail
-  const tocLinks = document.querySelectorAll('#toc-list a');
-  const headings = document.querySelectorAll('.article-body h2');
+// ---------- shared state ----------
+let cards = [];
+let currentIndex = 0;
+let activeDeckFilter = null;
+let sqlPromise = null;
 
-  tocLinks.forEach((link, i) => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      const target = headings[i];
-      if (!target) return;
-      const top = target.getBoundingClientRect().top + window.scrollY - 130;
-      window.scrollTo({ top, behavior: 'smooth' });
+// ---------- tab switching ----------
+document.querySelectorAll('.section-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tab).classList.add('active');
+        if (tab === 'study') { buildDeckFilter(); updateDisplay(); }
     });
-  });
+});
 
-  window.addEventListener('scroll', () => {
-    const scrollY = window.scrollY + 160;
-    let activeIndex = 0;
-    headings.forEach((h, i) => {
-      if (h.offsetTop <= scrollY) activeIndex = i;
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// =====================================================================
+// APKG IMPORT
+// =====================================================================
+const apkgDrop = document.getElementById('apkgDrop');
+const apkgInput = document.getElementById('apkgInput');
+const apkgBadge = document.getElementById('apkgBadge');
+const apkgFileName = document.getElementById('apkgFileName');
+const apkgRemove = document.getElementById('apkgRemove');
+const apkgParseBtn = document.getElementById('apkgParseBtn');
+const apkgClearBtn = document.getElementById('apkgClearBtn');
+const apkgMsg = document.getElementById('apkgMsg');
+const apkgDeckList = document.getElementById('apkgDeckList');
+
+let pendingApkgFile = null;
+
+apkgDrop.addEventListener('click', () => apkgInput.click());
+apkgDrop.addEventListener('dragover', e => { e.preventDefault(); apkgDrop.classList.add('dragover'); });
+apkgDrop.addEventListener('dragleave', () => apkgDrop.classList.remove('dragover'));
+apkgDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    apkgDrop.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleApkgFile(e.dataTransfer.files[0]);
+});
+apkgInput.addEventListener('change', e => {
+    if (e.target.files.length) handleApkgFile(e.target.files[0]);
+});
+apkgRemove.addEventListener('click', e => {
+    e.stopPropagation();
+    resetApkgFile();
+});
+apkgClearBtn.addEventListener('click', resetApkgFile);
+
+function handleApkgFile(file) {
+    apkgMsg.innerHTML = '';
+    if (!file.name.toLowerCase().endsWith('.apkg')) {
+        apkgMsg.innerHTML = '<div class="msg error">That doesn\'t look like a .apkg file. Please choose the file Anki exported (File → Export → Anki Deck Package).</div>';
+        return;
+    }
+    pendingApkgFile = file;
+    apkgFileName.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+    apkgBadge.style.display = 'flex';
+    apkgParseBtn.disabled = false;
+}
+
+function resetApkgFile() {
+    pendingApkgFile = null;
+    apkgInput.value = '';
+    apkgBadge.style.display = 'none';
+    apkgParseBtn.disabled = true;
+    apkgMsg.innerHTML = '';
+    apkgDeckList.innerHTML = '';
+}
+
+function getSqlJs() {
+    if (!sqlPromise) {
+        sqlPromise = initSqlJs({
+            locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+        });
+    }
+    return sqlPromise;
+}
+
+apkgParseBtn.addEventListener('click', async () => {
+    if (!pendingApkgFile) return;
+    apkgParseBtn.disabled = true;
+    apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Reading deck file…</div>';
+    apkgDeckList.innerHTML = '';
+
+    try {
+        const zipBuffer = await pendingApkgFile.arrayBuffer();
+        const zip = await JSZip.loadAsync(zipBuffer);
+
+        let dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2');
+        if (!dbEntry) {
+            if (zip.file('collection.anki21b')) {
+                throw new Error(
+                    'This deck uses Anki\'s newer zstd-compressed format (collection.anki21b), ' +
+                    'which needs a decompression step this browser-only tool doesn\'t include. ' +
+                    'In Anki, try re-exporting with "Support older Anki versions" checked — that ' +
+                    'produces a collection.anki21 or collection.anki2 file this tool can read.'
+                );
+            }
+            throw new Error('Couldn\'t find a collection database inside this .apkg file. It may be corrupted or not a valid Anki export.');
+        }
+
+        apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Loading database engine…</div>';
+        const SQL = await getSqlJs();
+
+        apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Parsing notes and cards…</div>';
+        const dbBuffer = await dbEntry.async('uint8array');
+        const db = new SQL.Database(dbBuffer);
+
+        const colRes = db.exec('SELECT decks FROM col LIMIT 1');
+        let deckNames = {};
+        if (colRes.length) {
+            const decksJson = JSON.parse(colRes[0].values[0][0]);
+            for (const id in decksJson) {
+                deckNames[id] = decksJson[id].name || 'Default';
+            }
+        }
+
+        const notesRes = db.exec('SELECT id, mid, flds FROM notes');
+        const cardsRes = db.exec('SELECT id, nid, did, ord FROM cards');
+        const modelsRes = db.exec('SELECT models FROM col LIMIT 1');
+
+        if (!notesRes.length) {
+            throw new Error('This deck doesn\'t contain any notes.');
+        }
+
+        const models = modelsRes.length ? JSON.parse(modelsRes[0].values[0][0]) : {};
+
+        const noteMap = {};
+        for (const row of notesRes[0].values) {
+            const [id, mid, flds] = row;
+            noteMap[id] = { mid: String(mid), fields: flds.split('\x1f') };
+        }
+
+        const cardRows = cardsRes.length ? cardsRes[0].values : [];
+
+        const importedCards = [];
+        let skippedCloze = 0;
+        let skippedUnknown = 0;
+
+        for (const row of cardRows) {
+            const [cardId, nid, did, ord] = row;
+            const note = noteMap[nid];
+            if (!note) continue;
+            const model = models[note.mid];
+            const deckName = deckNames[did] || 'Default';
+
+            if (!model) { skippedUnknown++; continue; }
+
+            const modelName = (model.name || '').toLowerCase();
+            const fieldNames = (model.flds || []).map(f => f.name.toLowerCase());
+
+            if (modelName.includes('cloze')) {
+                const text = note.fields[0] || '';
+                const extra = note.fields[1] || '';
+                const q = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '[...]');
+                const a = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '$1') +
+                          (extra ? '\n\n' + stripHtml(extra) : '');
+                if (q.trim() && a.trim()) {
+                    importedCards.push({ q, a, deck: deckName });
+                } else {
+                    skippedCloze++;
+                }
+                continue;
+            }
+
+            let frontIdx = 0, backIdx = 1;
+            const frontFieldIdx = fieldNames.indexOf('front');
+            const backFieldIdx = fieldNames.indexOf('back');
+            if (frontFieldIdx !== -1) frontIdx = frontFieldIdx;
+            if (backFieldIdx !== -1) backIdx = backFieldIdx;
+
+            if (note.fields.length < 2) { skippedUnknown++; continue; }
+
+            const frontText = stripHtml(note.fields[frontIdx] ?? note.fields[0]);
+            const backText = stripHtml(note.fields[backIdx] ?? note.fields[1]);
+
+            if (!frontText.trim() || !backText.trim()) { skippedUnknown++; continue; }
+
+            if (ord === 1 && modelName.includes('reversed')) {
+                importedCards.push({ q: backText, a: frontText, deck: deckName });
+            } else {
+                importedCards.push({ q: frontText, a: backText, deck: deckName });
+            }
+        }
+
+        db.close();
+
+        if (importedCards.length === 0) {
+            apkgMsg.innerHTML = '<div class="msg error">Found the deck, but couldn\'t extract any readable cards from it. ' +
+                'This can happen with heavily customized note types or image-only cards.</div>';
+            apkgParseBtn.disabled = false;
+            return;
+        }
+
+        cards = cards.concat(importedCards);
+
+        const deckCounts = {};
+        importedCards.forEach(c => { deckCounts[c.deck] = (deckCounts[c.deck] || 0) + 1; });
+
+        let summary = `<div class="msg success">✓ Imported ${importedCards.length} card${importedCards.length === 1 ? '' : 's'}`;
+        if (skippedCloze || skippedUnknown) {
+            const skippedTotal = skippedCloze + skippedUnknown;
+            summary += ` (${skippedTotal} card${skippedTotal === 1 ? '' : 's'} skipped — unreadable or unsupported note type)`;
+        }
+        summary += '. Switch to the Study tab to begin.</div>';
+        apkgMsg.innerHTML = summary;
+
+        apkgDeckList.innerHTML =
+            Object.entries(deckCounts).map(([name, count]) =>
+                `<div class="deck-row"><span>${escapeHtml(name)}</span><span class="count">${count} card${count === 1 ? '' : 's'}</span></div>`
+            ).join('');
+
+        resetApkgFile();
+
+    } catch (err) {
+        console.error(err);
+        apkgMsg.innerHTML = `<div class="msg error">Couldn't import this deck: ${escapeHtml(err.message || String(err))}</div>`;
+        apkgParseBtn.disabled = false;
+    }
+});
+
+function stripHtml(html) {
+    if (!html) return '';
+    const withBreaks = html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/p>/gi, '\n');
+    const div = document.createElement('div');
+    div.innerHTML = withBreaks;
+    let text = (div.textContent || div.innerText || '').replace(/\[sound:[^\]]*\]/g, '');
+    return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// =====================================================================
+// TEXT PARSE
+// =====================================================================
+const textInput = document.getElementById('textInput');
+const textMsg = document.getElementById('textMsg');
+
+document.getElementById('textParseBtn').addEventListener('click', () => {
+    const text = textInput.value.trim();
+    textMsg.innerHTML = '';
+
+    if (!text) {
+        textMsg.innerHTML = '<div class="msg error">Please paste some content first.</div>';
+        return;
+    }
+
+    const parsed = [];
+    const lines = text.split('\n');
+    let currentQ = '';
+    let currentA = '';
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        if (line.match(/^(Q:|What|Which|How|Why|Where|When|Does|Is|Are|Can|Should)/i)) {
+            if (currentQ && currentA) parsed.push({ q: currentQ, a: currentA, deck: 'Pasted Text' });
+            currentQ = line.replace(/^Q:\s*/i, '');
+            currentA = '';
+        } else if (line.match(/^(A:|[-•*])/)) {
+            currentA = line.replace(/^(A:|[-•*])\s*/i, '');
+        } else if (currentQ) {
+            currentA = currentA ? currentA + '\n' + line : line;
+        }
+    }
+    if (currentQ && currentA) parsed.push({ q: currentQ, a: currentA, deck: 'Pasted Text' });
+
+    if (parsed.length === 0) {
+        textMsg.innerHTML = '<div class="msg error">Couldn\'t find any Q&amp;A pairs in that text. Check the format and try again.</div>';
+        return;
+    }
+
+    cards = cards.concat(parsed);
+    textMsg.innerHTML = `<div class="msg success">✓ Created ${parsed.length} flashcard${parsed.length === 1 ? '' : 's'}. Switch to the Study tab to begin.</div>`;
+});
+
+document.getElementById('textClearBtn').addEventListener('click', () => {
+    textInput.value = '';
+    textMsg.innerHTML = '';
+});
+
+// =====================================================================
+// STUDY
+// =====================================================================
+function buildDeckFilter() {
+    const filterEl = document.getElementById('deckFilter');
+    const deckNames = [...new Set(cards.map(c => c.deck))];
+
+    if (deckNames.length <= 1) {
+        filterEl.innerHTML = '';
+        activeDeckFilter = null;
+        return;
+    }
+
+    if (activeDeckFilter && !deckNames.includes(activeDeckFilter)) activeDeckFilter = null;
+
+    filterEl.innerHTML = `<div class="deck-chip ${activeDeckFilter === null ? 'active' : ''}" data-deck="">All decks</div>` +
+        deckNames.map(name =>
+            `<div class="deck-chip ${activeDeckFilter === name ? 'active' : ''}" data-deck="${escapeHtml(name)}">${escapeHtml(name)}</div>`
+        ).join('');
+
+    filterEl.querySelectorAll('.deck-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            activeDeckFilter = chip.dataset.deck || null;
+            currentIndex = 0;
+            buildDeckFilter();
+            updateDisplay();
+        });
     });
-    tocLinks.forEach((link, i) => link.classList.toggle('toc-active', i === activeIndex));
-  }, { passive: true });
+}
+
+function currentDeckCards() {
+    return activeDeckFilter ? cards.filter(c => c.deck === activeDeckFilter) : cards;
+}
+
+function updateDisplay() {
+    const container = document.getElementById('flashcardContainer');
+    const deckCards = currentDeckCards();
+    document.getElementById('totalCards').textContent = deckCards.length;
+
+    if (deckCards.length === 0) {
+        container.innerHTML = '<div class="empty-state"><h2>No flashcards yet</h2><p>Import a .apkg file or paste Q&amp;A text to get started.</p></div>';
+        document.getElementById('currentCard').textContent = '–';
+        document.getElementById('progressPercent').textContent = '0%';
+        document.getElementById('progressFill').style.width = '0%';
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+        return;
+    }
+
+    if (currentIndex >= deckCards.length) currentIndex = deckCards.length - 1;
+    if (currentIndex < 0) currentIndex = 0;
+
+    const card = deckCards[currentIndex];
+    const progressPercent = Math.round(((currentIndex + 1) / deckCards.length) * 100);
+
+    document.getElementById('currentCard').textContent = currentIndex + 1;
+    document.getElementById('progressPercent').textContent = progressPercent + '%';
+    document.getElementById('progressFill').style.width = progressPercent + '%';
+
+    container.innerHTML = `
+        <div class="flashcard" id="card">
+            <div class="card-side card-front">
+                <span class="deck-tag">${escapeHtml(card.deck)}</span>
+                <span class="card-label">Question</span>
+                <div class="card-text">${escapeHtml(card.q).replace(/\n/g, '<br>')}</div>
+                <div class="flip-hint">Click to reveal answer</div>
+            </div>
+            <div class="card-side card-back">
+                <span class="deck-tag">${escapeHtml(card.deck)}</span>
+                <span class="card-label">Answer</span>
+                <div class="card-text">${escapeHtml(card.a).replace(/\n/g, '<br>')}</div>
+                <div class="flip-hint">Click to see question</div>
+            </div>
+        </div>
+    `;
+    document.getElementById('card').addEventListener('click', flipCard);
+
+    document.getElementById('prevBtn').disabled = currentIndex === 0;
+    document.getElementById('nextBtn').disabled = currentIndex === deckCards.length - 1;
+}
+
+function flipCard() {
+    const card = document.getElementById('card');
+    if (card) card.classList.toggle('flipped');
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    const deckCards = currentDeckCards();
+    if (currentIndex < deckCards.length - 1) { currentIndex++; updateDisplay(); }
+});
+document.getElementById('prevBtn').addEventListener('click', () => {
+    if (currentIndex > 0) { currentIndex--; updateDisplay(); }
+});
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+    const deckCards = currentDeckCards();
+    for (let i = deckCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deckCards[i], deckCards[j]] = [deckCards[j], deckCards[i]];
+    }
+    if (activeDeckFilter) {
+        let k = 0;
+        cards = cards.map(c => c.deck === activeDeckFilter ? deckCards[k++] : c);
+    } else {
+        cards = deckCards;
+    }
+    currentIndex = 0;
+    updateDisplay();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+    currentIndex = 0;
+    updateDisplay();
+});
 </script>
 </body>
 </html>
