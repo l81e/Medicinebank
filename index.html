@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apply — MedicineBank Publications</title>
+  <title>Apply — MedicineBank Media</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -11,21 +11,20 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #f6ecd9;
-      --bg-deep:     #efe0c4;
-      --panel:       #f1e3c8;
-      --panel-hi:    #ead5ac;
-      --line:        #ddc294;
-      --line-soft:   #e3cca3;
+      --bg:          #1c0d10;
+      --bg-deep:     #140809;
+      --panel:       #3a1a1f;
+      --panel-hi:    #4a2229;
+      --line:        #562832;
+      --line-soft:   #4a222a;
 
-      --text:        #4a3b22;
-      --text-dim:    #7a6541;
-      --text-faint:  #a8926a;
+      --text:        #f7efec;
+      --text-dim:    #d8bcbc;
+      --text-faint:  #a3797d;
 
-      --accent:      #c9a463;
-      --accent-dark: #a9834a;
-      --accent-text: #3a2b12;
-      --err:         #b3453f;
+      --accent:      #c23e4a;
+      --accent-dark: #94232d;
+      --err:         #e2646f;
     }
 
     body {
@@ -39,13 +38,14 @@
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
 
+    /* ── HEADER (not sticky — scrolls away; never fades / never moves on lang switch) ── */
     .site-header {
       padding: 22px 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .logo img { height: 26px; width: auto; display: block; filter: brightness(0) opacity(0.82); }
+    .logo img { height: 26px; width: auto; display: block; filter: brightness(0) invert(1) opacity(0.92); }
 
     .lang-toggle {
       display: flex; align-items: center; gap: 2px;
@@ -53,6 +53,7 @@
       border: 1px solid var(--line-soft);
       border-radius: 20px;
       padding: 3px;
+      /* fixed width so the pill never resizes when EN <-> عربي swap */
       width: 132px;
       flex-shrink: 0;
     }
@@ -64,11 +65,14 @@
       background: none; border: none; color: var(--text-faint);
       cursor: pointer; transition: background .15s, color .15s;
     }
-    .lang-toggle button.active { background: var(--accent); color: var(--accent-text); }
+    .lang-toggle button.active { background: var(--accent); color: var(--text); }
 
+    /* ── LANGUAGE FADE ── */
+    /* everything except the header fades out/in on language switch */
     .fade-region { transition: opacity .15s ease; }
     .fade-region.fading { opacity: 0; }
 
+    /* ── HERO ── */
     .hero {
       max-width: 640px;
       margin: 0 auto;
@@ -84,6 +88,7 @@
       line-height: 1.75; max-width: 480px;
     }
 
+    /* ── FORM ── */
     .form-section { padding: 0 40px 90px; }
     .form-wrap { max-width: 640px; margin: 0 auto; }
 
@@ -122,10 +127,25 @@
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(201,164,99,0.22);
+      box-shadow: 0 0 0 3px rgba(194,62,74,0.22);
     }
     textarea { resize: vertical; min-height: 92px; line-height: 1.6; }
 
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a3797d' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+    html[dir="rtl"] select {
+      background-position: left 13px center;
+      padding-right: 13px;
+      padding-left: 34px;
+    }
+
+    /* role checkboxes — with short descriptions */
     .role-checks { display: flex; flex-direction: column; gap: 2px; }
     .role-check {
       display: flex; align-items: flex-start; gap: 11px;
@@ -135,24 +155,39 @@
     }
     .role-check:last-child { border-bottom: none; }
 
-    .role-check input[type="radio"] {
+    .role-check input[type="checkbox"] {
       appearance: none; width: 17px; height: 17px; flex-shrink: 0;
-      border: 1.5px solid var(--text-faint); border-radius: 50%;
+      border: 1.5px solid var(--text-faint); border-radius: 3px;
       cursor: pointer; position: relative; margin-top: 2px;
       transition: background .15s, border-color .15s;
     }
-    .role-check input[type="radio"]:checked {
-      border-color: var(--accent);
+    .role-check input[type="checkbox"]:checked {
+      background: var(--accent); border-color: var(--accent);
     }
-    .role-check input[type="radio"]:checked::after {
-      content: ''; position: absolute; left: 3px; top: 3px;
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent);
+    .role-check input[type="checkbox"]:checked::after {
+      content: ''; position: absolute; left: 5px; top: 1px;
+      width: 4px; height: 8px;
+      border: solid var(--text); border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
     }
-    .role-check input[type="radio"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .role-check input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .role-check-text { font-size: 0.86rem; }
     .role-check-text strong { display: block; font-weight: 700; margin-bottom: 1px; }
     .role-check-text span.desc { display: block; color: var(--text-faint); font-size: 0.76rem; font-weight: 400; }
+
+    /* experience pills */
+    .radio-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .radio-pill {
+      display: flex; align-items: center; gap: 6px;
+      border: 1.5px solid var(--line-soft); border-radius: 18px;
+      padding: 7px 14px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+      color: var(--text-dim);
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .radio-pill:hover { border-color: var(--text-faint); }
+    .radio-pill.checked { border-color: var(--accent); background: var(--accent); color: var(--text); }
+    .radio-pill input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .radio-pill:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .char-count { font-size: 0.71rem; color: var(--text-faint); text-align: right; margin-top: 5px; }
     html[dir="rtl"] .char-count { text-align: left; }
@@ -166,7 +201,7 @@
     .consent-row input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
     .consent-row input[type="checkbox"]:checked::after {
       content: ''; position: absolute; left: 5px; top: 1px;
-      width: 4px; height: 8px; border: solid var(--accent-text); border-width: 0 2px 2px 0; transform: rotate(45deg);
+      width: 4px; height: 8px; border: solid var(--text); border-width: 0 2px 2px 0; transform: rotate(45deg);
     }
     .consent-row label { font-size: 0.79rem; color: var(--text-dim); line-height: 1.6; cursor: pointer; }
     .consent-row label .req { color: var(--accent); margin-left: 3px; }
@@ -178,7 +213,7 @@
     .submit-btn {
       width: 100%;
       background: var(--accent);
-      color: var(--accent-text);
+      color: var(--text);
       border: none; border-radius: 4px;
       font-family: inherit;
       font-size: 0.9rem; font-weight: 700;
@@ -199,6 +234,7 @@
     .field-group.invalid select,
     .field-group.invalid textarea { border-color: var(--err); }
 
+    /* ── SECTION HEADERS (basic info / details) ── */
     .section-heading {
       font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px;
       color: var(--text-faint); text-transform: uppercase;
@@ -206,6 +242,7 @@
     }
     html[dir="rtl"] .section-heading { text-transform: none; }
 
+    /* ── COLLAPSIBLE BASIC-INFO SECTION ── */
     #basicInfoSection { margin-bottom: 30px; }
 
     #basicInfoFields {
@@ -250,6 +287,7 @@
       display: none;
     }
 
+    /* success state */
     .success-panel {
       display: none;
       text-align: center;
@@ -277,12 +315,13 @@
 
     #applyForm.hide { display: none; }
 
+    /* ── SUBMIT ERROR STATE ── */
     .submit-error {
       display: none;
       font-size: 0.79rem;
       color: var(--err);
-      background: rgba(179,69,63,0.08);
-      border: 1.5px solid rgba(179,69,63,0.3);
+      background: rgba(226,100,111,0.1);
+      border: 1.5px solid rgba(226,100,111,0.35);
       border-radius: 4px;
       padding: 10px 13px;
       margin-bottom: 16px;
@@ -299,6 +338,7 @@
 </head>
 <body>
 
+<!-- HEADER (scrolls away with the page; static position, no fade) -->
 <header class="site-header">
   <a href="/" class="logo">
     <img src="IMG_3083.png" alt="MedicineBank" />
@@ -309,13 +349,16 @@
   </div>
 </header>
 
+<!-- Everything below the header fades on language switch -->
 <div class="fade-region" id="fadeRegion">
 
+  <!-- HERO -->
   <section class="hero">
-    <h1 data-en="Apply to Publications — Year 2" data-ar="التقديم لل publications في سنة تانية">التقديم لل publications في سنة تانية</h1>
-    <p data-en="Year 2 applications — flashcard making (Anki) or website data management. Tell us a bit about yourself and what you're looking for." data-ar="تقديم الفرقة الثانية — إعداد فلاش كاردز (Anki) أو إدارة بيانات الموقع. عرّفنا على نفسك وإيه اللي بتدور عليه.">تقديم الفرقة الثانية — إعداد فلاش كاردز (Anki) أو إدارة بيانات الموقع. عرّفنا على نفسك وإيه اللي بتدور عليه.</p>
+    <h1 data-en="Apply to MedicineBank Media" data-ar="التقديم على قسم الميديا">التقديم على قسم الميديا</h1>
+    <p data-en="Content creation, script writing, directing, cinematography, filmography, PopScience prep, presenting, and voice-over. Tell us who you are and where you'd fit." data-ar="صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك وفين ممكن تناسب.">صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك وفين ممكن تناسب.</p>
   </section>
 
+  <!-- FORM -->
   <section class="form-section">
     <div class="form-wrap">
 
@@ -323,6 +366,7 @@
 
         <div class="submit-error" id="submitError" data-en="Something went wrong sending your application. Please check your connection and try again." data-ar="حصلت مشكلة في إرسال طلبك. تأكد من الاتصال بالإنترنت وحاول تاني.">حصلت مشكلة في إرسال طلبك. تأكد من الاتصال بالإنترنت وحاول تاني.</div>
 
+        <!-- ── BASIC INFO (collapses automatically once valid) ── -->
         <div id="basicInfoSection">
 
           <div class="summary-bar" id="summaryBar">
@@ -334,60 +378,149 @@
 
             <div class="field-row">
               <div class="field-group" data-required="true">
-                <label class="field-label" for="fullName"><span data-en="Name" data-ar="الاسم">الاسم</span><span class="req">*</span></label>
+                <label class="field-label" for="fullName"><span data-en="Full name" data-ar="الاسم بالكامل">الاسم بالكامل</span><span class="req">*</span></label>
                 <input type="text" id="fullName" name="fullName" data-ph-en="No funny nicknames" data-ph-ar="بلاش اسامي شهرة الله يخليك" placeholder="بلاش اسامي شهرة الله يخليك" />
                 <div class="error-msg" data-en="Please enter your name." data-ar="من فضلك اكتب اسمك.">من فضلك اكتب اسمك.</div>
               </div>
               <div class="field-group" data-required="true">
-                <label class="field-label" for="phone"><span data-en="Number" data-ar="رقم الهاتف">رقم الهاتف</span><span class="req">*</span></label>
+                <label class="field-label" for="college"><span data-en="College" data-ar="الكلية">الكلية</span><span class="req">*</span></label>
+                <input type="text" id="college" name="university" data-ph-en="e.g. Faculty of Medicine" data-ph-ar="مثال: كلية الطب" placeholder="مثال: كلية الطب" />
+                <div class="error-msg" data-en="Please enter your college." data-ar="من فضلك اكتب كليتك.">من فضلك اكتب كليتك.</div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="email"><span data-en="Email" data-ar="البريد الإلكتروني">البريد الإلكتروني</span><span class="req">*</span></label>
+                <input type="email" id="email" name="email" data-ph-en="you@example.com" data-ph-ar="you@example.com" placeholder="you@example.com" />
+                <div class="error-msg" data-en="Please enter a valid email." data-ar="من فضلك اكتب بريد إلكتروني صحيح.">من فضلك اكتب بريد إلكتروني صحيح.</div>
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="phone"><span data-en="Phone / WhatsApp" data-ar="رقم الهاتف / واتساب">رقم الهاتف / واتساب</span><span class="req">*</span></label>
                 <input type="tel" id="phone" name="phone" data-ph-en="+20 1xx xxx xxxx" data-ph-ar="+20 1xx xxx xxxx" placeholder="+20 1xx xxx xxxx" />
                 <div class="error-msg" data-en="Please enter a phone number." data-ar="من فضلك اكتب رقم هاتف.">من فضلك اكتب رقم هاتف.</div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="city"><span data-en="City" data-ar="المدينة">المدينة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+                <input type="text" id="city" name="city" data-ph-en="e.g. Mansoura" data-ph-ar="مثال: المنصورة" placeholder="مثال: المنصورة" />
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="year"><span data-en="Academic year" data-ar="السنة الدراسية">السنة الدراسية</span><span class="req">*</span></label>
+                <select id="year" name="year">
+                  <option value="" selected disabled data-en="Select year" data-ar="اختر السنة">اختر السنة</option>
+                  <option data-en="1st year" data-ar="الفرقة الأولى">الفرقة الأولى</option>
+                  <option data-en="2nd year" data-ar="الفرقة الثانية">الفرقة الثانية</option>
+                  <option data-en="3rd year" data-ar="الفرقة الثالثة">الفرقة الثالثة</option>
+                  <option data-en="4th year" data-ar="الفرقة الرابعة">الفرقة الرابعة</option>
+                  <option data-en="5th year" data-ar="الفرقة الخامسة">الفرقة الخامسة</option>
+                  <option data-en="6th year / Intern" data-ar="الفرقة السادسة / امتياز">الفرقة السادسة / امتياز</option>
+                </select>
+                <div class="error-msg" data-en="Please select your academic year." data-ar="من فضلك اختر سنتك الدراسية.">من فضلك اختر سنتك الدراسية.</div>
               </div>
             </div>
 
           </div>
         </div>
 
+        <!-- ── APPLICATION DETAILS ── -->
         <div id="detailsSection">
 
+          <!-- Roles -->
           <div class="field-group" data-required="true" id="roleGroup">
-            <label class="field-label"><span data-en="Which role do you want to cover?" data-ar="أنهي دور عايز تغطيه؟">أنهي دور عايز تغطيه؟</span><span class="req">*</span></label>
+            <label class="field-label"><span data-en="Which role(s) interest you?" data-ar="أنهي مجال/مجالات مهتم بيها؟">أنهي مجال/مجالات مهتم بيها؟</span><span class="req">*</span></label>
             <div class="role-checks" id="roleChecks">
               <label class="role-check">
-                <input type="radio" name="role" value="Flashcards Making (Anki)" />
+                <input type="checkbox" name="roles" value="Content Creation" />
                 <span class="role-check-text">
-                  <strong data-en="Flashcards Making (Anki)" data-ar="إعداد فلاش كاردز (Anki)">إعداد فلاش كاردز (Anki)</strong>
-                  <span class="desc" data-en="Building and organizing Anki decks" data-ar="بناء وتنظيم مجموعات الأنكي">بناء وتنظيم مجموعات الأنكي</span>
+                  <strong data-en="Content Creation" data-ar="صناعة محتوى">صناعة محتوى</strong>
+                  <span class="desc" data-en="Ideas, formats, series" data-ar="أفكار، فورمات، سلاسل حلقات">أفكار، فورمات، سلاسل حلقات</span>
                 </span>
               </label>
               <label class="role-check">
-                <input type="radio" name="role" value="Website Data Managing" />
+                <input type="checkbox" name="roles" value="Script Writing" />
                 <span class="role-check-text">
-                  <strong data-en="Website Data Managing" data-ar="إدارة بيانات الموقع">إدارة بيانات الموقع</strong>
-                  <span class="desc" data-en="Organizing and maintaining site content" data-ar="تنظيم ومتابعة محتوى الموقع">تنظيم ومتابعة محتوى الموقع</span>
+                  <strong data-en="Script Writing" data-ar="كتابة سكريبت">كتابة سكريبت</strong>
+                  <span class="desc" data-en="Episode & video scripts" data-ar="سكريبتات الحلقات والفيديوهات">سكريبتات الحلقات والفيديوهات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Directing" />
+                <span class="role-check-text">
+                  <strong data-en="Directing" data-ar="إخراج">إخراج</strong>
+                  <span class="desc" data-en="Shot-calling, pacing, tone" data-ar="اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة">اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Cinematography" />
+                <span class="role-check-text">
+                  <strong data-en="Cinematography" data-ar="تصوير سينمائي">تصوير سينمائي</strong>
+                  <span class="desc" data-en="Camera work, lighting" data-ar="التصوير بالكاميرا والإضاءة">التصوير بالكاميرا والإضاءة</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Filmography" />
+                <span class="role-check-text">
+                  <strong data-en="Filmography" data-ar="فيلموغرافيا">فيلموغرافيا</strong>
+                  <span class="desc" data-en="Filming & editing footage" data-ar="تصوير ومونتاج اللقطات">تصوير ومونتاج اللقطات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="PopScience Prep" />
+                <span class="role-check-text">
+                  <strong>PopScience Prep</strong>
+                  <span class="desc" data-en="Research & fact-checking" data-ar="بحث وتدقيق المعلومات">بحث وتدقيق المعلومات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Presenting" />
+                <span class="role-check-text">
+                  <strong data-en="Presenting" data-ar="تقديم">تقديم</strong>
+                  <span class="desc" data-en="On-camera hosting" data-ar="التقديم أمام الكاميرا">التقديم أمام الكاميرا</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Voice-Over" />
+                <span class="role-check-text">
+                  <strong data-en="Voice-Over" data-ar="تعليق صوتي">تعليق صوتي</strong>
+                  <span class="desc" data-en="Narration & audio" data-ar="السرد الصوتي والأوديو">السرد الصوتي والأوديو</span>
                 </span>
               </label>
             </div>
-            <div class="error-msg" id="roleError" data-en="Please select a role." data-ar="من فضلك اختر دور.">من فضلك اختر دور.</div>
+            <div class="error-msg" id="roleError" data-en="Please select at least one role." data-ar="من فضلك اختر مجال واحد على الأقل.">من فضلك اختر مجال واحد على الأقل.</div>
           </div>
 
-          <div class="field-group" data-required="true">
-            <label class="field-label" for="expectations"><span data-en="Your expectations about the role?" data-ar="توقعاتك عن الدور؟">توقعاتك عن الدور؟</span><span class="req">*</span></label>
-            <textarea id="expectations" name="expectations" maxlength="600" data-ph-en="What are you hoping to get out of this role?" data-ph-ar="إيه اللي بتتوقعه أو بتدور عليه من الدور ده؟" placeholder="إيه اللي بتتوقعه أو بتدور عليه من الدور ده؟"></textarea>
-            <div class="char-count"><span id="expectationsCount">0</span>/600</div>
-            <div class="error-msg" data-en="Tell us a bit about your expectations." data-ar="قولنا كام كلمة عن توقعاتك.">قولنا كام كلمة عن توقعاتك.</div>
-          </div>
-
+          <!-- Experience level -->
           <div class="field-group">
-            <label class="field-label" for="experience"><span data-en="Previous experience" data-ar="خبرة سابقة">خبرة سابقة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
-            <textarea id="experience" name="experience" maxlength="600" data-ph-en="Anything relevant you've done before — leave blank if none." data-ph-ar="أي حاجة سبق وعملتها ليها علاقة، سيبها فاضية لو معندكش." placeholder="أي حاجة سبق وعملتها ليها علاقة، سيبها فاضية لو معندكش."></textarea>
-            <div class="char-count"><span id="experienceCount">0</span>/600</div>
+            <label class="field-label"><span data-en="Experience level" data-ar="مستوى الخبرة">مستوى الخبرة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+            <div class="radio-row" id="expRow">
+              <label class="radio-pill"><input type="radio" name="experience" value="New to this" /><span data-en="New to this" data-ar="لسه بادئ">لسه بادئ</span></label>
+              <label class="radio-pill"><input type="radio" name="experience" value="Some experience" /><span data-en="Some experience" data-ar="عندي خبرة بسيطة">عندي خبرة بسيطة</span></label>
+              <label class="radio-pill"><input type="radio" name="experience" value="Experienced" /><span data-en="Experienced" data-ar="عندي خبرة">عندي خبرة</span></label>
+            </div>
+          </div>
+
+          <!-- Portfolio -->
+          <div class="field-group">
+            <label class="field-label" for="portfolio"><span data-en="Portfolio / sample work link" data-ar="رابط أعمالك السابقة">رابط أعمالك السابقة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+            <input type="url" id="portfolio" name="portfolio" data-ph-en="YouTube, Drive, Instagram, anything showing your work" data-ph-ar="حط هنا لينكات اي محتوى اشتغلت عليه قبل كدا" placeholder="حط هنا لينك اي محتوى اشتغلت عليه قبل كدا" />
+            <div class="field-hint" data-en="No polished portfolio yet? Leave it blank — we care more about the answer below." data-ar="لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.">لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.</div>
+          </div>
+
+          <!-- Why -->
+          <div class="field-group" data-required="true">
+            <label class="field-label" for="why"><span data-en="Why do you want to join Media?" data-ar="ليه عايز تنضم لقسم الميديا؟">ليه عايز تنضم لقسم الميديا؟</span><span class="req">*</span></label>
+            <textarea id="why" name="why" maxlength="600" data-ph-en="Tell us what draws you to this — a project you're proud of, a gap you want to fill, anything real." data-ph-ar="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تقدمها." placeholder="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تقدمها."></textarea>
+            <div class="char-count"><span id="whyCount">0</span>/600</div>
+            <div class="error-msg" data-en="Tell us a bit about why you're applying." data-ar="قولنا كام كلمة ليه بتقدم.">قولنا كام كلمة ليه بتقدم.</div>
           </div>
 
           <div class="consent-group" id="consentGroup">
             <div class="consent-row" id="consentRow">
               <input type="checkbox" id="consent" name="consent" />
-              <label for="consent"><span data-en="I'm okay with MedicineBank Publications contacting me by phone about this application." data-ar="موافق إن قسم النشر في MedicineBank يتواصل معايا بالهاتف بخصوص التقديم ده.">موافق إن قسم النشر في MedicineBank يتواصل معايا بالهاتف بخصوص التقديم ده.</span><span class="req">*</span></label>
+              <label for="consent"><span data-en="I'm okay with MedicineBank Media contacting me by email or phone about this application." data-ar="موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.">موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.</span><span class="req">*</span></label>
             </div>
             <div class="error-msg" id="consentError" data-en="You need to agree to be contacted before submitting." data-ar="لازم توافق إن يتم التواصل معاك قبل ما تقدر تبعت الطلب.">لازم توافق إن يتم التواصل معاك قبل ما تقدر تبعت الطلب.</div>
           </div>
@@ -399,19 +532,20 @@
 
       </form>
 
+      <!-- SUCCESS STATE -->
       <div class="success-panel" id="successPanel">
         <div class="success-icon">
           <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
         <h2 data-en="Application received" data-ar="تم استلام طلبك">تم استلام طلبك</h2>
-        <p data-en="Thanks for applying to MedicineBank Publications — we've got it. Someone from the team will reach out by phone once applications are reviewed." data-ar="شكرًا لتقديمك لقسم النشر في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالهاتف بعد مراجعة الطلبات.">شكرًا لتقديمك لقسم النشر في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالهاتف بعد مراجعة الطلبات.</p>
+        <p data-en="Thanks for applying to MedicineBank Media — we've got it. Someone from the team will reach out by email or phone once applications are reviewed." data-ar="شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.">شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.</p>
         <button class="btn-secondary" id="resetBtn" data-en="Submit another response" data-ar="إرسال طلب تاني">إرسال طلب تاني</button>
       </div>
 
     </div>
   </section>
 
-</div>
+</div><!-- /fade-region -->
 
 <script>
   const form = document.getElementById('applyForm');
@@ -422,10 +556,12 @@
   const submitBtn = document.getElementById('submitBtn');
   const submitError = document.getElementById('submitError');
 
+  // Formspree endpoint for MedicineBank Media applications
   const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xwlkpgvp';
 
   let currentLang = 'ar';
 
+  /* ── Language toggle with fade ── */
   const langButtons = document.querySelectorAll('.lang-toggle button');
 
   function applyLangText(lang) {
@@ -442,6 +578,7 @@
       if (ph != null) el.setAttribute('placeholder', ph);
     });
 
+    // re-render dynamic summary bar text in the new language, if visible
     updateSummaryBar();
   }
 
@@ -458,10 +595,21 @@
 
   langButtons.forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
 
-  document.querySelectorAll('.role-check input[type="radio"]').forEach(rb => {
-    rb.addEventListener('change', () => clearFieldError(document.getElementById('roleGroup')));
+  /* ── role checkbox ── */
+  document.querySelectorAll('.role-check input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => clearFieldError(document.getElementById('roleGroup')));
   });
 
+  /* ── experience pill visual state ── */
+  document.querySelectorAll('#expRow .radio-pill').forEach(pill => {
+    const radio = pill.querySelector('input[type="radio"]');
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('#expRow .radio-pill').forEach(p => p.classList.remove('checked'));
+      pill.classList.add('checked');
+    });
+  });
+
+  /* ── consent checkbox ── */
   const consentField = document.getElementById('consent');
   const consentRow = document.getElementById('consentRow');
   const consentGroup = document.getElementById('consentGroup');
@@ -478,13 +626,10 @@
     if (err) err.classList.add('show');
   }
 
-  const expectationsField = document.getElementById('expectations');
-  const expectationsCount = document.getElementById('expectationsCount');
-  expectationsField.addEventListener('input', () => { expectationsCount.textContent = expectationsField.value.length; });
-
-  const experienceField = document.getElementById('experience');
-  const experienceCount = document.getElementById('experienceCount');
-  experienceField.addEventListener('input', () => { experienceCount.textContent = experienceField.value.length; });
+  /* ── char counter ── */
+  const whyField = document.getElementById('why');
+  const whyCount = document.getElementById('whyCount');
+  whyField.addEventListener('input', () => { whyCount.textContent = whyField.value.length; });
 
   function clearFieldError(group) {
     group.classList.remove('invalid');
@@ -497,25 +642,32 @@
     if (err) err.classList.add('show');
   }
 
-  const basicRequiredNames = ['fullName', 'phone'];
+  form.querySelectorAll('#basicInfoFields [data-required] input, #basicInfoFields [data-required] select').forEach(() => {});
+
+  const basicRequiredNames = ['fullName', 'university', 'email', 'phone', 'year'];
 
   function basicInfoIsValid() {
     return basicRequiredNames.every(name => {
       const el = form.elements[name];
-      return el.value.trim().length > 0;
+      let ok = el.value.trim().length > 0;
+      if (name === 'email' && ok) ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+      return ok;
     });
   }
 
   function validateBasicField(el) {
     const group = el.closest('.field-group');
-    const ok = el.value.trim().length > 0;
+    let ok = el.value.trim().length > 0;
+    if (el.name === 'email' && ok) ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
     if (ok) clearFieldError(group); else setFieldError(group);
     return ok;
   }
 
+  // clear-on-input for basic fields, plus check for auto-collapse
   basicRequiredNames.forEach(name => {
     const el = form.elements[name];
-    el.addEventListener('input', () => {
+    const evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(evt, () => {
       clearFieldError(el.closest('.field-group'));
       maybeAutoCollapse();
     });
@@ -527,13 +679,15 @@
   const summaryEditBtn = document.getElementById('summaryEditBtn');
 
   let basicInfoCollapsed = false;
-  let userReopened = false;
+  let userReopened = false; // once reopened manually, don't auto-recollapse while editing
 
   function updateSummaryBar() {
     if (!basicInfoCollapsed) return;
     const name = form.fullName.value.trim();
-    const phone = form.phone.value.trim();
-    const label = `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(phone)}`;
+    const college = form.university.value.trim();
+    const label = currentLang === 'ar'
+      ? `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(college)}`
+      : `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(college)}`;
     summaryBarText.innerHTML = label;
   }
 
@@ -566,30 +720,36 @@
 
   summaryEditBtn.addEventListener('click', expandBasicInfo);
 
+  /* ── submit ── */
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     let valid = true;
 
     submitError.classList.remove('show');
 
+    // basic info fields — validate regardless of collapsed state
     basicRequiredNames.forEach(name => {
       const el = form.elements[name];
       if (!validateBasicField(el)) valid = false;
     });
 
-    const expectationsGroup = expectationsField.closest('.field-group');
-    if (expectationsField.value.trim().length === 0) { setFieldError(expectationsGroup); valid = false; }
-    else clearFieldError(expectationsGroup);
+    // why field
+    const whyGroup = whyField.closest('.field-group');
+    if (whyField.value.trim().length === 0) { setFieldError(whyGroup); valid = false; }
+    else clearFieldError(whyGroup);
 
+    // roles
     const roleGroup = document.getElementById('roleGroup');
-    const anyRole = Array.from(form.querySelectorAll('input[name="role"]')).some(rb => rb.checked);
+    const anyRole = Array.from(form.querySelectorAll('input[name="roles"]')).some(cb => cb.checked);
     if (!anyRole) { setFieldError(roleGroup); valid = false; }
     else clearFieldError(roleGroup);
 
+    // consent — required before an application can be sent
     if (!consentField.checked) { setConsentError(); valid = false; }
     else clearConsentError();
 
     if (!valid) {
+      // if the invalid field lives in a collapsed basic-info section, reopen it first
       const firstInvalid = form.querySelector('.field-group.invalid') || (consentRow.classList.contains('invalid') ? consentGroup : null);
       if (firstInvalid && basicInfoFields.contains(firstInvalid) && basicInfoCollapsed) {
         expandBasicInfo();
@@ -600,15 +760,21 @@
 
     const data = {
       fullName: form.fullName.value.trim(),
+      college: form.university.value.trim(),
+      email: form.email.value.trim(),
       phone: form.phone.value.trim(),
-      role: (form.querySelector('input[name="role"]:checked') || {}).value || null,
-      expectations: form.expectations.value.trim(),
-      experience: form.experience.value.trim(),
-      consent: form.consent.checked,
-      sector: 'Publications',
-      year: 'Year 2'
+      year: form.year.value,
+      city: form.city.value.trim(),
+      roles: Array.from(form.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value),
+      experience: form.experience.value || null,
+      portfolio: form.portfolio.value.trim(),
+      why: form.why.value.trim(),
+      consent: form.consent.checked
     };
 
+    // ── SUBMISSION HANDLER ──────────────────────────────────────────
+    // Sends the application to Formspree. Formspree emails you each
+    // submission and keeps a copy in your dashboard at formspree.io.
     submitBtn.disabled = true;
     const originalBtnText = submitBtn.textContent;
     submitBtn.textContent = currentLang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
@@ -634,6 +800,7 @@
         submitBtn.disabled = false;
         submitBtn.textContent = originalBtnText;
       });
+    // ─────────────────────────────────────────────────────────────────
   });
 
   function showSuccess() {
@@ -644,14 +811,15 @@
 
   resetBtn.addEventListener('click', () => {
     form.reset();
-    expectationsCount.textContent = '0';
-    experienceCount.textContent = '0';
+    document.querySelectorAll('#expRow .radio-pill.checked').forEach(p => p.classList.remove('checked'));
+    whyCount.textContent = '0';
     form.querySelectorAll('.field-group.invalid').forEach(g => clearFieldError(g));
     clearConsentError();
     successPanel.classList.remove('show');
     form.classList.remove('hide');
     submitError.classList.remove('show');
 
+    // reset basic-info collapse state too
     basicInfoCollapsed = false;
     userReopened = false;
     basicInfoFields.classList.remove('collapsed');
