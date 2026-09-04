@@ -26,6 +26,8 @@
       --accent-dark: #a9834a;
       --accent-text: #3a2b12;
       --err:         #b3453f;
+      --warn:        #b3803f;
+      --warn-bg:     rgba(179,128,63,0.10);
     }
 
     body {
@@ -153,6 +155,27 @@
     .role-check-text { font-size: 0.86rem; }
     .role-check-text strong { display: block; font-weight: 700; margin-bottom: 1px; }
     .role-check-text span.desc { display: block; color: var(--text-faint); font-size: 0.76rem; font-weight: 400; }
+
+    .role-check.is-closed { cursor: not-allowed; }
+    .role-check.is-closed input[type="radio"] {
+      cursor: not-allowed;
+      border-color: var(--line-soft);
+      opacity: 0.6;
+    }
+    .role-check.is-closed .role-check-text strong,
+    .role-check.is-closed .role-check-text span.desc { opacity: 0.55; }
+    .role-closed-note {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; font-weight: 700;
+      color: var(--warn);
+      background: var(--warn-bg);
+      border: 1px solid rgba(179,128,63,0.28);
+      border-radius: 12px;
+      padding: 2px 9px;
+      margin-top: 5px;
+      width: fit-content;
+    }
+    .role-closed-note svg { width: 11px; height: 11px; flex-shrink: 0; stroke: var(--warn); fill: none; stroke-width: 2.4; }
 
     .char-count { font-size: 0.71rem; color: var(--text-faint); text-align: right; margin-top: 5px; }
     html[dir="rtl"] .char-count { text-align: left; }
@@ -367,11 +390,15 @@
                   <span class="desc" data-en="Organizing and maintaining site content" data-ar="تنظيم ومتابعة محتوى الموقع">تنظيم ومتابعة محتوى الموقع</span>
                 </span>
               </label>
-              <label class="role-check">
-                <input type="radio" name="role" value="Data Collection" />
+              <label class="role-check is-closed" aria-disabled="true">
+                <input type="radio" name="role" value="Data Collection" disabled />
                 <span class="role-check-text">
                   <strong data-en="Data Collection" data-ar="جمع داتا">جمع داتا</strong>
                   <span class="desc" data-en="Gathering and compiling source material" data-ar="تجميع المصادر والمعلومات">تجميع المصادر والمعلومات</span>
+                  <span class="role-closed-note">
+                    <svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                    <span data-en="Applications for this role are complete" data-ar="التقديم على الدور ده اتقفل">التقديم على الدور ده اتقفل</span>
+                  </span>
                 </span>
               </label>
             </div>
