@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Data of the Day — MedicineBank</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,6 +25,9 @@
     --accent-dark:   #ffffff;
     --accent-glow:   rgba(255,255,255,0.08);
     --err:           #c7c7c7;
+
+    --today-green:   #3ba55c;
+    --today-green-hi:#46bd68;
   }
 
   html,body{height:100%;}
@@ -36,6 +39,7 @@
     position:relative;
     min-height:100vh;
     overflow-x:hidden;
+    touch-action:pan-x pan-y;
   }
   html[dir="rtl"] body{font-family:'Cairo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
 
@@ -59,16 +63,23 @@
     font-weight:800; font-size:0.72rem; letter-spacing:0.2px; color:var(--text);
   }
 
-  .calendar-wrap{position:relative; z-index:31;}
+  .calendar-wrap{position:relative; z-index:31; display:flex; align-items:center; gap:8px;}
+  html[dir="rtl"] .calendar-wrap{flex-direction:row-reverse;}
   .calendar-btn{
     width:34px; height:34px; border-radius:50%;
     background:transparent; border:1px solid var(--line-soft);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; color:var(--text-faint);
     transition:border-color .15s, color .15s, background .15s;
+    flex-shrink:0;
   }
   .calendar-btn:hover{border-color:var(--text-faint); color:var(--text-dim);}
   .calendar-btn svg{width:16px; height:16px;}
+
+  #calDateLabel{
+    font-size:0.68rem; color:var(--text-faint); font-weight:600;
+    white-space:nowrap;
+  }
 
   /* Calendar popup — must sit above everything, including the date hero */
   .calendar-popup{
@@ -148,31 +159,45 @@
     line-height:1.05;
   }
   html[dir="rtl"] .date-big{font-family:'Cairo',sans-serif; font-weight:700;}
-  .date-today-badge{
-    display:inline-block; margin-top:8px; margin-right:8px;
-    font-size:0.68rem; font-weight:700;
-    color:var(--text);
-    border:1px solid var(--text-dim);
-    border-radius:20px; padding:3px 11px;
-    opacity:0; pointer-events:none;
-    transition:opacity .15s;
-  }
-  html[dir="rtl"] .date-today-badge{margin-right:0; margin-left:8px;}
-  .date-today-badge.show{opacity:1;}
   .date-sub{font-size:0.78rem; color:var(--text-faint); margin-top:6px;}
 
-  .jump-today{
+  /*
+    Today pill / Jump-to-today button — now a single element.
+    Default state (viewing today): neutral pill, reads "Today", not clickable.
+    Away state (viewing another day): same position/shape, turns green,
+    reads "Jump to today", is clickable, and jumps back to today.
+  */
+  .today-pill{
     display:inline-flex; align-items:center; gap:6px;
     margin-top:10px;
     text-align:left;
-    font-size:0.76rem; font-weight:700; color:var(--text-dim);
-    background:var(--panel); border:1px solid var(--line-soft);
+    font-size:0.76rem; font-weight:700;
     border-radius:20px; padding:7px 14px;
-    cursor:pointer;
-    transition:border-color .15s, color .15s, background .15s;
+    font-family:inherit;
+    border:1px solid var(--text-dim);
+    background:transparent;
+    color:var(--text);
+    cursor:default;
+    transition:border-color .18s ease, color .18s ease, background .18s ease;
   }
-  .jump-today svg{width:12px; height:12px; flex-shrink:0;}
-  .jump-today:hover{border-color:var(--text-dim); color:var(--text); background:var(--panel-hi);}
+  html[dir="rtl"] .today-pill{text-align:right;}
+  .today-pill .today-pill-icon{
+    width:12px; height:12px; flex-shrink:0;
+    display:none;
+  }
+  .today-pill .today-pill-icon svg{width:100%; height:100%; display:block;}
+
+  .today-pill.is-jump{
+    cursor:pointer;
+    border-color:var(--today-green);
+    background:var(--today-green);
+    color:#0b0b0b;
+  }
+  .today-pill.is-jump:hover{
+    border-color:var(--today-green-hi);
+    background:var(--today-green-hi);
+  }
+  .today-pill.is-jump .today-pill-icon{display:inline-flex;}
 
   /* ---------- MAIN ---------- */
   main{position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 24px 90px; touch-action:pan-y; overflow:hidden;}
@@ -225,32 +250,6 @@
   .subject-count{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
 
   .subject-head-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
-
-  .subject-color-btn{
-    width:24px; height:24px; border-radius:6px;
-    border:1.5px solid var(--line-soft); cursor:pointer;
-    background:var(--subj-color, var(--panel-hi));
-    padding:0;
-  }
-  .subject-color-btn:hover{border-color:var(--text-dim);}
-
-  .color-swatch-popup{
-    position:absolute; top:calc(100% + 6px); right:0;
-    background:var(--panel-hi); border:1px solid var(--line-soft);
-    border-radius:10px; padding:10px;
-    display:none;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
-    box-shadow:0 12px 30px rgba(0,0,0,0.55);
-    z-index:20;
-  }
-  html[dir="rtl"] .color-swatch-popup{right:auto; left:0;}
-  .color-swatch-popup.open{display:grid;}
-  .swatch-btn{
-    width:26px; height:26px; border-radius:6px; border:1.5px solid transparent;
-    cursor:pointer; padding:0;
-  }
-  .swatch-btn.selected{border-color:var(--text);}
 
   .subject-add-btn{
     flex-shrink:0;
@@ -314,30 +313,31 @@
 
   .loading-row{text-align:center; padding:40px 0; color:var(--text-faint); font-size:0.85rem;}
 
-  /* ---------- MODAL (shared: add subject / add material / edit material) ---------- */
+  /* ---------- MODAL (shared: add subject / add material / edit material) ----------
+     Always a centered popup window, regardless of screen size — never a
+     bottom sheet that springs from a button. */
   .modal-overlay{
     position:fixed; inset:0; z-index:50;
     background:rgba(0,0,0,0.72);
-    display:none; align-items:flex-end; justify-content:center;
+    display:none; align-items:center; justify-content:center;
+    padding:20px;
   }
-  @media (min-width:640px){ .modal-overlay{align-items:center;} }
   .modal-overlay.open{display:flex;}
   .modal-sheet{
     background:var(--panel-hi);
     border:1px solid var(--line-soft);
-    border-radius:16px 16px 0 0;
+    border-radius:14px;
     width:100%; max-width:480px;
     max-height:88vh; overflow-y:auto;
     padding:22px 22px 26px;
   }
-  @media (min-width:640px){ .modal-sheet{border-radius:14px; max-height:80vh;} }
 
   .modal-title{font-size:1.02rem; font-weight:700; margin-bottom:18px;}
 
   .mfield{margin-bottom:16px;}
   .mfield label{display:block; font-size:0.76rem; font-weight:700; color:var(--text-dim); margin-bottom:7px;}
   .mfield input[type="text"], .mfield input[type="url"], .mfield select, .mfield textarea{
-    width:100%; font-family:inherit; font-size:0.86rem;
+    width:100%; font-family:inherit; font-size:16px;
     padding:10px 12px; background:var(--panel);
     border:1.5px solid var(--line-soft); border-radius:6px; color:var(--text);
   }
@@ -451,11 +451,11 @@
   <div class="date-center">
     <div class="date-big" id="dateBig">—</div>
     <div class="date-sub" id="dateSub"></div>
-    <div class="date-today-badge" id="todayBadge" data-en="Today" data-ar="النهاردة">Today</div>
-    <br/>
-    <button class="jump-today" id="jumpTodayBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l7-7M3 12l7 7M3 12h18"/></svg>
-      <span data-en="Jump to today" data-ar="روح لدلوقتي">Jump to today</span>
+    <button type="button" class="today-pill" id="todayPill">
+      <span class="today-pill-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l7-7M3 12l7 7M3 12h18"/></svg>
+      </span>
+      <span id="todayPillLabel" data-en="Today" data-ar="النهاردة">Today</span>
     </button>
   </div>
 </section>
@@ -587,8 +587,8 @@
 
   const dateBig = document.getElementById('dateBig');
   const dateSub = document.getElementById('dateSub');
-  const todayBadge = document.getElementById('todayBadge');
-  const jumpTodayBtn = document.getElementById('jumpTodayBtn');
+  const todayPill = document.getElementById('todayPill');
+  const todayPillLabel = document.getElementById('todayPillLabel');
 
   const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   const MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
@@ -597,24 +597,42 @@
   const DOW_SHORT_EN = ["S","M","T","W","T","F","S"];
   const DOW_SHORT_AR = ["ح","ن","ث","ر","خ","ج","س"];
 
+  /*
+    Single pill, two states:
+    - viewing today  → neutral "Today" pill, not a button
+    - viewing another day → same spot/shape, turns green, becomes the
+      "Jump to today" button
+  */
   function renderDate(){
     const days = currentLang === 'ar' ? DAYS_AR : DAYS_EN;
     dateBig.textContent = days[viewDate.getDay()];
 
     const isToday = fmtKey(viewDate) === fmtKey(todayDate());
-    todayBadge.classList.toggle('show', isToday);
-    jumpTodayBtn.style.visibility = isToday ? 'hidden' : 'visible';
+    todayPill.classList.toggle('is-jump', !isToday);
+    todayPill.disabled = isToday;
+    todayPill.setAttribute('aria-live', 'polite');
+
+    if (isToday){
+      todayPillLabel.dataset.en = 'Today';
+      todayPillLabel.dataset.ar = 'النهاردة';
+      todayPillLabel.textContent = currentLang === 'ar' ? 'النهاردة' : 'Today';
+      todayPill.removeAttribute('aria-label');
+    } else {
+      todayPillLabel.dataset.en = 'Jump to today';
+      todayPillLabel.dataset.ar = 'روح لدلوقتي';
+      todayPillLabel.textContent = currentLang === 'ar' ? 'روح لدلوقتي' : 'Jump to today';
+      todayPill.setAttribute('aria-label', currentLang === 'ar' ? 'روح لدلوقتي' : 'Jump to today');
+    }
   }
 
   function renderCalBtnDate(){
-    let btn = document.getElementById('calDateLabel');
-    if (!btn){
-      btn = document.createElement('div');
-      btn.id = 'calDateLabel';
-      btn.style.cssText = 'font-size:0.68rem; color:var(--text-faint); text-align:center; margin-top:4px; font-weight:600;';
-      document.getElementById('calendarWrap').appendChild(btn);
+    let label = document.getElementById('calDateLabel');
+    if (!label){
+      label = document.createElement('div');
+      label.id = 'calDateLabel';
+      document.getElementById('calendarWrap').appendChild(label);
     }
-    btn.textContent = fmtDMY(viewDate);
+    label.textContent = fmtDMY(viewDate);
   }
 
   function goToDate(d, direction){
@@ -630,7 +648,8 @@
     }
   }
 
-  jumpTodayBtn.addEventListener('click', () => {
+  todayPill.addEventListener('click', () => {
+    if (!todayPill.classList.contains('is-jump')) return; // no-op while already on today
     const t = todayDate();
     const direction = t.getTime() === viewDate.getTime() ? undefined : (t > viewDate ? 'next' : 'prev');
     goToDate(t, direction);
@@ -903,11 +922,7 @@
                 <div class="subject-count">${countLabel}</div>
               </div>
             </div>
-            <div class="subject-head-actions" style="position:relative;">
-              <button type="button" class="subject-color-btn" data-color-subject="${subj.id}" title="${currentLang==='ar'?'اللون':'Color'}" aria-label="Change color"></button>
-              <div class="color-swatch-popup" data-color-popup="${subj.id}">
-                ${SUBJECT_COLORS.map(c => `<button type="button" class="swatch-btn ${c.toLowerCase()===color.toLowerCase()?'selected':''}" style="background:${c}" data-pick-color="${subj.id}" data-color-value="${c}"></button>`).join('')}
-              </div>
+            <div class="subject-head-actions">
               <button type="button" class="subject-add-btn" data-add-material="${subj.id}" aria-label="Add material">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
               </button>
@@ -973,29 +988,6 @@
     main.querySelectorAll('[data-edit-material]').forEach(row => {
       row.addEventListener('click', () => openMaterialModal(row.dataset.editSubject, row.dataset.editMaterial));
     });
-
-    main.querySelectorAll('[data-color-subject]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const popup = main.querySelector(`[data-color-popup="${btn.dataset.colorSubject}"]`);
-        const wasOpen = popup.classList.contains('open');
-        main.querySelectorAll('.color-swatch-popup').forEach(p => p.classList.remove('open'));
-        if (!wasOpen) popup.classList.add('open');
-      });
-    });
-    main.querySelectorAll('[data-pick-color]').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const subj = (currentDayData.subjects || []).find(s => s.id === btn.dataset.pickColor);
-        if (!subj) return;
-        subj.color = btn.dataset.colorValue;
-        renderDay();
-        await saveDay();
-      });
-    });
-    document.addEventListener('click', () => {
-      main.querySelectorAll('.color-swatch-popup').forEach(p => p.classList.remove('open'));
-    }, { once: true });
   }
 
   async function toggleSubject(subjectId){
