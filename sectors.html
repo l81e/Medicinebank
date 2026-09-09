@@ -1,371 +1,871 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MedicineBank — Who We Are</title>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data of the Day — MedicineBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
 <style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
-:root{
-  --bg:#0e0d0a;
-  --surface:#161409;
-  --surface-2:#1c1a10;
-  --border:#2c2717;
-  --text:#f2ede1;
-  --text-dim:#9a917c;
-  --text-faint:#6e6656;
-  --brass:#c9a35e;
-  --brass-soft:rgba(201,163,94,0.10);
+  :root{
+    --bg:            #0b0a09;
+    --bg-grain-a:    rgba(255,255,255,0.020);
+    --bg-grain-b:    rgba(255,255,255,0.012);
+    --panel:         #17130f;
+    --panel-hi:      #1f1a15;
+    --line:          #2c2620;
+    --line-soft:     #221d18;
 
-  /* sector colors — used as the encoded signal throughout */
-  --research:#3a6fd6;      /* Egyptian blue */
-  --research-soft:rgba(58,111,214,0.10);
-  --media:#c0475a;         /* burgundy */
-  --media-soft:rgba(192,71,90,0.10);
-  --logistics:#ecdfb4;     /* champagne, lifted for contrast on charcoal */
-  --logistics-soft:rgba(236,223,180,0.16);
-  --relations:#e8863f;     /* orange */
-  --relations-soft:rgba(232,134,63,0.10);
+    --text:          #f2ece3;
+    --text-dim:      #ada195;
+    --text-faint:    #6f645a;
 
-  --serif:'Source Serif 4', Georgia, serif;
-  --sans:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-}
+    --accent:        #c23e4a;
+    --accent-dark:   #94232d;
+    --accent-glow:   rgba(194,62,74,0.16);
+    --err:           #e2646f;
 
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--sans);
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-}
-@media (prefers-reduced-motion: reduce){
-  html{scroll-behavior:auto;}
-  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
-}
+    --gold:          #c9a15a;
+  }
 
-::selection{ background:var(--brass-soft); color:var(--brass); }
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    position:relative;
+    min-height:100vh;
+  }
+  html[dir="rtl"] body{font-family:'Cairo',sans-serif;}
 
-a{ color:inherit; }
-:focus-visible{ outline:2px solid var(--brass); outline-offset:3px; border-radius:2px; }
+  /* grain texture — layered noise, near-black but never flat */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image:
+      radial-gradient(circle at 20% 20%, var(--bg-grain-a) 0%, transparent 45%),
+      radial-gradient(circle at 80% 60%, var(--bg-grain-b) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    background-size:auto,auto,140px 140px;
+  }
 
-.wrap{
-  max-width:760px;
-  margin:0 auto;
-  padding:0 24px;
-}
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+  button{font-family:inherit;}
 
-/* ══ HERO ══ */
-.hero{
-  padding:88px 0 56px;
-  border-bottom:1px solid var(--border);
-}
-.hero-eyebrow{
-  display:flex; align-items:center; gap:10px;
-  font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
-  color:var(--text-faint); margin-bottom:28px;
-}
-.hero-eyebrow .dot{ width:5px; height:5px; border-radius:50%; background:var(--brass); flex-shrink:0; }
-.hero h1{
-  font-family:var(--serif);
-  font-weight:700;
-  font-size:clamp(38px, 6.4vw, 58px);
-  line-height:1.08;
-  letter-spacing:-0.01em;
-  margin-bottom:22px;
-}
-.hero h1 em{
-  font-style:italic;
-  color:var(--brass);
-}
-.hero-lede{
-  font-size:16.5px;
-  color:var(--text-dim);
-  max-width:56ch;
-  margin-bottom:14px;
-}
-.hero-lede strong{ color:var(--text); font-weight:600; }
+  /* ---------- HEADER ---------- */
+  .site-header{
+    position:relative; z-index:2;
+    padding:20px 40px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .logo{font-weight:800; font-size:0.92rem; letter-spacing:0.2px; color:var(--text);}
+  .logo span{color:var(--accent);}
 
-.hero-strip{
-  display:flex; gap:0; margin-top:36px;
-  border:1px solid var(--border); border-radius:14px; overflow:hidden;
-}
-.hero-strip-item{
-  flex:1; padding:16px 18px; position:relative;
-}
-.hero-strip-item + .hero-strip-item::before{
-  content:''; position:absolute; left:0; top:22%; bottom:22%; width:1px; background:var(--border);
-}
-.hero-strip-num{
-  font-family:var(--serif); font-weight:700; font-size:22px; color:var(--brass); line-height:1;
-}
-.hero-strip-label{
-  font-size:11px; color:var(--text-faint); margin-top:6px; letter-spacing:0.01em;
-}
+  .settings-wrap{position:relative;}
+  .settings-btn{
+    width:34px; height:34px; border-radius:50%;
+    background:transparent; border:1px solid var(--line-soft);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--text-faint);
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  .settings-btn:hover{border-color:var(--text-faint); color:var(--text-dim);}
+  .settings-btn svg{width:16px; height:16px;}
 
-/* ══ SECTION SHELL ══ */
-section{ padding:64px 0; border-bottom:1px solid var(--border); }
-section:last-of-type{ border-bottom:none; }
+  .settings-menu{
+    position:absolute; top:calc(100% + 8px); right:0;
+    background:var(--panel-hi); border:1px solid var(--line-soft);
+    border-radius:8px; padding:6px;
+    min-width:150px;
+    display:none;
+    box-shadow:0 12px 28px rgba(0,0,0,0.5);
+    z-index:10;
+  }
+  html[dir="rtl"] .settings-menu{right:auto; left:0;}
+  .settings-menu.open{display:block;}
+  .settings-menu-label{
+    font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--text-faint); padding:8px 10px 4px;
+  }
+  html[dir="rtl"] .settings-menu-label{text-transform:none;}
+  .lang-option{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; padding:8px 10px; border-radius:5px;
+    background:none; border:none; color:var(--text-dim);
+    font-size:0.82rem; font-weight:600; cursor:pointer;
+    text-align:left;
+  }
+  html[dir="rtl"] .lang-option{text-align:right;}
+  .lang-option:hover{background:var(--panel);}
+  .lang-option.active{color:var(--text);}
+  .lang-option .dot{width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:0;}
+  .lang-option.active .dot{opacity:1;}
 
-.section-eyebrow{
-  font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
-  color:var(--text-faint); margin-bottom:14px;
-}
-h2{
-  font-family:var(--serif); font-weight:700;
-  font-size:clamp(26px, 3.6vw, 32px);
-  letter-spacing:-0.01em;
-  margin-bottom:18px;
-}
-.section-lede{
-  font-size:15.5px; color:var(--text-dim); max-width:62ch; margin-bottom:8px;
-}
-.section-lede strong{ color:var(--text); font-weight:600; }
+  /* ---------- DATE HERO ---------- */
+  .date-hero{
+    position:relative; z-index:2;
+    padding:36px 20px 44px;
+    display:flex; align-items:center; justify-content:center;
+    gap:20px;
+  }
+  .date-nav{
+    width:40px; height:40px; border-radius:50%;
+    border:1px solid var(--line-soft); background:transparent;
+    color:var(--text-faint); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition:border-color .15s, color .15s, transform .1s;
+  }
+  .date-nav:hover{border-color:var(--accent); color:var(--accent);}
+  .date-nav:active{transform:scale(0.94);}
+  .date-nav svg{width:17px; height:17px;}
+  html[dir="rtl"] .date-nav.next svg{transform:scaleX(-1);}
+  html[dir="rtl"] .date-nav.prev svg{transform:scaleX(-1);}
 
-/* ══ REACH BAND (no sector color — it's the initiative as a whole) ══ */
-.reach-band{
-  margin-top:28px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:26px 26px 22px;
-}
-.reach-row{
-  display:grid; grid-template-columns:1fr 1fr; gap:20px 24px;
-}
-@media (max-width:520px){ .reach-row{ grid-template-columns:1fr; } }
-.reach-figure{ font-family:var(--serif); font-weight:700; font-size:26px; color:var(--text); }
-.reach-caption{ font-size:12.5px; color:var(--text-dim); margin-top:4px; line-height:1.5; }
-.reach-note{
-  font-size:13px; color:var(--text-faint); margin-top:20px; padding-top:18px;
-  border-top:1px solid var(--border); line-height:1.6;
-}
+  .date-center{text-align:center; min-width:0;}
+  .date-big{
+    font-family:'Newsreader',serif;
+    font-weight:600;
+    font-size:clamp(2.1rem, 7vw, 3.4rem);
+    letter-spacing:-0.01em;
+    line-height:1.05;
+    white-space:nowrap;
+  }
+  .date-today-badge{
+    display:inline-block; margin-top:10px;
+    font-size:0.68rem; font-weight:700;
+    color:var(--accent);
+    border:1px solid var(--accent);
+    border-radius:20px; padding:3px 11px;
+    opacity:0; pointer-events:none;
+    transition:opacity .15s;
+  }
+  .date-today-badge.show{opacity:1;}
+  .date-sub{font-size:0.78rem; color:var(--text-faint); margin-top:6px;}
 
-/* ══ SECTOR BLOCKS ══
-   Each sector carries its own color as: the left rule, the eyebrow
-   tag, and the stat figures inside it. Everything else — heading
-   weight, body copy color, spacing — stays identical across all
-   four, so the color is the only thing that differs between them. */
-.sector-list{ margin-top:8px; }
-.sector{
-  border-left:3px solid var(--sc);
-  padding:26px 0 26px 24px;
-  margin-bottom:4px;
-}
-.sector:last-child{ margin-bottom:0; }
+  .jump-today{
+    display:block; margin:0 auto 6px; text-align:center;
+    font-size:0.74rem; color:var(--text-faint); text-decoration:underline;
+    text-underline-offset:3px; background:none; border:none; cursor:pointer;
+  }
+  .jump-today:hover{color:var(--accent);}
 
-.sector-tag{
-  display:inline-flex; align-items:center; gap:7px;
-  font-size:10.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
-  color:var(--sc); background:var(--sc-soft);
-  border:1px solid color-mix(in srgb, var(--sc) 35%, transparent);
-  border-radius:20px; padding:5px 12px 5px 10px;
-  margin-bottom:14px;
-}
-.sector-tag .sw{ width:7px; height:7px; border-radius:50%; background:var(--sc); flex-shrink:0; }
+  /* ---------- MAIN ---------- */
+  main{position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 24px 90px;}
 
-.sector h3{
-  font-family:var(--serif); font-weight:600; font-size:19px;
-  color:var(--text); margin-bottom:10px;
-}
-.sector p{
-  font-size:14.5px; color:var(--text-dim); max-width:60ch;
-}
-.sector p + p{ margin-top:10px; }
-.sector strong{ color:var(--text); font-weight:600; }
-.sector .stat{ color:var(--sc); font-weight:700; }
+  .day-empty{
+    text-align:center; padding:50px 20px 60px;
+    color:var(--text-faint);
+  }
+  .day-empty .big-icon{font-size:2rem; margin-bottom:14px; opacity:0.5;}
+  .day-empty h3{font-size:1rem; font-weight:700; color:var(--text-dim); margin-bottom:6px;}
+  .day-empty p{font-size:0.83rem; max-width:340px; margin:0 auto; line-height:1.7;}
 
-.sector--research  { --sc:var(--research);  --sc-soft:var(--research-soft); }
-.sector--media     { --sc:var(--media);     --sc-soft:var(--media-soft); }
-.sector--logistics { --sc:var(--logistics); --sc-soft:var(--logistics-soft); }
-.sector--relations { --sc:var(--relations); --sc-soft:var(--relations-soft); }
+  .subject-card{
+    background:var(--panel);
+    border:1px solid var(--line-soft);
+    border-radius:10px;
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .subject-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:15px 18px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .subject-name{font-size:0.98rem; font-weight:700;}
+  .subject-count{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
+  .subject-add-btn{
+    flex-shrink:0;
+    width:30px; height:30px; border-radius:50%;
+    border:1px solid var(--line-soft); background:transparent;
+    color:var(--text-dim); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .15s, color .15s;
+  }
+  .subject-add-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .subject-add-btn svg{width:14px; height:14px;}
 
-/* Logistics' champagne is light — needs a darker text tone on its own
-   tag background to stay legible, rather than the pale-on-pale every
-   other sector's tag would give it if it inherited --sc directly. */
-.sector--logistics .sector-tag{
-  color:#2e2914;
-  background:var(--logistics);
-  border-color:var(--logistics);
-}
-.sector--logistics .sector-tag .sw{ background:#2e2914; }
+  .material-list{padding:6px 10px;}
+  .material-row{
+    display:flex; align-items:flex-start; gap:11px;
+    padding:11px 8px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .material-row:last-child{border-bottom:none;}
+  .material-icon{
+    flex-shrink:0; width:30px; height:30px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    margin-top:1px;
+  }
+  .material-icon svg{width:14px; height:14px;}
+  .icon-pdf{background:rgba(226,100,111,0.12); color:#e2646f;}
+  .icon-q{background:rgba(201,161,90,0.14); color:var(--gold);}
+  .icon-spotify{background:rgba(46,190,110,0.14); color:#2ebe6e;}
+  .icon-youtube{background:rgba(226,64,64,0.14); color:#e24040;}
 
-/* ══ SECTOR LEGEND (quiet key at the top of the section, so the
-   colors are introduced once before the reader meets them again in
-   each block) ══ */
-.legend{
-  display:flex; flex-wrap:wrap; gap:10px 18px;
-  margin:22px 0 6px;
-}
-.legend-item{
-  display:flex; align-items:center; gap:7px;
-  font-size:12px; color:var(--text-dim); font-weight:500;
-}
-.legend-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .material-body{flex:1; min-width:0;}
+  .material-title{font-size:0.87rem; font-weight:600; word-break:break-word;}
+  .material-meta{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
+  .material-link{font-size:0.78rem; color:var(--text-dim); word-break:break-all; margin-top:2px; display:inline-block;}
+  .material-link:hover{color:var(--accent);}
 
-/* ══ CLOSE ══ */
-.close{
-  padding:56px 0 80px;
-  text-align:center;
-}
-.close-mark{
-  font-family:var(--serif); font-style:italic; font-size:20px; color:var(--brass);
-  margin-bottom:10px;
-}
-.close p{ font-size:13.5px; color:var(--text-faint); max-width:44ch; margin:0 auto; }
+  .material-del{
+    flex-shrink:0; width:24px; height:24px; border-radius:6px;
+    border:none; background:none; color:var(--text-faint); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0.5; transition:opacity .15s, color .15s;
+  }
+  .material-del:hover{opacity:1; color:var(--err);}
+  .material-del svg{width:13px; height:13px;}
 
+  .add-subject-btn{
+    width:100%;
+    background:transparent;
+    border:1.5px dashed var(--line-soft);
+    border-radius:10px;
+    color:var(--text-faint);
+    font-size:0.85rem; font-weight:600;
+    padding:16px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:border-color .15s, color .15s;
+  }
+  .add-subject-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .add-subject-btn svg{width:15px; height:15px;}
+
+  .loading-row{text-align:center; padding:40px 0; color:var(--text-faint); font-size:0.85rem;}
+
+  /* ---------- MODAL (shared: add subject / add material) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:50;
+    background:rgba(5,4,3,0.72);
+    backdrop-filter:blur(3px);
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  @media (min-width:640px){ .modal-overlay{align-items:center;} }
+  .modal-overlay.open{display:flex;}
+  .modal-sheet{
+    background:var(--panel-hi);
+    border:1px solid var(--line-soft);
+    border-radius:16px 16px 0 0;
+    width:100%; max-width:480px;
+    max-height:88vh; overflow-y:auto;
+    padding:22px 22px 26px;
+  }
+  @media (min-width:640px){ .modal-sheet{border-radius:14px; max-height:80vh;} }
+
+  .modal-title{font-size:1.02rem; font-weight:700; margin-bottom:18px;}
+
+  .mfield{margin-bottom:16px;}
+  .mfield label{display:block; font-size:0.76rem; font-weight:700; color:var(--text-dim); margin-bottom:7px;}
+  .mfield input[type="text"], .mfield input[type="url"], .mfield select{
+    width:100%; font-family:inherit; font-size:0.86rem;
+    padding:10px 12px; background:var(--panel);
+    border:1.5px solid var(--line-soft); border-radius:6px; color:var(--text);
+  }
+  .mfield input::placeholder{color:var(--text-faint);}
+  .mfield input:focus, .mfield select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow);}
+  .mfield-hint{font-size:0.71rem; color:var(--text-faint); margin-top:5px;}
+  .mfield-err{font-size:0.71rem; color:var(--err); margin-top:5px; display:none;}
+  .mfield-err.show{display:block;}
+  .mfield.invalid input, .mfield.invalid select{border-color:var(--err);}
+
+  .type-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .type-opt{
+    display:flex; align-items:center; gap:8px;
+    border:1.5px solid var(--line-soft); border-radius:8px;
+    padding:10px 11px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text-dim);
+  }
+  .type-opt input{position:absolute; opacity:0; width:0; height:0;}
+  .type-opt.checked{border-color:var(--accent); background:var(--accent-glow); color:var(--text);}
+  .type-opt svg{width:14px; height:14px; flex-shrink:0;}
+
+  .source-toggle{display:flex; gap:8px; margin-bottom:14px;}
+  .source-opt{
+    flex:1; text-align:center; padding:9px; border-radius:7px;
+    border:1.5px solid var(--line-soft); font-size:0.78rem; font-weight:700;
+    color:var(--text-faint); cursor:pointer;
+  }
+  .source-opt.active{border-color:var(--accent); color:var(--accent); background:var(--accent-glow);}
+
+  .upload-drop{
+    border:1.5px dashed var(--line-soft); border-radius:8px;
+    padding:22px 14px; text-align:center; cursor:pointer;
+    color:var(--text-faint); font-size:0.8rem;
+    transition:border-color .15s;
+  }
+  .upload-drop:hover{border-color:var(--accent);}
+  .upload-drop.has-file{border-color:var(--accent); color:var(--text-dim);}
+  .upload-drop svg{width:18px; height:18px; margin-bottom:8px; opacity:0.6;}
+
+  .modal-btn-row{display:flex; gap:10px; margin-top:20px;}
+  .modal-btn{
+    flex:1; padding:12px; border-radius:7px; font-size:0.85rem; font-weight:700;
+    cursor:pointer; border:1.5px solid var(--line-soft); background:transparent; color:var(--text-dim);
+  }
+  .modal-btn.primary{background:var(--accent); border-color:var(--accent); color:var(--text);}
+  .modal-btn.primary:hover{background:var(--accent-dark);}
+  .modal-btn.primary:disabled{background:var(--panel); color:var(--text-faint); cursor:not-allowed; border-color:var(--line-soft);}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-hi); border:1px solid var(--line-soft); color:var(--text);
+    padding:11px 20px; border-radius:30px; font-size:0.82rem; font-weight:600;
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+    z-index:60; white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:560px){
+    .site-header{padding:16px 18px;}
+    .date-hero{padding:28px 10px 34px; gap:10px;}
+    main{padding:0 14px 80px;}
+  }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-
-  <!-- ══ HERO ══ -->
-  <header class="hero">
-    <div class="hero-eyebrow"><span class="dot"></span>Student-Led Academic Society · MNU</div>
-    <h1>Who We <em>Are</em></h1>
-    <p class="hero-lede">
-      Field-focused student societies are standard practice at leading international universities —
-      they give students a structured way to collaborate on academic work outside the formal curriculum.
-      <strong>MedicineBank</strong> was founded to bring that model to MNU, as a student-led academic
-      collaboration society spanning the colleges of Medicine, Pharmacy, and Dentistry.
-    </p>
-    <p class="hero-lede">
-      We are not a social club. Every activity we run is designed to build a concrete academic skill,
-      publication, or resource that students take with them into their careers.
-    </p>
-    <p class="hero-lede">
-      We operate through four sectors — <strong>Research</strong>, <strong>Media</strong>,
-      <strong>Logistics</strong>, and <strong>Relations</strong> — each with a specific mandate and
-      a track record to show for it.
-    </p>
-
-    <div class="hero-strip">
-      <div class="hero-strip-item">
-        <div class="hero-strip-num">2,000+</div>
-        <div class="hero-strip-label">students on MedicineBank.org</div>
-      </div>
-      <div class="hero-strip-item">
-        <div class="hero-strip-num">3</div>
-        <div class="hero-strip-label">colleges — Medicine, Pharmacy, Dentistry</div>
-      </div>
-      <div class="hero-strip-item">
-        <div class="hero-strip-num">4</div>
-        <div class="hero-strip-label">operating sectors</div>
-      </div>
+<header class="site-header">
+  <div class="logo">Medicine<span>Bank</span></div>
+  <div class="settings-wrap">
+    <button class="settings-btn" id="settingsBtn" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+    <div class="settings-menu" id="settingsMenu">
+      <div class="settings-menu-label" data-en="Language" data-ar="اللغة">Language</div>
+      <button class="lang-option active" data-lang="en"><span>English</span><span class="dot"></span></button>
+      <button class="lang-option" data-lang="ar"><span>عربي</span><span class="dot"></span></button>
     </div>
-  </header>
-
-  <!-- ══ WHAT WE'VE BUILT ══ -->
-  <section id="built">
-    <div class="section-eyebrow">What We've Built</div>
-    <h2>A record across four sectors</h2>
-    <p class="section-lede">
-      Every medical student at MNU is listed in our community — <strong>1,949 members</strong> across
-      our 2nd and 3rd cohorts, <strong>1,230</strong> across our 4th and 5th.
-    </p>
-
-    <div class="reach-band">
-      <div class="reach-row">
-        <div>
-          <div class="reach-figure">2,000+</div>
-          <div class="reach-caption">MNU medical students use MedicineBank.org — the primary
-            resource-sharing archive for the faculty</div>
-        </div>
-        <div>
-          <div class="reach-figure">3,179</div>
-          <div class="reach-caption">total members listed across our 2nd–5th year cohorts</div>
-        </div>
-      </div>
-      <div class="reach-note">
-        The platform addresses a gap the university's Moodle LMS was not built to fill.
-      </div>
-    </div>
-
-    <div class="legend">
-      <div class="legend-item"><span class="legend-dot" style="background:var(--research)"></span>Research</div>
-      <div class="legend-item"><span class="legend-dot" style="background:var(--media)"></span>Media</div>
-      <div class="legend-item"><span class="legend-dot" style="background:var(--logistics)"></span>Logistics</div>
-      <div class="legend-item"><span class="legend-dot" style="background:var(--relations)"></span>Relations</div>
-    </div>
-  </section>
-
-  <!-- ══ SECTORS ══ -->
-  <section id="sectors">
-    <div class="sector-list">
-
-      <div class="sector sector--research">
-        <div class="sector-tag"><span class="sw"></span>Research</div>
-        <h3>Peer-to-peer training, real output</h3>
-        <p>
-          We ran a <strong>4-part peer-to-peer research training series</strong> covering research
-          question formulation, research methods, and medical statistics (parts I &amp; II) —
-          consistently well-attended, and directly resulting in
-          <span class="stat">7 completed student research methodologies</span>.
-        </p>
-        <p>
-          We also hosted a joint research Q&amp;A with Leicester University's medical association,
-          drawing <span class="stat">450+ student attendees</span> across multiple countries.
-        </p>
-      </div>
-
-      <div class="sector sector--media">
-        <div class="sector-tag"><span class="sw"></span>Media</div>
-        <h3>MedBank Records and beyond</h3>
-        <p>
-          Our podcast arm, <strong>MedBank Records</strong>, has generated
-          <span class="stat">147,000 all-time plays and downloads</span> with
-          <span class="stat">4,690 Spotify followers</span>, alongside a growing YouTube presence.
-        </p>
-        <p>
-          We've hosted guest interviews — including a former national handball player now completing
-          his medical degree in the US, talking about personal experience in that regard — and continue
-          to cover MedicineBank's campaigns and public events.
-        </p>
-      </div>
-
-      <div class="sector sector--logistics">
-        <div class="sector-tag"><span class="sw"></span>Logistics</div>
-        <h3>The technical backbone</h3>
-        <p>
-          This sector runs <strong>MedicineBank.org</strong>, arranges every event we host — online
-          and in-person — and manages podcast production.
-        </p>
-        <p>
-          It's also the sector that incubated <strong>Patholytica</strong>, an academic content platform
-          for medical students that went on to win recognition at Startup Grind MNU, and now stands as
-          a live example of the kind of outcome this initiative is capable of producing when given room
-          to build.
-        </p>
-      </div>
-
-      <div class="sector sector--relations">
-        <div class="sector-tag"><span class="sw"></span>Relations</div>
-        <h3>Every partnership, secured here</h3>
-        <p>
-          We currently have verbal agreements in place with the student union at
-          <strong>LKC School of Medicine, Singapore</strong> (a top-ranked institution) and with the
-          <strong>REACT initiative at Al-Kafeel University, Iraq</strong>, both aimed at joint student
-          research publications — pending formal university endorsement.
-        </p>
-        <p>
-          We are also partnering with <strong>Triviadox</strong>, a student society at the Medical
-          University of Cairo, to make MedicineBank.org more personalized for each student.
-        </p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ══ CLOSE ══ -->
-  <div class="close">
-    <div class="close-mark">MedicineBank</div>
-    <p>A student-led academic society across Medicine, Pharmacy, and Dentistry at MNU.</p>
   </div>
+</header>
 
+<section class="date-hero">
+  <button class="date-nav prev" id="prevBtn" aria-label="Previous day">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="date-center">
+    <button class="jump-today" id="jumpTodayBtn" data-en="Jump to today" data-ar="روح لدلوقتي">Jump to today</button>
+    <div class="date-big" id="dateBig">—</div>
+    <div class="date-today-badge" id="todayBadge" data-en="Today" data-ar="النهاردة">Today</div>
+  </div>
+  <button class="date-nav next" id="nextBtn" aria-label="Next day">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+</section>
+
+<main id="mainContent">
+  <div class="loading-row" id="loadingRow" data-en="Loading…" data-ar="جاري التحميل…">Loading…</div>
+</main>
+
+<!-- ADD SUBJECT MODAL -->
+<div class="modal-overlay" id="subjectModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" data-en="Add a subject" data-ar="إضافة مادة">Add a subject</div>
+    <div class="mfield" id="subjectNameField">
+      <label data-en="Subject / lecture name" data-ar="اسم المادة / المحاضرة">Subject / lecture name</label>
+      <input type="text" id="subjectNameInput" data-ph-en="e.g. Cardiology — Arrhythmias" data-ph-ar="مثال: قلبية — اضطرابات النظم" placeholder="e.g. Cardiology — Arrhythmias" />
+      <div class="mfield-err" data-en="Please enter a name." data-ar="من فضلك اكتب اسم.">Please enter a name.</div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-btn" id="subjectCancelBtn" data-en="Cancel" data-ar="إلغاء">Cancel</button>
+      <button class="modal-btn primary" id="subjectSaveBtn" data-en="Add subject" data-ar="إضافة">Add subject</button>
+    </div>
+  </div>
 </div>
 
+<!-- ADD MATERIAL MODAL -->
+<div class="modal-overlay" id="materialModalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-title" id="materialModalTitle" data-en="Add material" data-ar="إضافة مادة علمية">Add material</div>
+
+    <div class="mfield">
+      <label data-en="Type" data-ar="النوع">Type</label>
+      <div class="type-grid" id="typeGrid">
+        <label class="type-opt" data-type="pdf">
+          <input type="radio" name="mtype" value="pdf" checked />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+          <span data-en="Lecture PDF" data-ar="ملف محاضرة">Lecture PDF</span>
+        </label>
+        <label class="type-opt" data-type="q">
+          <input type="radio" name="mtype" value="q" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
+          <span data-en="Questions" data-ar="أسئلة">Questions</span>
+        </label>
+        <label class="type-opt" data-type="spotify">
+          <input type="radio" name="mtype" value="spotify" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M7.5 10.5c3-1 6.5-.7 9 .8M8 14c2.3-.7 4.8-.5 7 .7M8.5 7.3c2.6-.6 5.7-.3 8.3 1.2"/></svg>
+          <span data-en="Podcast (Spotify)" data-ar="بودكاست (Spotify)">Podcast (Spotify)</span>
+        </label>
+        <label class="type-opt" data-type="youtube">
+          <input type="radio" name="mtype" value="youtube" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>
+          <span data-en="YouTube video" data-ar="فيديو YouTube">YouTube video</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mfield" id="materialTitleField">
+      <label data-en="Title" data-ar="العنوان">Title</label>
+      <input type="text" id="materialTitleInput" data-ph-en="e.g. Lecture 4 — Slides" data-ph-ar="مثال: محاضرة ٤ — سلايدات" placeholder="e.g. Lecture 4 — Slides" />
+      <div class="mfield-err" data-en="Please enter a title." data-ar="من فضلك اكتب عنوان.">Please enter a title.</div>
+    </div>
+
+    <div class="mfield" id="pdfSourceField">
+      <label data-en="How are you adding this file?" data-ar="هتضيف الملف إزاي؟">How are you adding this file?</label>
+      <div class="source-toggle">
+        <div class="source-opt active" id="srcLinkOpt" data-en="Paste a link" data-ar="حط لينك">Paste a link</div>
+        <div class="source-opt" id="srcUploadOpt" data-en="Upload file" data-ar="ارفع ملف">Upload file</div>
+      </div>
+      <div id="linkInputWrap">
+        <input type="url" id="materialLinkInput" data-ph-en="https://drive.google.com/…" data-ph-ar="https://drive.google.com/…" placeholder="https://drive.google.com/…" />
+      </div>
+      <div id="uploadInputWrap" style="display:none;">
+        <div class="upload-drop" id="uploadDrop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:block;margin:0 auto 8px;"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+          <span id="uploadDropText" data-en="Tap to choose a PDF" data-ar="اضغط لاختيار ملف PDF">Tap to choose a PDF</span>
+        </div>
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none;" />
+      </div>
+      <div class="mfield-err" data-en="Add a link or upload a file." data-ar="حط لينك أو ارفع ملف.">Add a link or upload a file.</div>
+    </div>
+
+    <div class="mfield" id="urlOnlyField" style="display:none;">
+      <label id="urlOnlyLabel" data-en="Spotify link" data-ar="لينك Spotify">Spotify link</label>
+      <input type="url" id="urlOnlyInput" placeholder="" />
+      <div class="mfield-err" data-en="Please enter a valid link." data-ar="من فضلك حط لينك صحيح.">Please enter a valid link.</div>
+    </div>
+
+    <div class="modal-btn-row">
+      <button class="modal-btn" id="materialCancelBtn" data-en="Cancel" data-ar="إلغاء">Cancel</button>
+      <button class="modal-btn primary" id="materialSaveBtn" data-en="Add" data-ar="إضافة">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const htmlEl = document.documentElement;
+  let currentLang = 'en';
+
+  /* ---------------- date state ---------------- */
+  function fmtKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function todayDate(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+
+  let viewDate = todayDate();
+
+  const dateBig = document.getElementById('dateBig');
+  const todayBadge = document.getElementById('todayBadge');
+  const jumpTodayBtn = document.getElementById('jumpTodayBtn');
+
+  const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  const DAYS_EN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const DAYS_AR = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+
+  function renderDate(){
+    const months = currentLang === 'ar' ? MONTHS_AR : MONTHS_EN;
+    const days = currentLang === 'ar' ? DAYS_AR : DAYS_EN;
+    const dayName = days[viewDate.getDay()];
+    const dayNum = viewDate.getDate();
+    const month = months[viewDate.getMonth()];
+    const year = viewDate.getFullYear();
+    dateBig.textContent = currentLang === 'ar'
+      ? `${dayNum} ${month} ${year}`
+      : `${month} ${dayNum}, ${year}`;
+    document.querySelector('.date-sub')?.remove();
+    const sub = document.createElement('div');
+    sub.className = 'date-sub';
+    sub.textContent = dayName;
+    dateBig.insertAdjacentElement('afterend', sub);
+
+    const isToday = fmtKey(viewDate) === fmtKey(todayDate());
+    todayBadge.classList.toggle('show', isToday);
+    jumpTodayBtn.style.visibility = isToday ? 'hidden' : 'visible';
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    viewDate.setDate(viewDate.getDate() - 1);
+    viewDate = new Date(viewDate);
+    renderDate(); loadDay();
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    viewDate.setDate(viewDate.getDate() + 1);
+    viewDate = new Date(viewDate);
+    renderDate(); loadDay();
+  });
+  jumpTodayBtn.addEventListener('click', () => {
+    viewDate = todayDate();
+    renderDate(); loadDay();
+  });
+
+  /* ---------------- language ---------------- */
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsMenu = document.getElementById('settingsMenu');
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    settingsMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', () => settingsMenu.classList.remove('open'));
+  settingsMenu.addEventListener('click', (e) => e.stopPropagation());
+
+  document.querySelectorAll('.lang-option').forEach(btn => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+
+  function applyStaticText(lang){
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const t = lang === 'ar' ? el.dataset.ar : el.dataset.en;
+      if (t != null) el.textContent = t;
+    });
+    document.querySelectorAll('[data-ph-en]').forEach(el => {
+      const ph = lang === 'ar' ? el.dataset.phAr : el.dataset.phEn;
+      if (ph != null) el.setAttribute('placeholder', ph);
+    });
+    document.querySelectorAll('.lang-option').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  }
+
+  function setLang(lang){
+    currentLang = lang;
+    htmlEl.setAttribute('lang', lang);
+    htmlEl.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    applyStaticText(lang);
+    settingsMenu.classList.remove('open');
+    renderDate();
+    renderDay();
+  }
+
+  /* ---------------- storage ---------------- */
+  const STORAGE_KEY_PREFIX = 'day:';
+
+  async function loadDay(){
+    const key = STORAGE_KEY_PREFIX + fmtKey(viewDate);
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `<div class="loading-row" data-en="Loading…" data-ar="جاري التحميل…">${currentLang==='ar'?'جاري التحميل…':'Loading…'}</div>`;
+    try{
+      const result = await window.storage.get(key, true);
+      currentDayData = result && result.value ? JSON.parse(result.value) : { subjects: [] };
+    }catch(err){
+      currentDayData = { subjects: [] };
+    }
+    renderDay();
+  }
+
+  async function saveDay(){
+    const key = STORAGE_KEY_PREFIX + fmtKey(viewDate);
+    try{
+      await window.storage.set(key, JSON.stringify(currentDayData), true);
+    }catch(err){
+      showToast(currentLang==='ar' ? 'حصل خطأ في الحفظ' : 'Something went wrong saving');
+      console.error(err);
+    }
+  }
+
+  let currentDayData = { subjects: [] };
+
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+
+  /* ---------------- render ---------------- */
+  const TYPE_META = {
+    pdf:     { icon: 'icon-pdf',     labelEn:'PDF',      labelAr:'ملف PDF' },
+    q:       { icon: 'icon-q',       labelEn:'Questions',labelAr:'أسئلة' },
+    spotify: { icon: 'icon-spotify', labelEn:'Podcast',  labelAr:'بودكاست' },
+    youtube: { icon: 'icon-youtube', labelEn:'Video',    labelAr:'فيديو' },
+  };
+
+  function iconSvg(type){
+    if(type==='pdf') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>';
+    if(type==='q') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>';
+    if(type==='spotify') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M7.5 10.5c3-1 6.5-.7 9 .8M8 14c2.3-.7 4.8-.5 7 .7M8.5 7.3c2.6-.6 5.7-.3 8.3 1.2"/></svg>';
+    if(type==='youtube') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>';
+    return '';
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
+  }
+
+  function renderDay(){
+    const main = document.getElementById('mainContent');
+    const subjects = currentDayData.subjects || [];
+
+    if (subjects.length === 0){
+      main.innerHTML = `
+        <div class="day-empty">
+          <div class="big-icon">🗓️</div>
+          <h3 data-en="Nothing here yet" data-ar="لسه معندناش حاجة هنا">${currentLang==='ar'?'لسه معندناش حاجة هنا':'Nothing here yet'}</h3>
+          <p data-en="Be the first to add a subject and its materials for this day." data-ar="كن أول واحد يضيف مادة ومحتواها لليوم ده.">${currentLang==='ar'?'كن أول واحد يضيف مادة ومحتواها لليوم ده.':'Be the first to add a subject and its materials for this day.'}</p>
+        </div>
+        <button class="add-subject-btn" id="addSubjectBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span data-en="Add a subject" data-ar="إضافة مادة">${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
+        </button>
+      `;
+      document.getElementById('addSubjectBtn').addEventListener('click', openSubjectModal);
+      return;
+    }
+
+    let html = '';
+    subjects.forEach(subj => {
+      const count = subj.materials.length;
+      const countLabel = currentLang === 'ar'
+        ? `${count} ${count===1 ? 'عنصر' : 'عناصر'}`
+        : `${count} item${count===1?'':'s'}`;
+      html += `
+        <div class="subject-card" data-subject-id="${subj.id}">
+          <div class="subject-head">
+            <div>
+              <div class="subject-name">${escapeHtml(subj.name)}</div>
+              <div class="subject-count">${countLabel}</div>
+            </div>
+            <button class="subject-add-btn" data-add-material="${subj.id}" aria-label="Add material">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <div class="material-list">
+            ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);" data-en="No materials yet." data-ar="لسه مفيش محتوى.">${currentLang==='ar'?'لسه مفيش محتوى.':'No materials yet.'}</div>` :
+              subj.materials.map(m => {
+                const meta = TYPE_META[m.type] || TYPE_META.pdf;
+                const label = currentLang === 'ar' ? meta.labelAr : meta.labelEn;
+                let bodyExtra = '';
+                if (m.kind === 'link' || m.type === 'spotify' || m.type === 'youtube'){
+                  bodyExtra = `<a class="material-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener">${escapeHtml(m.url)}</a>`;
+                } else if (m.kind === 'upload'){
+                  bodyExtra = `<a class="material-link" href="${m.dataUrl}" download="${escapeHtml(m.fileName||'file.pdf')}" data-en-prefix="Download file" data-ar-prefix="تحميل الملف">${currentLang==='ar'?'تحميل الملف':'Download file'}</a>`;
+                }
+                return `
+                  <div class="material-row" data-material-id="${m.id}">
+                    <div class="material-icon ${meta.icon}">${iconSvg(m.type)}</div>
+                    <div class="material-body">
+                      <div class="material-title">${escapeHtml(m.title)}</div>
+                      <div class="material-meta">${label}</div>
+                      ${bodyExtra}
+                    </div>
+                    <button class="material-del" data-del-subject="${subj.id}" data-del-material="${m.id}" aria-label="Delete">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                `;
+              }).join('')
+            }
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+      <button class="add-subject-btn" id="addSubjectBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-en="Add a subject" data-ar="إضافة مادة">${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
+      </button>
+    `;
+
+    main.innerHTML = html;
+    document.getElementById('addSubjectBtn').addEventListener('click', openSubjectModal);
+    main.querySelectorAll('[data-add-material]').forEach(btn => {
+      btn.addEventListener('click', () => openMaterialModal(btn.dataset.addMaterial));
+    });
+    main.querySelectorAll('.material-del').forEach(btn => {
+      btn.addEventListener('click', () => deleteMaterial(btn.dataset.delSubject, btn.dataset.delMaterial));
+    });
+  }
+
+  /* ---------------- toast ---------------- */
+  function showToast(msg){
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  /* ---------------- subject modal ---------------- */
+  const subjectModalOverlay = document.getElementById('subjectModalOverlay');
+  const subjectNameInput = document.getElementById('subjectNameInput');
+  const subjectNameField = document.getElementById('subjectNameField');
+
+  function openSubjectModal(){
+    subjectNameInput.value = '';
+    subjectNameField.classList.remove('invalid');
+    subjectModalOverlay.classList.add('open');
+    setTimeout(() => subjectNameInput.focus(), 50);
+  }
+  function closeSubjectModal(){ subjectModalOverlay.classList.remove('open'); }
+
+  document.getElementById('subjectCancelBtn').addEventListener('click', closeSubjectModal);
+  subjectModalOverlay.addEventListener('click', (e) => { if(e.target === subjectModalOverlay) closeSubjectModal(); });
+
+  document.getElementById('subjectSaveBtn').addEventListener('click', async () => {
+    const name = subjectNameInput.value.trim();
+    if (!name){ subjectNameField.classList.add('invalid'); return; }
+    currentDayData.subjects = currentDayData.subjects || [];
+    currentDayData.subjects.push({ id: uid(), name, materials: [] });
+    closeSubjectModal();
+    renderDay();
+    await saveDay();
+    showToast(currentLang==='ar' ? 'تمت إضافة المادة' : 'Subject added');
+  });
+
+  /* ---------------- material modal ---------------- */
+  const materialModalOverlay = document.getElementById('materialModalOverlay');
+  const materialTitleInput = document.getElementById('materialTitleInput');
+  const materialTitleField = document.getElementById('materialTitleField');
+  const pdfSourceField = document.getElementById('pdfSourceField');
+  const urlOnlyField = document.getElementById('urlOnlyField');
+  const urlOnlyInput = document.getElementById('urlOnlyInput');
+  const urlOnlyLabel = document.getElementById('urlOnlyLabel');
+  const materialLinkInput = document.getElementById('materialLinkInput');
+  const linkInputWrap = document.getElementById('linkInputWrap');
+  const uploadInputWrap = document.getElementById('uploadInputWrap');
+  const uploadDrop = document.getElementById('uploadDrop');
+  const uploadDropText = document.getElementById('uploadDropText');
+  const fileInput = document.getElementById('fileInput');
+  const srcLinkOpt = document.getElementById('srcLinkOpt');
+  const srcUploadOpt = document.getElementById('srcUploadOpt');
+
+  let activeSubjectId = null;
+  let currentType = 'pdf';
+  let currentSource = 'link';
+  let uploadedFile = null; // { fileName, dataUrl }
+
+  function openMaterialModal(subjectId){
+    activeSubjectId = subjectId;
+    materialTitleInput.value = '';
+    materialLinkInput.value = '';
+    urlOnlyInput.value = '';
+    uploadedFile = null;
+    fileInput.value = '';
+    uploadDrop.classList.remove('has-file');
+    uploadDropText.textContent = currentLang === 'ar' ? 'اضغط لاختيار ملف PDF' : 'Tap to choose a PDF';
+    [materialTitleField, pdfSourceField, urlOnlyField].forEach(f => f.classList.remove('invalid'));
+    document.querySelectorAll('.mfield-err').forEach(e => e.classList.remove('show'));
+
+    document.querySelector('input[name="mtype"][value="pdf"]').checked = true;
+    updateTypeVisual('pdf');
+    setSource('link');
+
+    materialModalOverlay.classList.add('open');
+    setTimeout(() => materialTitleInput.focus(), 50);
+  }
+  function closeMaterialModal(){ materialModalOverlay.classList.remove('open'); }
+
+  document.getElementById('materialCancelBtn').addEventListener('click', closeMaterialModal);
+  materialModalOverlay.addEventListener('click', (e) => { if(e.target === materialModalOverlay) closeMaterialModal(); });
+
+  document.querySelectorAll('input[name="mtype"]').forEach(radio => {
+    radio.addEventListener('change', () => updateTypeVisual(radio.value));
+  });
+
+  function updateTypeVisual(type){
+    currentType = type;
+    document.querySelectorAll('.type-opt').forEach(opt => {
+      opt.classList.toggle('checked', opt.dataset.type === type);
+    });
+
+    if (type === 'pdf' || type === 'q'){
+      pdfSourceField.style.display = '';
+      urlOnlyField.style.display = 'none';
+      setSource(currentSource);
+    } else {
+      pdfSourceField.style.display = 'none';
+      urlOnlyField.style.display = '';
+      if (type === 'spotify'){
+        urlOnlyLabel.textContent = currentLang==='ar' ? 'لينك Spotify' : 'Spotify link';
+        urlOnlyInput.placeholder = 'https://open.spotify.com/episode/…';
+      } else {
+        urlOnlyLabel.textContent = currentLang==='ar' ? 'لينك YouTube' : 'YouTube link';
+        urlOnlyInput.placeholder = 'https://youtube.com/watch?v=…';
+      }
+    }
+  }
+
+  function setSource(src){
+    currentSource = src;
+    srcLinkOpt.classList.toggle('active', src === 'link');
+    srcUploadOpt.classList.toggle('active', src === 'upload');
+    linkInputWrap.style.display = src === 'link' ? '' : 'none';
+    uploadInputWrap.style.display = src === 'upload' ? '' : 'none';
+  }
+  srcLinkOpt.addEventListener('click', () => setSource('link'));
+  srcUploadOpt.addEventListener('click', () => setSource('upload'));
+
+  uploadDrop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (file.size > 4.5 * 1024 * 1024){
+      showToast(currentLang==='ar' ? 'الملف كبير أوي (الحد الأقصى ٤.٥ ميجا)' : 'File is too large (4.5MB max)');
+      fileInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedFile = { fileName: file.name, dataUrl: reader.result };
+      uploadDrop.classList.add('has-file');
+      uploadDropText.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('materialSaveBtn').addEventListener('click', async () => {
+    const title = materialTitleInput.value.trim();
+    let ok = true;
+
+    if (!title){ materialTitleField.classList.add('invalid'); ok = false; }
+    else materialTitleField.classList.remove('invalid');
+
+    let materialData = { id: uid(), type: currentType, title };
+
+    if (currentType === 'pdf' || currentType === 'q'){
+      if (currentSource === 'link'){
+        const url = materialLinkInput.value.trim();
+        if (!url){ pdfSourceField.classList.add('invalid'); ok = false; }
+        else { pdfSourceField.classList.remove('invalid'); materialData.kind = 'link'; materialData.url = url; }
+      } else {
+        if (!uploadedFile){ pdfSourceField.classList.add('invalid'); ok = false; }
+        else { pdfSourceField.classList.remove('invalid'); materialData.kind = 'upload'; materialData.fileName = uploadedFile.fileName; materialData.dataUrl = uploadedFile.dataUrl; }
+      }
+    } else {
+      const url = urlOnlyInput.value.trim();
+      if (!url){ urlOnlyField.classList.add('invalid'); ok = false; }
+      else { urlOnlyField.classList.remove('invalid'); materialData.kind = 'link'; materialData.url = url; }
+    }
+
+    if (!ok) return;
+
+    const subj = (currentDayData.subjects || []).find(s => s.id === activeSubjectId);
+    if (subj){
+      subj.materials.push(materialData);
+    }
+    closeMaterialModal();
+    renderDay();
+    await saveDay();
+    showToast(currentLang==='ar' ? 'تمت الإضافة' : 'Added');
+  });
+
+  async function deleteMaterial(subjectId, materialId){
+    const subj = (currentDayData.subjects || []).find(s => s.id === subjectId);
+    if (!subj) return;
+    subj.materials = subj.materials.filter(m => m.id !== materialId);
+    renderDay();
+    await saveDay();
+  }
+
+  /* ---------------- init ---------------- */
+  renderDate();
+  loadDay();
+})();
+</script>
 </body>
 </html>
