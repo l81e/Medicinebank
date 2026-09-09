@@ -467,7 +467,7 @@
 <!-- ADD SUBJECT MODAL -->
 <div class="modal-overlay" id="subjectModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" data-en="Add a subject" data-ar="إضافة مادة">Add a subject</div>
+    <div class="modal-title" data-en="Add a subject" data-ar="إضافة داتا">Add a subject</div>
     <div class="mfield" id="subjectNameField">
       <label data-en="Subject / lecture name" data-ar="اسم المادة / المحاضرة">Subject / lecture name</label>
       <input type="text" id="subjectNameInput" data-ph-en="e.g. Cardiology — Arrhythmias" data-ph-ar="مثال: قلبية — اضطرابات النظم" placeholder="e.g. Cardiology — Arrhythmias" />
@@ -488,7 +488,7 @@
 <!-- ADD / EDIT MATERIAL MODAL -->
 <div class="modal-overlay" id="materialModalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title" id="materialModalTitle" data-en="Add material" data-ar="إضافة مادة علمية">Add material</div>
+    <div class="modal-title" id="materialModalTitle" data-en="Add material" data-ar="إضافة داتا للمحاضرة">Add material</div>
 
     <div class="mfield">
       <label data-en="Type" data-ar="النوع">Type</label>
@@ -618,10 +618,10 @@
       todayPillLabel.textContent = currentLang === 'ar' ? 'النهاردة' : 'Today';
       todayPill.removeAttribute('aria-label');
     } else {
-      todayPillLabel.dataset.en = 'Jump to today';
-      todayPillLabel.dataset.ar = 'روح لدلوقتي';
-      todayPillLabel.textContent = currentLang === 'ar' ? 'روح لدلوقتي' : 'Jump to today';
-      todayPill.setAttribute('aria-label', currentLang === 'ar' ? 'روح لدلوقتي' : 'Jump to today');
+      todayPillLabel.dataset.en = 'Back to today';
+      todayPillLabel.dataset.ar = ' ارجع لتاريخ اليوم';
+      todayPillLabel.textContent = currentLang === 'ar' ? ' ارجع لتاريخ اليوم' : 'Back to today';
+      todayPill.setAttribute('aria-label', currentLang === 'ar' ? 'ارجع لتاريخ اليوم ' : 'Back to today');
     }
   }
 
@@ -888,12 +888,12 @@
         <div class="day-card slide-in">
           <div class="day-empty">
             <div class="big-icon">🗓️</div>
-            <h3>${currentLang==='ar'?'لسه معندناش حاجة هنا':'Nothing here yet'}</h3>
-            <p>${currentLang==='ar'?'كن أول واحد يضيف مادة ومحتواها لليوم ده.':'Be the first to add a subject and its materials for this day.'}</p>
+            <h3>${currentLang==='ar'?'لسه مفيش حد رفع داتا النهاردة':'Nothing here yet'}</h3>
+            <p>${currentLang==='ar'?'لو عندك حاجة تقدر ترفعهااضغط على علامة ال + الي تحت    .':'Be the first to add a subject and its materials for this day.'}</p>
           </div>
           <button class="add-subject-btn" id="addSubjectBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            <span>${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
+            <span>${currentLang==='ar'?'إضافة داتا':'Add a subject'}</span>
           </button>
         </div>
       `;
@@ -968,7 +968,7 @@
     html += `
       <button class="add-subject-btn" id="addSubjectBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span>${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
+        <span>${currentLang==='ar'?'إضافة داتا':'Add a subject'}</span>
       </button>
     `;
     html += '</div>';
@@ -1047,7 +1047,7 @@
     closeSubjectModal();
     renderDay();
     await saveDay();
-    showToast(currentLang==='ar' ? 'تمت إضافة المادة' : 'Subject added');
+    showToast(currentLang==='ar' ? 'تمت إضافة المرجع' : 'Subject added');
   });
 
   /* ---------------- material modal (add + edit) ---------------- */
@@ -1118,7 +1118,7 @@
       }
       materialSaveBtn.textContent = currentLang==='ar' ? 'حفظ' : 'Save changes';
     } else {
-      materialModalTitle.textContent = currentLang==='ar' ? 'إضافة مادة علمية' : 'Add material';
+      materialModalTitle.textContent = currentLang==='ar' ? 'إضافة حاجة للمحاضرة' : 'Add material';
       document.querySelector('input[name="mtype"][value="pdf"]').checked = true;
       updateTypeVisual('pdf');
       setSource('link');
