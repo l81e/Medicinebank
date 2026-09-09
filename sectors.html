@@ -929,7 +929,7 @@
             </div>
           </div>
           <div class="material-list ${expanded?'expanded':''}" data-materials-for="${subj.id}">
-            ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);">${currentLang==='ar'?'لسه مفيش محتوى.':'No materials yet.'}</div>` :
+            ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);">${currentLang==='ar'?'اضغط على ال + فوق عالشمال عشان ترفع داتا للمحاضرة دي.':'No materials yet.'}</div>` :
               subj.materials.map(m => {
                 const meta = TYPE_META[m.type] || TYPE_META.pdf;
                 const label = currentLang === 'ar' ? meta.labelAr : meta.labelEn;
