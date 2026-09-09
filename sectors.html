@@ -6,54 +6,37 @@
 <title>Data of the Day — MedicineBank</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
   :root{
-    --bg:            #0b0a09;
-    --bg-grain-a:    rgba(255,255,255,0.020);
-    --bg-grain-b:    rgba(255,255,255,0.012);
-    --panel:         #17130f;
-    --panel-hi:      #1f1a15;
-    --line:          #2c2620;
-    --line-soft:     #221d18;
+    --bg:            #0b0b0b;
+    --panel:         #161616;
+    --panel-hi:      #1e1e1e;
+    --line:          #2b2b2b;
+    --line-soft:     #232323;
 
-    --text:          #f2ece3;
-    --text-dim:      #ada195;
-    --text-faint:    #6f645a;
+    --text:          #f2f2f2;
+    --text-dim:      #a8a8a8;
+    --text-faint:    #6b6b6b;
 
-    --accent:        #c23e4a;
-    --accent-dark:   #94232d;
-    --accent-glow:   rgba(194,62,74,0.16);
-    --err:           #e2646f;
-
-    --gold:          #c9a15a;
+    --accent:        #e8e8e8;
+    --accent-dark:   #ffffff;
+    --accent-glow:   rgba(255,255,255,0.08);
+    --err:           #c7c7c7;
   }
 
   html,body{height:100%;}
   body{
-    font-family:'Inter',sans-serif;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     background:var(--bg);
     color:var(--text);
     line-height:1.6;
     position:relative;
     min-height:100vh;
   }
-  html[dir="rtl"] body{font-family:'Cairo',sans-serif;}
-
-  /* grain texture — layered noise, near-black but never flat */
-  body::before{
-    content:"";
-    position:fixed; inset:0;
-    z-index:0;
-    pointer-events:none;
-    background-image:
-      radial-gradient(circle at 20% 20%, var(--bg-grain-a) 0%, transparent 45%),
-      radial-gradient(circle at 80% 60%, var(--bg-grain-b) 0%, transparent 50%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-    background-size:auto,auto,140px 140px;
-  }
+  html[dir="rtl"] body{font-family:'Cairo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
 
   a{color:inherit;text-decoration:none;}
   ul{list-style:none;}
@@ -65,8 +48,16 @@
     padding:20px 40px;
     display:flex; align-items:center; justify-content:space-between;
   }
+  .logo-wrap{display:flex; align-items:center; gap:10px;}
+  .logo-img{height:28px; width:auto; display:block;}
+  .logo-fallback{
+    display:flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:6px;
+    border:1px solid var(--line-soft);
+    font-weight:800; font-size:0.72rem; letter-spacing:0.2px; color:var(--text);
+  }
   .logo{font-weight:800; font-size:0.92rem; letter-spacing:0.2px; color:var(--text);}
-  .logo span{color:var(--accent);}
+  .logo span{color:var(--text-dim);}
 
   .settings-wrap{position:relative;}
   .settings-btn{
@@ -105,15 +96,20 @@
   html[dir="rtl"] .lang-option{text-align:right;}
   .lang-option:hover{background:var(--panel);}
   .lang-option.active{color:var(--text);}
-  .lang-option .dot{width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:0;}
+  .lang-option .dot{width:6px; height:6px; border-radius:50%; background:var(--text); opacity:0;}
   .lang-option.active .dot{opacity:1;}
 
   /* ---------- DATE HERO ---------- */
   .date-hero{
     position:relative; z-index:2;
     padding:36px 20px 44px;
-    display:flex; align-items:center; justify-content:center;
+    display:grid;
+    grid-template-columns:40px 1fr 40px;
+    align-items:center;
+    justify-items:center;
     gap:20px;
+    max-width:520px;
+    margin:0 auto;
   }
   .date-nav{
     width:40px; height:40px; border-radius:50%;
@@ -122,27 +118,29 @@
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0;
     transition:border-color .15s, color .15s, transform .1s;
+    align-self:center;
   }
-  .date-nav:hover{border-color:var(--accent); color:var(--accent);}
+  .date-nav:hover{border-color:var(--text-dim); color:var(--text);}
   .date-nav:active{transform:scale(0.94);}
-  .date-nav svg{width:17px; height:17px;}
+  .date-nav svg{width:17px; height:17px; display:block;}
   html[dir="rtl"] .date-nav.next svg{transform:scaleX(-1);}
   html[dir="rtl"] .date-nav.prev svg{transform:scaleX(-1);}
 
-  .date-center{text-align:center; min-width:0;}
+  .date-center{text-align:center; min-width:0; width:100%;}
   .date-big{
-    font-family:'Newsreader',serif;
-    font-weight:600;
-    font-size:clamp(2.1rem, 7vw, 3.4rem);
-    letter-spacing:-0.01em;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-weight:700;
+    font-size:clamp(1.9rem, 6.5vw, 3rem);
+    letter-spacing:-0.02em;
     line-height:1.05;
     white-space:nowrap;
   }
+  html[dir="rtl"] .date-big{font-family:'Cairo',sans-serif; font-weight:700;}
   .date-today-badge{
     display:inline-block; margin-top:10px;
     font-size:0.68rem; font-weight:700;
-    color:var(--accent);
-    border:1px solid var(--accent);
+    color:var(--text);
+    border:1px solid var(--text-dim);
     border-radius:20px; padding:3px 11px;
     opacity:0; pointer-events:none;
     transition:opacity .15s;
@@ -155,7 +153,7 @@
     font-size:0.74rem; color:var(--text-faint); text-decoration:underline;
     text-underline-offset:3px; background:none; border:none; cursor:pointer;
   }
-  .jump-today:hover{color:var(--accent);}
+  .jump-today:hover{color:var(--text);}
 
   /* ---------- MAIN ---------- */
   main{position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 24px 90px;}
@@ -190,7 +188,7 @@
     display:flex; align-items:center; justify-content:center;
     transition:border-color .15s, color .15s;
   }
-  .subject-add-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .subject-add-btn:hover{border-color:var(--text-dim); color:var(--text);}
   .subject-add-btn svg{width:14px; height:14px;}
 
   .material-list{padding:6px 10px;}
@@ -204,18 +202,16 @@
     flex-shrink:0; width:30px; height:30px; border-radius:7px;
     display:flex; align-items:center; justify-content:center;
     margin-top:1px;
+    background:var(--panel-hi); color:var(--text-dim);
   }
   .material-icon svg{width:14px; height:14px;}
-  .icon-pdf{background:rgba(226,100,111,0.12); color:#e2646f;}
-  .icon-q{background:rgba(201,161,90,0.14); color:var(--gold);}
-  .icon-spotify{background:rgba(46,190,110,0.14); color:#2ebe6e;}
-  .icon-youtube{background:rgba(226,64,64,0.14); color:#e24040;}
 
   .material-body{flex:1; min-width:0;}
   .material-title{font-size:0.87rem; font-weight:600; word-break:break-word;}
   .material-meta{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
+  .material-uploader{font-size:0.7rem; color:var(--text-faint); margin-top:3px; opacity:0.85;}
   .material-link{font-size:0.78rem; color:var(--text-dim); word-break:break-all; margin-top:2px; display:inline-block;}
-  .material-link:hover{color:var(--accent);}
+  .material-link:hover{color:var(--text);}
 
   .material-del{
     flex-shrink:0; width:24px; height:24px; border-radius:6px;
@@ -223,7 +219,7 @@
     display:flex; align-items:center; justify-content:center;
     opacity:0.5; transition:opacity .15s, color .15s;
   }
-  .material-del:hover{opacity:1; color:var(--err);}
+  .material-del:hover{opacity:1; color:var(--text);}
   .material-del svg{width:13px; height:13px;}
 
   .add-subject-btn{
@@ -237,7 +233,7 @@
     display:flex; align-items:center; justify-content:center; gap:8px;
     transition:border-color .15s, color .15s;
   }
-  .add-subject-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .add-subject-btn:hover{border-color:var(--text-dim); color:var(--text);}
   .add-subject-btn svg{width:15px; height:15px;}
 
   .loading-row{text-align:center; padding:40px 0; color:var(--text-faint); font-size:0.85rem;}
@@ -245,8 +241,7 @@
   /* ---------- MODAL (shared: add subject / add material) ---------- */
   .modal-overlay{
     position:fixed; inset:0; z-index:50;
-    background:rgba(5,4,3,0.72);
-    backdrop-filter:blur(3px);
+    background:rgba(0,0,0,0.72);
     display:none; align-items:flex-end; justify-content:center;
   }
   @media (min-width:640px){ .modal-overlay{align-items:center;} }
@@ -271,11 +266,11 @@
     border:1.5px solid var(--line-soft); border-radius:6px; color:var(--text);
   }
   .mfield input::placeholder{color:var(--text-faint);}
-  .mfield input:focus, .mfield select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow);}
+  .mfield input:focus, .mfield select:focus{outline:none; border-color:var(--text-dim); box-shadow:0 0 0 3px var(--accent-glow);}
   .mfield-hint{font-size:0.71rem; color:var(--text-faint); margin-top:5px;}
   .mfield-err{font-size:0.71rem; color:var(--err); margin-top:5px; display:none;}
   .mfield-err.show{display:block;}
-  .mfield.invalid input, .mfield.invalid select{border-color:var(--err);}
+  .mfield.invalid input, .mfield.invalid select{border-color:var(--text);}
 
   .type-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .type-opt{
@@ -284,7 +279,7 @@
     padding:10px 11px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text-dim);
   }
   .type-opt input{position:absolute; opacity:0; width:0; height:0;}
-  .type-opt.checked{border-color:var(--accent); background:var(--accent-glow); color:var(--text);}
+  .type-opt.checked{border-color:var(--text); background:var(--accent-glow); color:var(--text);}
   .type-opt svg{width:14px; height:14px; flex-shrink:0;}
 
   .source-toggle{display:flex; gap:8px; margin-bottom:14px;}
@@ -293,7 +288,7 @@
     border:1.5px solid var(--line-soft); font-size:0.78rem; font-weight:700;
     color:var(--text-faint); cursor:pointer;
   }
-  .source-opt.active{border-color:var(--accent); color:var(--accent); background:var(--accent-glow);}
+  .source-opt.active{border-color:var(--text); color:var(--text); background:var(--accent-glow);}
 
   .upload-drop{
     border:1.5px dashed var(--line-soft); border-radius:8px;
@@ -301,8 +296,8 @@
     color:var(--text-faint); font-size:0.8rem;
     transition:border-color .15s;
   }
-  .upload-drop:hover{border-color:var(--accent);}
-  .upload-drop.has-file{border-color:var(--accent); color:var(--text-dim);}
+  .upload-drop:hover{border-color:var(--text-dim);}
+  .upload-drop.has-file{border-color:var(--text); color:var(--text-dim);}
   .upload-drop svg{width:18px; height:18px; margin-bottom:8px; opacity:0.6;}
 
   .modal-btn-row{display:flex; gap:10px; margin-top:20px;}
@@ -310,8 +305,8 @@
     flex:1; padding:12px; border-radius:7px; font-size:0.85rem; font-weight:700;
     cursor:pointer; border:1.5px solid var(--line-soft); background:transparent; color:var(--text-dim);
   }
-  .modal-btn.primary{background:var(--accent); border-color:var(--accent); color:var(--text);}
-  .modal-btn.primary:hover{background:var(--accent-dark);}
+  .modal-btn.primary{background:var(--text); border-color:var(--text); color:var(--bg);}
+  .modal-btn.primary:hover{background:var(--text-dim);}
   .modal-btn.primary:disabled{background:var(--panel); color:var(--text-faint); cursor:not-allowed; border-color:var(--line-soft);}
 
   .toast{
@@ -333,7 +328,11 @@
 <body>
 
 <header class="site-header">
-  <div class="logo">Medicine<span>Bank</span></div>
+  <div class="logo-wrap">
+    <img src="IMG_3083.png" alt="MedicineBank" class="logo-img" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';" />
+    <div class="logo-fallback" id="logoFallback" style="display:none;">MB</div>
+    <div class="logo">Medicine<span>Bank</span></div>
+  </div>
   <div class="settings-wrap">
     <button class="settings-btn" id="settingsBtn" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -456,6 +455,9 @@
   const htmlEl = document.documentElement;
   let currentLang = 'en';
 
+  /* ---------------- hardcoded current user (placeholder until backend/auth) ---------------- */
+  const CURRENT_USER = { id: 'u_demo1', nameEn: 'Eyad', nameAr: 'إياد' };
+
   /* ---------------- date state ---------------- */
   function fmtKey(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -542,7 +544,7 @@
     applyStaticText(lang);
     settingsMenu.classList.remove('open');
     renderDate();
-    renderDay();
+    renderDay(); // <-- this was missing before: dynamic content (empty state, subject cards, material rows, uploader labels) never re-rendered on language switch
   }
 
   /* ---------------- storage ---------------- */
@@ -577,10 +579,10 @@
 
   /* ---------------- render ---------------- */
   const TYPE_META = {
-    pdf:     { icon: 'icon-pdf',     labelEn:'PDF',      labelAr:'ملف PDF' },
-    q:       { icon: 'icon-q',       labelEn:'Questions',labelAr:'أسئلة' },
-    spotify: { icon: 'icon-spotify', labelEn:'Podcast',  labelAr:'بودكاست' },
-    youtube: { icon: 'icon-youtube', labelEn:'Video',    labelAr:'فيديو' },
+    pdf:     { labelEn:'PDF',      labelAr:'ملف PDF' },
+    q:       { labelEn:'Questions',labelAr:'أسئلة' },
+    spotify: { labelEn:'Podcast',  labelAr:'بودكاست' },
+    youtube: { labelEn:'Video',    labelAr:'فيديو' },
   };
 
   function iconSvg(type){
@@ -605,12 +607,12 @@
       main.innerHTML = `
         <div class="day-empty">
           <div class="big-icon">🗓️</div>
-          <h3 data-en="Nothing here yet" data-ar="لسه معندناش حاجة هنا">${currentLang==='ar'?'لسه معندناش حاجة هنا':'Nothing here yet'}</h3>
-          <p data-en="Be the first to add a subject and its materials for this day." data-ar="كن أول واحد يضيف مادة ومحتواها لليوم ده.">${currentLang==='ar'?'كن أول واحد يضيف مادة ومحتواها لليوم ده.':'Be the first to add a subject and its materials for this day.'}</p>
+          <h3>${currentLang==='ar'?'لسه معندناش حاجة هنا':'Nothing here yet'}</h3>
+          <p>${currentLang==='ar'?'كن أول واحد يضيف مادة ومحتواها لليوم ده.':'Be the first to add a subject and its materials for this day.'}</p>
         </div>
         <button class="add-subject-btn" id="addSubjectBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          <span data-en="Add a subject" data-ar="إضافة مادة">${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
+          <span>${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
         </button>
       `;
       document.getElementById('addSubjectBtn').addEventListener('click', openSubjectModal);
@@ -635,7 +637,7 @@
             </button>
           </div>
           <div class="material-list">
-            ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);" data-en="No materials yet." data-ar="لسه مفيش محتوى.">${currentLang==='ar'?'لسه مفيش محتوى.':'No materials yet.'}</div>` :
+            ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);">${currentLang==='ar'?'لسه مفيش محتوى.':'No materials yet.'}</div>` :
               subj.materials.map(m => {
                 const meta = TYPE_META[m.type] || TYPE_META.pdf;
                 const label = currentLang === 'ar' ? meta.labelAr : meta.labelEn;
@@ -643,15 +645,19 @@
                 if (m.kind === 'link' || m.type === 'spotify' || m.type === 'youtube'){
                   bodyExtra = `<a class="material-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener">${escapeHtml(m.url)}</a>`;
                 } else if (m.kind === 'upload'){
-                  bodyExtra = `<a class="material-link" href="${m.dataUrl}" download="${escapeHtml(m.fileName||'file.pdf')}" data-en-prefix="Download file" data-ar-prefix="تحميل الملف">${currentLang==='ar'?'تحميل الملف':'Download file'}</a>`;
+                  bodyExtra = `<a class="material-link" href="${m.dataUrl}" download="${escapeHtml(m.fileName||'file.pdf')}">${currentLang==='ar'?'تحميل الملف':'Download file'}</a>`;
                 }
+                const uploaderName = currentLang === 'ar' ? (m.uploaderNameAr || m.uploaderName || '') : (m.uploaderName || m.uploaderNameAr || '');
+                const uploadedByLabel = currentLang === 'ar' ? 'بواسطة' : 'Uploaded by';
+                const uploaderLine = uploaderName ? `<div class="material-uploader">${uploadedByLabel} ${escapeHtml(uploaderName)}</div>` : '';
                 return `
                   <div class="material-row" data-material-id="${m.id}">
-                    <div class="material-icon ${meta.icon}">${iconSvg(m.type)}</div>
+                    <div class="material-icon">${iconSvg(m.type)}</div>
                     <div class="material-body">
                       <div class="material-title">${escapeHtml(m.title)}</div>
                       <div class="material-meta">${label}</div>
                       ${bodyExtra}
+                      ${uploaderLine}
                     </div>
                     <button class="material-del" data-del-subject="${subj.id}" data-del-material="${m.id}" aria-label="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -668,7 +674,7 @@
     html += `
       <button class="add-subject-btn" id="addSubjectBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span data-en="Add a subject" data-ar="إضافة مادة">${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
+        <span>${currentLang==='ar'?'إضافة مادة':'Add a subject'}</span>
       </button>
     `;
 
@@ -825,7 +831,13 @@
     if (!title){ materialTitleField.classList.add('invalid'); ok = false; }
     else materialTitleField.classList.remove('invalid');
 
-    let materialData = { id: uid(), type: currentType, title };
+    let materialData = {
+      id: uid(),
+      type: currentType,
+      title,
+      uploaderName: CURRENT_USER.nameEn,
+      uploaderNameAr: CURRENT_USER.nameAr
+    };
 
     if (currentType === 'pdf' || currentType === 'q'){
       if (currentSource === 'link'){
