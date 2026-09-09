@@ -35,6 +35,7 @@
     line-height:1.6;
     position:relative;
     min-height:100vh;
+    overflow-x:hidden;
   }
   html[dir="rtl"] body{font-family:'Cairo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
 
@@ -56,84 +57,95 @@
     border:1px solid var(--line-soft);
     font-weight:800; font-size:0.72rem; letter-spacing:0.2px; color:var(--text);
   }
-  .logo{font-weight:800; font-size:0.92rem; letter-spacing:0.2px; color:var(--text);}
-  .logo span{color:var(--text-dim);}
 
-  .settings-wrap{position:relative;}
-  .settings-btn{
+  .calendar-wrap{position:relative;}
+  .calendar-btn{
     width:34px; height:34px; border-radius:50%;
     background:transparent; border:1px solid var(--line-soft);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; color:var(--text-faint);
     transition:border-color .15s, color .15s, background .15s;
   }
-  .settings-btn:hover{border-color:var(--text-faint); color:var(--text-dim);}
-  .settings-btn svg{width:16px; height:16px;}
+  .calendar-btn:hover{border-color:var(--text-faint); color:var(--text-dim);}
+  .calendar-btn svg{width:16px; height:16px;}
 
-  .settings-menu{
+  /* Calendar popup — must sit above everything, including the date hero */
+  .calendar-popup{
     position:absolute; top:calc(100% + 8px); right:0;
     background:var(--panel-hi); border:1px solid var(--line-soft);
-    border-radius:8px; padding:6px;
-    min-width:150px;
+    border-radius:12px; padding:14px;
+    width:280px;
     display:none;
-    box-shadow:0 12px 28px rgba(0,0,0,0.5);
-    z-index:10;
+    box-shadow:0 20px 45px rgba(0,0,0,0.6);
+    z-index:100;
   }
-  html[dir="rtl"] .settings-menu{right:auto; left:0;}
-  .settings-menu.open{display:block;}
-  .settings-menu-label{
-    font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px;
-    color:var(--text-faint); padding:8px 10px 4px;
-  }
-  html[dir="rtl"] .settings-menu-label{text-transform:none;}
-  .lang-option{
+  html[dir="rtl"] .calendar-popup{right:auto; left:0;}
+  .calendar-popup.open{display:block;}
+
+  .cal-month-row{
     display:flex; align-items:center; justify-content:space-between;
-    width:100%; padding:8px 10px; border-radius:5px;
-    background:none; border:none; color:var(--text-dim);
-    font-size:0.82rem; font-weight:600; cursor:pointer;
-    text-align:left;
+    margin-bottom:10px;
   }
-  html[dir="rtl"] .lang-option{text-align:right;}
-  .lang-option:hover{background:var(--panel);}
-  .lang-option.active{color:var(--text);}
-  .lang-option .dot{width:6px; height:6px; border-radius:50%; background:var(--text); opacity:0;}
-  .lang-option.active .dot{opacity:1;}
+  .cal-month-nav{
+    width:26px; height:26px; border-radius:50%;
+    border:1px solid var(--line-soft); background:transparent;
+    color:var(--text-faint); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cal-month-nav:hover{border-color:var(--text-dim); color:var(--text);}
+  .cal-month-nav svg{width:13px; height:13px;}
+  html[dir="rtl"] .cal-month-nav.cal-next svg{transform:scaleX(-1);}
+  html[dir="rtl"] .cal-month-nav.cal-prev svg{transform:scaleX(-1);}
+  .cal-month-label{font-size:0.85rem; font-weight:700;}
+
+  .cal-grid{
+    display:grid; grid-template-columns:repeat(7,1fr);
+    gap:3px; margin-bottom:10px;
+  }
+  .cal-dow{
+    text-align:center; font-size:0.62rem; color:var(--text-faint);
+    font-weight:700; padding:4px 0;
+  }
+  .cal-day{
+    text-align:center; font-size:0.78rem; color:var(--text-dim);
+    padding:6px 0; border-radius:6px; cursor:pointer;
+    background:transparent; border:none; font-family:inherit;
+  }
+  .cal-day:hover{background:var(--panel);}
+  .cal-day.other-month{color:var(--text-faint); opacity:0.35;}
+  .cal-day.is-today{border:1px solid var(--text-dim);}
+  .cal-day.is-selected{background:var(--text); color:var(--bg); font-weight:700;}
+
+  .cal-menu-divider{height:1px; background:var(--line-soft); margin:8px 0 10px;}
+
+  .cal-menu-item{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; padding:9px 8px; border-radius:6px;
+    background:none; border:none; color:var(--text-dim);
+    font-size:0.8rem; font-weight:600; cursor:pointer;
+    text-align:left; margin-bottom:2px;
+  }
+  html[dir="rtl"] .cal-menu-item{text-align:right;}
+  .cal-menu-item:hover{background:var(--panel);}
+  .cal-menu-item svg{width:14px; height:14px; color:var(--text-faint); flex-shrink:0;}
+  .cal-menu-item-left{display:flex; align-items:center; gap:8px;}
+  .cal-lang-value{font-size:0.72rem; color:var(--text-faint); font-weight:700;}
 
   /* ---------- DATE HERO ---------- */
   .date-hero{
     position:relative; z-index:2;
     padding:36px 20px 44px;
-    display:grid;
-    grid-template-columns:40px 1fr 40px;
-    align-items:center;
-    justify-items:center;
-    gap:20px;
+    text-align:center;
     max-width:520px;
     margin:0 auto;
   }
-  .date-nav{
-    width:40px; height:40px; border-radius:50%;
-    border:1px solid var(--line-soft); background:transparent;
-    color:var(--text-faint); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
-    transition:border-color .15s, color .15s, transform .1s;
-    align-self:center;
-  }
-  .date-nav:hover{border-color:var(--text-dim); color:var(--text);}
-  .date-nav:active{transform:scale(0.94);}
-  .date-nav svg{width:17px; height:17px; display:block;}
-  html[dir="rtl"] .date-nav.next svg{transform:scaleX(-1);}
-  html[dir="rtl"] .date-nav.prev svg{transform:scaleX(-1);}
-
-  .date-center{text-align:center; min-width:0; width:100%;}
+  .date-center{min-width:0; width:100%;}
   .date-big{
     font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     font-weight:700;
     font-size:clamp(1.9rem, 6.5vw, 3rem);
     letter-spacing:-0.02em;
     line-height:1.05;
-    white-space:nowrap;
   }
   html[dir="rtl"] .date-big{font-family:'Cairo',sans-serif; font-weight:700;}
   .date-today-badge{
@@ -155,8 +167,13 @@
   }
   .jump-today:hover{color:var(--text);}
 
+  .swipe-hint{
+    text-align:center; font-size:0.68rem; color:var(--text-faint);
+    margin-top:2px; opacity:0.6;
+  }
+
   /* ---------- MAIN ---------- */
-  main{position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 24px 90px;}
+  main{position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 24px 90px; touch-action:pan-y;}
 
   .day-empty{
     text-align:center; padding:50px 20px 60px;
@@ -169,17 +186,46 @@
   .subject-card{
     background:var(--panel);
     border:1px solid var(--line-soft);
+    border-left:4px solid var(--subj-color, var(--line-soft));
     border-radius:10px;
     margin-bottom:16px;
     overflow:hidden;
   }
+  html[dir="rtl"] .subject-card{border-left:1px solid var(--line-soft); border-right:4px solid var(--subj-color, var(--line-soft));}
+
   .subject-head{
     display:flex; align-items:center; justify-content:space-between;
     padding:15px 18px;
-    border-bottom:1px solid var(--line-soft);
+    cursor:pointer;
   }
-  .subject-name{font-size:0.98rem; font-weight:700;}
+  .subject-head.has-content{border-bottom:1px solid var(--line-soft);}
+  .subject-head-left{display:flex; align-items:center; gap:11px; min-width:0;}
+  .subject-chevron{
+    flex-shrink:0; width:16px; height:16px; color:var(--text-faint);
+    transition:transform .15s;
+  }
+  .subject-chevron.expanded{transform:rotate(90deg);}
+  html[dir="rtl"] .subject-chevron{transform:rotate(180deg);}
+  html[dir="rtl"] .subject-chevron.expanded{transform:rotate(90deg);}
+
+  .subject-name-row{display:flex; align-items:center; gap:8px; min-width:0;}
+  .subject-color-dot{
+    flex-shrink:0; width:10px; height:10px; border-radius:50%;
+    background:var(--subj-color, var(--text-dim));
+  }
+  .subject-name{font-size:0.98rem; font-weight:700; word-break:break-word;}
   .subject-count{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
+
+  .subject-head-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .subject-color-btn{
+    width:26px; height:26px; border-radius:50%;
+    border:1.5px solid var(--line-soft); cursor:pointer;
+    background:var(--subj-color, var(--panel-hi));
+    padding:0;
+  }
+  .subject-color-btn:hover{border-color:var(--text-dim);}
+  .subject-color-input{position:absolute; opacity:0; width:0; height:0; pointer-events:none;}
+
   .subject-add-btn{
     flex-shrink:0;
     width:30px; height:30px; border-radius:50%;
@@ -191,13 +237,16 @@
   .subject-add-btn:hover{border-color:var(--text-dim); color:var(--text);}
   .subject-add-btn svg{width:14px; height:14px;}
 
-  .material-list{padding:6px 10px;}
+  .material-list{padding:6px 10px; display:none;}
+  .material-list.expanded{display:block;}
   .material-row{
     display:flex; align-items:flex-start; gap:11px;
     padding:11px 8px;
     border-bottom:1px solid var(--line-soft);
+    cursor:pointer;
   }
   .material-row:last-child{border-bottom:none;}
+  .material-row:hover{background:var(--panel-hi);}
   .material-icon{
     flex-shrink:0; width:30px; height:30px; border-radius:7px;
     display:flex; align-items:center; justify-content:center;
@@ -209,6 +258,7 @@
   .material-body{flex:1; min-width:0;}
   .material-title{font-size:0.87rem; font-weight:600; word-break:break-word;}
   .material-meta{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
+  .material-caption{font-size:0.76rem; color:var(--text-dim); margin-top:4px; font-style:italic; line-height:1.5;}
   .material-uploader{font-size:0.7rem; color:var(--text-faint); margin-top:3px; opacity:0.85;}
   .material-link{font-size:0.78rem; color:var(--text-dim); word-break:break-all; margin-top:2px; display:inline-block;}
   .material-link:hover{color:var(--text);}
@@ -238,7 +288,7 @@
 
   .loading-row{text-align:center; padding:40px 0; color:var(--text-faint); font-size:0.85rem;}
 
-  /* ---------- MODAL (shared: add subject / add material) ---------- */
+  /* ---------- MODAL (shared: add subject / add material / edit material) ---------- */
   .modal-overlay{
     position:fixed; inset:0; z-index:50;
     background:rgba(0,0,0,0.72);
@@ -260,17 +310,18 @@
 
   .mfield{margin-bottom:16px;}
   .mfield label{display:block; font-size:0.76rem; font-weight:700; color:var(--text-dim); margin-bottom:7px;}
-  .mfield input[type="text"], .mfield input[type="url"], .mfield select{
+  .mfield input[type="text"], .mfield input[type="url"], .mfield select, .mfield textarea{
     width:100%; font-family:inherit; font-size:0.86rem;
     padding:10px 12px; background:var(--panel);
     border:1.5px solid var(--line-soft); border-radius:6px; color:var(--text);
   }
-  .mfield input::placeholder{color:var(--text-faint);}
-  .mfield input:focus, .mfield select:focus{outline:none; border-color:var(--text-dim); box-shadow:0 0 0 3px var(--accent-glow);}
+  .mfield textarea{resize:vertical; min-height:64px; line-height:1.5;}
+  .mfield input::placeholder, .mfield textarea::placeholder{color:var(--text-faint);}
+  .mfield input:focus, .mfield select:focus, .mfield textarea:focus{outline:none; border-color:var(--text-dim); box-shadow:0 0 0 3px var(--accent-glow);}
   .mfield-hint{font-size:0.71rem; color:var(--text-faint); margin-top:5px;}
   .mfield-err{font-size:0.71rem; color:var(--err); margin-top:5px; display:none;}
   .mfield-err.show{display:block;}
-  .mfield.invalid input, .mfield.invalid select{border-color:var(--text);}
+  .mfield.invalid input, .mfield.invalid select, .mfield.invalid textarea{border-color:var(--text);}
 
   .type-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .type-opt{
@@ -281,6 +332,7 @@
   .type-opt input{position:absolute; opacity:0; width:0; height:0;}
   .type-opt.checked{border-color:var(--text); background:var(--accent-glow); color:var(--text);}
   .type-opt svg{width:14px; height:14px; flex-shrink:0;}
+  .type-opt.disabled{opacity:0.4; pointer-events:none;}
 
   .source-toggle{display:flex; gap:8px; margin-bottom:14px;}
   .source-opt{
@@ -308,6 +360,7 @@
   .modal-btn.primary{background:var(--text); border-color:var(--text); color:var(--bg);}
   .modal-btn.primary:hover{background:var(--text-dim);}
   .modal-btn.primary:disabled{background:var(--panel); color:var(--text-faint); cursor:not-allowed; border-color:var(--line-soft);}
+  .modal-btn.danger{color:var(--err);}
 
   .toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -320,7 +373,7 @@
 
   @media (max-width:560px){
     .site-header{padding:16px 18px;}
-    .date-hero{padding:28px 10px 34px; gap:10px;}
+    .date-hero{padding:28px 10px 34px;}
     main{padding:0 14px 80px;}
   }
 </style>
@@ -331,32 +384,49 @@
   <div class="logo-wrap">
     <img src="IMG_3083.png" alt="MedicineBank" class="logo-img" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';" />
     <div class="logo-fallback" id="logoFallback" style="display:none;">MB</div>
-    <div class="logo">Medicine<span>Bank</span></div>
   </div>
-  <div class="settings-wrap">
-    <button class="settings-btn" id="settingsBtn" aria-label="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+  <div class="calendar-wrap" id="calendarWrap">
+    <button class="calendar-btn" id="calendarBtn" aria-label="Open calendar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3 9.5h18"/></svg>
     </button>
-    <div class="settings-menu" id="settingsMenu">
-      <div class="settings-menu-label" data-en="Language" data-ar="اللغة">Language</div>
-      <button class="lang-option active" data-lang="en"><span>English</span><span class="dot"></span></button>
-      <button class="lang-option" data-lang="ar"><span>عربي</span><span class="dot"></span></button>
+    <div class="calendar-popup" id="calendarPopup">
+      <div class="cal-month-row">
+        <button class="cal-month-nav cal-prev" id="calPrevMonth" aria-label="Previous month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="cal-month-label" id="calMonthLabel">—</div>
+        <button class="cal-month-nav cal-next" id="calNextMonth" aria-label="Next month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="cal-grid" id="calDowRow"></div>
+      <div class="cal-grid" id="calDaysGrid"></div>
+      <div class="cal-menu-divider"></div>
+      <button class="cal-menu-item" id="adminDashboardBtn">
+        <span class="cal-menu-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <span data-en="Admin dashboard" data-ar="لوحة الأدمن">Admin dashboard</span>
+        </span>
+      </button>
+      <button class="cal-menu-item" id="langToggleBtn">
+        <span class="cal-menu-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20z"/></svg>
+          <span data-en="Language" data-ar="اللغة">Language</span>
+        </span>
+        <span class="cal-lang-value" id="langValueLabel">EN</span>
+      </button>
     </div>
   </div>
 </header>
 
 <section class="date-hero">
-  <button class="date-nav prev" id="prevBtn" aria-label="Previous day">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-  </button>
   <div class="date-center">
     <button class="jump-today" id="jumpTodayBtn" data-en="Jump to today" data-ar="روح لدلوقتي">Jump to today</button>
     <div class="date-big" id="dateBig">—</div>
+    <div class="date-sub" id="dateSub"></div>
     <div class="date-today-badge" id="todayBadge" data-en="Today" data-ar="النهاردة">Today</div>
+    <div class="swipe-hint" id="swipeHint" data-en="Swipe left or right to change day" data-ar="اسحب يمين أو شمال لتغيير اليوم">Swipe left or right to change day</div>
   </div>
-  <button class="date-nav next" id="nextBtn" aria-label="Next day">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-  </button>
 </section>
 
 <main id="mainContent">
@@ -372,6 +442,10 @@
       <input type="text" id="subjectNameInput" data-ph-en="e.g. Cardiology — Arrhythmias" data-ph-ar="مثال: قلبية — اضطرابات النظم" placeholder="e.g. Cardiology — Arrhythmias" />
       <div class="mfield-err" data-en="Please enter a name." data-ar="من فضلك اكتب اسم.">Please enter a name.</div>
     </div>
+    <div class="mfield">
+      <label data-en="Color" data-ar="اللون">Color</label>
+      <input type="color" id="subjectColorInput" value="#e8e8e8" style="width:100%; height:42px; padding:2px; border-radius:6px; border:1.5px solid var(--line-soft); background:var(--panel); cursor:pointer;" />
+    </div>
     <div class="modal-btn-row">
       <button class="modal-btn" id="subjectCancelBtn" data-en="Cancel" data-ar="إلغاء">Cancel</button>
       <button class="modal-btn primary" id="subjectSaveBtn" data-en="Add subject" data-ar="إضافة">Add subject</button>
@@ -379,7 +453,7 @@
   </div>
 </div>
 
-<!-- ADD MATERIAL MODAL -->
+<!-- ADD / EDIT MATERIAL MODAL -->
 <div class="modal-overlay" id="materialModalOverlay">
   <div class="modal-sheet">
     <div class="modal-title" id="materialModalTitle" data-en="Add material" data-ar="إضافة مادة علمية">Add material</div>
@@ -441,6 +515,11 @@
       <div class="mfield-err" data-en="Please enter a valid link." data-ar="من فضلك حط لينك صحيح.">Please enter a valid link.</div>
     </div>
 
+    <div class="mfield">
+      <label data-en="Caption (optional)" data-ar="وصف (اختياري)">Caption (optional)</label>
+      <textarea id="materialCaptionInput" data-ph-en="Add a short note about this material…" data-ph-ar="اكتب ملاحظة قصيرة عن المحتوى ده…" placeholder="Add a short note about this material…"></textarea>
+    </div>
+
     <div class="modal-btn-row">
       <button class="modal-btn" id="materialCancelBtn" data-en="Cancel" data-ar="إلغاء">Cancel</button>
       <button class="modal-btn primary" id="materialSaveBtn" data-en="Add" data-ar="إضافة">Add</button>
@@ -463,10 +542,16 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
   function todayDate(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+  // d/m/y — day first, never the American m/d/y order
+  function fmtDMY(d){
+    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+  }
 
   let viewDate = todayDate();
+  let calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
 
   const dateBig = document.getElementById('dateBig');
+  const dateSub = document.getElementById('dateSub');
   const todayBadge = document.getElementById('todayBadge');
   const jumpTodayBtn = document.getElementById('jumpTodayBtn');
 
@@ -474,57 +559,153 @@
   const MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   const DAYS_EN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const DAYS_AR = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  const DOW_SHORT_EN = ["S","M","T","W","T","F","S"];
+  const DOW_SHORT_AR = ["ح","ن","ث","ر","خ","ج","س"];
 
   function renderDate(){
-    const months = currentLang === 'ar' ? MONTHS_AR : MONTHS_EN;
     const days = currentLang === 'ar' ? DAYS_AR : DAYS_EN;
-    const dayName = days[viewDate.getDay()];
-    const dayNum = viewDate.getDate();
-    const month = months[viewDate.getMonth()];
-    const year = viewDate.getFullYear();
-    dateBig.textContent = currentLang === 'ar'
-      ? `${dayNum} ${month} ${year}`
-      : `${month} ${dayNum}, ${year}`;
-    document.querySelector('.date-sub')?.remove();
-    const sub = document.createElement('div');
-    sub.className = 'date-sub';
-    sub.textContent = dayName;
-    dateBig.insertAdjacentElement('afterend', sub);
+    // Big text is now the WEEKDAY NAME (Sunday, Monday, …)
+    dateBig.textContent = days[viewDate.getDay()];
 
     const isToday = fmtKey(viewDate) === fmtKey(todayDate());
     todayBadge.classList.toggle('show', isToday);
     jumpTodayBtn.style.visibility = isToday ? 'hidden' : 'visible';
   }
 
-  document.getElementById('prevBtn').addEventListener('click', () => {
-    viewDate.setDate(viewDate.getDate() - 1);
-    viewDate = new Date(viewDate);
-    renderDate(); loadDay();
-  });
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    viewDate.setDate(viewDate.getDate() + 1);
-    viewDate = new Date(viewDate);
-    renderDate(); loadDay();
-  });
+  function renderCalBtnDate(){
+    // Small d/m/y label next to the calendar icon
+    let btn = document.getElementById('calDateLabel');
+    if (!btn){
+      btn = document.createElement('div');
+      btn.id = 'calDateLabel';
+      btn.style.cssText = 'font-size:0.68rem; color:var(--text-faint); text-align:center; margin-top:4px; font-weight:600;';
+      document.getElementById('calendarWrap').appendChild(btn);
+    }
+    btn.textContent = fmtDMY(viewDate);
+  }
+
+  function goToDate(d){
+    viewDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+    renderDate();
+    renderCalBtnDate();
+    loadDay();
+  }
+
   jumpTodayBtn.addEventListener('click', () => {
-    viewDate = todayDate();
-    renderDate(); loadDay();
+    goToDate(todayDate());
+  });
+
+  /* ---------------- swipe navigation ---------------- */
+  const mainEl = document.getElementById('mainContent');
+  let touchStartX = 0, touchStartY = 0, touchActive = false;
+
+  mainEl.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchActive = true;
+  }, { passive: true });
+
+  mainEl.addEventListener('touchend', (e) => {
+    if (!touchActive) return;
+    touchActive = false;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const SWIPE_THRESHOLD = 50;
+    // Ignore mostly-vertical swipes so normal scrolling still works
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+
+    const rtl = htmlEl.getAttribute('dir') === 'rtl';
+    const swipedLeft = dx < 0;
+    // Left-to-right physical swipe direction, but "next"/"prev" flips in RTL
+    const goNext = rtl ? !swipedLeft : swipedLeft;
+
+    const next = new Date(viewDate);
+    next.setDate(next.getDate() + (goNext ? 1 : -1));
+    goToDate(next);
+  }, { passive: true });
+
+  /* ---------------- calendar popup ---------------- */
+  const calendarBtn = document.getElementById('calendarBtn');
+  const calendarPopup = document.getElementById('calendarPopup');
+  const calMonthLabel = document.getElementById('calMonthLabel');
+  const calDowRow = document.getElementById('calDowRow');
+  const calDaysGrid = document.getElementById('calDaysGrid');
+
+  calendarBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !calendarPopup.classList.contains('open');
+    calendarPopup.classList.toggle('open');
+    if (willOpen){
+      calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+      renderCalendarPopup();
+    }
+  });
+  document.addEventListener('click', () => calendarPopup.classList.remove('open'));
+  calendarPopup.addEventListener('click', (e) => e.stopPropagation());
+
+  document.getElementById('calPrevMonth').addEventListener('click', () => {
+    calMonthCursor = new Date(calMonthCursor.getFullYear(), calMonthCursor.getMonth() - 1, 1);
+    renderCalendarPopup();
+  });
+  document.getElementById('calNextMonth').addEventListener('click', () => {
+    calMonthCursor = new Date(calMonthCursor.getFullYear(), calMonthCursor.getMonth() + 1, 1);
+    renderCalendarPopup();
+  });
+
+  function renderCalendarPopup(){
+    const months = currentLang === 'ar' ? MONTHS_AR : MONTHS_EN;
+    const dowShort = currentLang === 'ar' ? DOW_SHORT_AR : DOW_SHORT_EN;
+    calMonthLabel.textContent = `${months[calMonthCursor.getMonth()]} ${calMonthCursor.getFullYear()}`;
+
+    calDowRow.innerHTML = dowShort.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+    const firstOfMonth = new Date(calMonthCursor.getFullYear(), calMonthCursor.getMonth(), 1);
+    const startOffset = firstOfMonth.getDay(); // 0=Sun
+    const gridStart = new Date(firstOfMonth);
+    gridStart.setDate(gridStart.getDate() - startOffset);
+
+    const todayKey = fmtKey(todayDate());
+    const selectedKey = fmtKey(viewDate);
+
+    let cellsHtml = '';
+    for (let i = 0; i < 42; i++){
+      const cellDate = new Date(gridStart);
+      cellDate.setDate(gridStart.getDate() + i);
+      const isOtherMonth = cellDate.getMonth() !== calMonthCursor.getMonth();
+      const key = fmtKey(cellDate);
+      const classes = ['cal-day'];
+      if (isOtherMonth) classes.push('other-month');
+      if (key === todayKey) classes.push('is-today');
+      if (key === selectedKey) classes.push('is-selected');
+      cellsHtml += `<button type="button" class="${classes.join(' ')}" data-date="${key}">${cellDate.getDate()}</button>`;
+    }
+    calDaysGrid.innerHTML = cellsHtml;
+
+    calDaysGrid.querySelectorAll('.cal-day').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const [y,m,d] = btn.dataset.date.split('-').map(Number);
+        goToDate(new Date(y, m-1, d));
+        calendarPopup.classList.remove('open');
+      });
+    });
+  }
+
+  /* ---------------- admin dashboard + language toggle (inside calendar popup) ---------------- */
+  document.getElementById('adminDashboardBtn').addEventListener('click', () => {
+    showToast(currentLang==='ar' ? 'لوحة الأدمن قريبًا' : 'Admin dashboard coming soon');
+    calendarPopup.classList.remove('open');
+  });
+
+  const langToggleBtn = document.getElementById('langToggleBtn');
+  const langValueLabel = document.getElementById('langValueLabel');
+  langToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setLang(currentLang === 'en' ? 'ar' : 'en');
   });
 
   /* ---------------- language ---------------- */
-  const settingsBtn = document.getElementById('settingsBtn');
-  const settingsMenu = document.getElementById('settingsMenu');
-  settingsBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    settingsMenu.classList.toggle('open');
-  });
-  document.addEventListener('click', () => settingsMenu.classList.remove('open'));
-  settingsMenu.addEventListener('click', (e) => e.stopPropagation());
-
-  document.querySelectorAll('.lang-option').forEach(btn => {
-    btn.addEventListener('click', () => setLang(btn.dataset.lang));
-  });
-
   function applyStaticText(lang){
     document.querySelectorAll('[data-en]').forEach(el => {
       const t = lang === 'ar' ? el.dataset.ar : el.dataset.en;
@@ -534,7 +715,7 @@
       const ph = lang === 'ar' ? el.dataset.phAr : el.dataset.phEn;
       if (ph != null) el.setAttribute('placeholder', ph);
     });
-    document.querySelectorAll('.lang-option').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    langValueLabel.textContent = lang === 'ar' ? 'AR' : 'EN';
   }
 
   function setLang(lang){
@@ -542,9 +723,10 @@
     htmlEl.setAttribute('lang', lang);
     htmlEl.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyStaticText(lang);
-    settingsMenu.classList.remove('open');
     renderDate();
-    renderDay(); // <-- this was missing before: dynamic content (empty state, subject cards, material rows, uploader labels) never re-rendered on language switch
+    renderCalBtnDate();
+    renderCalendarPopup();
+    renderDay(); // dynamic content (empty state, subject cards, material rows, uploader labels) re-renders on language switch
   }
 
   /* ---------------- storage ---------------- */
@@ -553,7 +735,7 @@
   async function loadDay(){
     const key = STORAGE_KEY_PREFIX + fmtKey(viewDate);
     const main = document.getElementById('mainContent');
-    main.innerHTML = `<div class="loading-row" data-en="Loading…" data-ar="جاري التحميل…">${currentLang==='ar'?'جاري التحميل…':'Loading…'}</div>`;
+    main.innerHTML = `<div class="loading-row">${currentLang==='ar'?'جاري التحميل…':'Loading…'}</div>`;
     try{
       const result = await window.storage.get(key, true);
       currentDayData = result && result.value ? JSON.parse(result.value) : { subjects: [] };
@@ -625,38 +807,52 @@
       const countLabel = currentLang === 'ar'
         ? `${count} ${count===1 ? 'عنصر' : 'عناصر'}`
         : `${count} item${count===1?'':'s'}`;
+      const expanded = !subj.collapsed; // collapsed by default (subj.collapsed defaults truthy via ??)
+      const color = subj.color || '#a8a8a8';
       html += `
-        <div class="subject-card" data-subject-id="${subj.id}">
-          <div class="subject-head">
-            <div>
-              <div class="subject-name">${escapeHtml(subj.name)}</div>
-              <div class="subject-count">${countLabel}</div>
+        <div class="subject-card" data-subject-id="${subj.id}" style="--subj-color:${escapeHtml(color)}">
+          <div class="subject-head ${count>0?'has-content':''}" data-toggle-subject="${subj.id}">
+            <div class="subject-head-left">
+              <svg class="subject-chevron ${expanded?'expanded':''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+              <div>
+                <div class="subject-name-row">
+                  <span class="subject-color-dot"></span>
+                  <span class="subject-name">${escapeHtml(subj.name)}</span>
+                </div>
+                <div class="subject-count">${countLabel}</div>
+              </div>
             </div>
-            <button class="subject-add-btn" data-add-material="${subj.id}" aria-label="Add material">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
+            <div class="subject-head-actions">
+              <button type="button" class="subject-color-btn" data-color-subject="${subj.id}" title="${currentLang==='ar'?'اللون':'Color'}" aria-label="Change color"></button>
+              <input type="color" class="subject-color-input" data-color-input="${subj.id}" value="${color.length===7?color:'#a8a8a8'}" />
+              <button type="button" class="subject-add-btn" data-add-material="${subj.id}" aria-label="Add material">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="material-list">
+          <div class="material-list ${expanded?'expanded':''}" data-materials-for="${subj.id}">
             ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);">${currentLang==='ar'?'لسه مفيش محتوى.':'No materials yet.'}</div>` :
               subj.materials.map(m => {
                 const meta = TYPE_META[m.type] || TYPE_META.pdf;
                 const label = currentLang === 'ar' ? meta.labelAr : meta.labelEn;
                 let bodyExtra = '';
                 if (m.kind === 'link' || m.type === 'spotify' || m.type === 'youtube'){
-                  bodyExtra = `<a class="material-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener">${escapeHtml(m.url)}</a>`;
+                  bodyExtra = `<a class="material-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escapeHtml(m.url)}</a>`;
                 } else if (m.kind === 'upload'){
-                  bodyExtra = `<a class="material-link" href="${m.dataUrl}" download="${escapeHtml(m.fileName||'file.pdf')}">${currentLang==='ar'?'تحميل الملف':'Download file'}</a>`;
+                  bodyExtra = `<a class="material-link" href="${m.dataUrl}" download="${escapeHtml(m.fileName||'file.pdf')}" onclick="event.stopPropagation()">${currentLang==='ar'?'تحميل الملف':'Download file'}</a>`;
                 }
+                const captionLine = m.caption ? `<div class="material-caption">${escapeHtml(m.caption)}</div>` : '';
                 const uploaderName = currentLang === 'ar' ? (m.uploaderNameAr || m.uploaderName || '') : (m.uploaderName || m.uploaderNameAr || '');
                 const uploadedByLabel = currentLang === 'ar' ? 'بواسطة' : 'Uploaded by';
                 const uploaderLine = uploaderName ? `<div class="material-uploader">${uploadedByLabel} ${escapeHtml(uploaderName)}</div>` : '';
                 return `
-                  <div class="material-row" data-material-id="${m.id}">
+                  <div class="material-row" data-material-id="${m.id}" data-edit-subject="${subj.id}" data-edit-material="${m.id}">
                     <div class="material-icon">${iconSvg(m.type)}</div>
                     <div class="material-body">
                       <div class="material-title">${escapeHtml(m.title)}</div>
                       <div class="material-meta">${label}</div>
                       ${bodyExtra}
+                      ${captionLine}
                       ${uploaderLine}
                     </div>
                     <button class="material-del" data-del-subject="${subj.id}" data-del-material="${m.id}" aria-label="Delete">
@@ -680,12 +876,44 @@
 
     main.innerHTML = html;
     document.getElementById('addSubjectBtn').addEventListener('click', openSubjectModal);
+
+    main.querySelectorAll('[data-toggle-subject]').forEach(head => {
+      head.addEventListener('click', () => toggleSubject(head.dataset.toggleSubject));
+    });
     main.querySelectorAll('[data-add-material]').forEach(btn => {
-      btn.addEventListener('click', () => openMaterialModal(btn.dataset.addMaterial));
+      btn.addEventListener('click', (e) => { e.stopPropagation(); openMaterialModal(btn.dataset.addMaterial); });
     });
     main.querySelectorAll('.material-del').forEach(btn => {
-      btn.addEventListener('click', () => deleteMaterial(btn.dataset.delSubject, btn.dataset.delMaterial));
+      btn.addEventListener('click', (e) => { e.stopPropagation(); deleteMaterial(btn.dataset.delSubject, btn.dataset.delMaterial); });
     });
+    main.querySelectorAll('[data-edit-material]').forEach(row => {
+      row.addEventListener('click', () => openMaterialModal(row.dataset.editSubject, row.dataset.editMaterial));
+    });
+    main.querySelectorAll('[data-color-subject]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const input = main.querySelector(`[data-color-input="${btn.dataset.colorSubject}"]`);
+        input.click();
+      });
+    });
+    main.querySelectorAll('[data-color-input]').forEach(input => {
+      input.addEventListener('click', (e) => e.stopPropagation());
+      input.addEventListener('input', async () => {
+        const subj = (currentDayData.subjects || []).find(s => s.id === input.dataset.colorInput);
+        if (!subj) return;
+        subj.color = input.value;
+        renderDay();
+        await saveDay();
+      });
+    });
+  }
+
+  async function toggleSubject(subjectId){
+    const subj = (currentDayData.subjects || []).find(s => s.id === subjectId);
+    if (!subj) return;
+    subj.collapsed = !subj.collapsed;
+    renderDay();
+    await saveDay();
   }
 
   /* ---------------- toast ---------------- */
@@ -700,14 +928,21 @@
   const subjectModalOverlay = document.getElementById('subjectModalOverlay');
   const subjectNameInput = document.getElementById('subjectNameInput');
   const subjectNameField = document.getElementById('subjectNameField');
+  const subjectColorInput = document.getElementById('subjectColorInput');
 
   function openSubjectModal(){
     subjectNameInput.value = '';
+    subjectColorInput.value = randomSubjectColor();
     subjectNameField.classList.remove('invalid');
     subjectModalOverlay.classList.add('open');
     setTimeout(() => subjectNameInput.focus(), 50);
   }
   function closeSubjectModal(){ subjectModalOverlay.classList.remove('open'); }
+
+  function randomSubjectColor(){
+    const palette = ['#e8817a','#e8b45a','#e8d95a','#8fd47a','#7ad4c9','#7aaee8','#a888e8','#e888c9'];
+    return palette[Math.floor(Math.random()*palette.length)];
+  }
 
   document.getElementById('subjectCancelBtn').addEventListener('click', closeSubjectModal);
   subjectModalOverlay.addEventListener('click', (e) => { if(e.target === subjectModalOverlay) closeSubjectModal(); });
@@ -716,17 +951,19 @@
     const name = subjectNameInput.value.trim();
     if (!name){ subjectNameField.classList.add('invalid'); return; }
     currentDayData.subjects = currentDayData.subjects || [];
-    currentDayData.subjects.push({ id: uid(), name, materials: [] });
+    currentDayData.subjects.push({ id: uid(), name, color: subjectColorInput.value, collapsed: true, materials: [] });
     closeSubjectModal();
     renderDay();
     await saveDay();
     showToast(currentLang==='ar' ? 'تمت إضافة المادة' : 'Subject added');
   });
 
-  /* ---------------- material modal ---------------- */
+  /* ---------------- material modal (add + edit) ---------------- */
   const materialModalOverlay = document.getElementById('materialModalOverlay');
+  const materialModalTitle = document.getElementById('materialModalTitle');
   const materialTitleInput = document.getElementById('materialTitleInput');
   const materialTitleField = document.getElementById('materialTitleField');
+  const materialCaptionInput = document.getElementById('materialCaptionInput');
   const pdfSourceField = document.getElementById('pdfSourceField');
   const urlOnlyField = document.getElementById('urlOnlyField');
   const urlOnlyInput = document.getElementById('urlOnlyInput');
@@ -739,17 +976,22 @@
   const fileInput = document.getElementById('fileInput');
   const srcLinkOpt = document.getElementById('srcLinkOpt');
   const srcUploadOpt = document.getElementById('srcUploadOpt');
+  const materialSaveBtn = document.getElementById('materialSaveBtn');
 
   let activeSubjectId = null;
+  let editingMaterialId = null; // null = adding new, else editing existing
   let currentType = 'pdf';
   let currentSource = 'link';
   let uploadedFile = null; // { fileName, dataUrl }
 
-  function openMaterialModal(subjectId){
+  function openMaterialModal(subjectId, materialId){
     activeSubjectId = subjectId;
+    editingMaterialId = materialId || null;
+
     materialTitleInput.value = '';
     materialLinkInput.value = '';
     urlOnlyInput.value = '';
+    materialCaptionInput.value = '';
     uploadedFile = null;
     fileInput.value = '';
     uploadDrop.classList.remove('has-file');
@@ -757,14 +999,44 @@
     [materialTitleField, pdfSourceField, urlOnlyField].forEach(f => f.classList.remove('invalid'));
     document.querySelectorAll('.mfield-err').forEach(e => e.classList.remove('show'));
 
-    document.querySelector('input[name="mtype"][value="pdf"]').checked = true;
-    updateTypeVisual('pdf');
-    setSource('link');
+    let existing = null;
+    if (editingMaterialId){
+      const subj = (currentDayData.subjects || []).find(s => s.id === subjectId);
+      existing = subj ? subj.materials.find(m => m.id === editingMaterialId) : null;
+    }
+
+    if (existing){
+      materialModalTitle.textContent = currentLang==='ar' ? 'تعديل المحتوى' : 'Edit material';
+      document.querySelector(`input[name="mtype"][value="${existing.type}"]`).checked = true;
+      updateTypeVisual(existing.type);
+      materialTitleInput.value = existing.title || '';
+      materialCaptionInput.value = existing.caption || '';
+      if (existing.type === 'pdf' || existing.type === 'q'){
+        if (existing.kind === 'upload'){
+          setSource('upload');
+          uploadedFile = { fileName: existing.fileName, dataUrl: existing.dataUrl };
+          uploadDrop.classList.add('has-file');
+          uploadDropText.textContent = existing.fileName || (currentLang==='ar'?'ملف مرفوع':'Uploaded file');
+        } else {
+          setSource('link');
+          materialLinkInput.value = existing.url || '';
+        }
+      } else {
+        urlOnlyInput.value = existing.url || '';
+      }
+      materialSaveBtn.textContent = currentLang==='ar' ? 'حفظ' : 'Save changes';
+    } else {
+      materialModalTitle.textContent = currentLang==='ar' ? 'إضافة مادة علمية' : 'Add material';
+      document.querySelector('input[name="mtype"][value="pdf"]').checked = true;
+      updateTypeVisual('pdf');
+      setSource('link');
+      materialSaveBtn.textContent = currentLang==='ar' ? 'إضافة' : 'Add';
+    }
 
     materialModalOverlay.classList.add('open');
     setTimeout(() => materialTitleInput.focus(), 50);
   }
-  function closeMaterialModal(){ materialModalOverlay.classList.remove('open'); }
+  function closeMaterialModal(){ materialModalOverlay.classList.remove('open'); editingMaterialId = null; }
 
   document.getElementById('materialCancelBtn').addEventListener('click', closeMaterialModal);
   materialModalOverlay.addEventListener('click', (e) => { if(e.target === materialModalOverlay) closeMaterialModal(); });
@@ -824,17 +1096,19 @@
     reader.readAsDataURL(file);
   });
 
-  document.getElementById('materialSaveBtn').addEventListener('click', async () => {
+  materialSaveBtn.addEventListener('click', async () => {
     const title = materialTitleInput.value.trim();
+    const caption = materialCaptionInput.value.trim();
     let ok = true;
 
     if (!title){ materialTitleField.classList.add('invalid'); ok = false; }
     else materialTitleField.classList.remove('invalid');
 
     let materialData = {
-      id: uid(),
+      id: editingMaterialId || uid(),
       type: currentType,
       title,
+      caption: caption || undefined,
       uploaderName: CURRENT_USER.nameEn,
       uploaderNameAr: CURRENT_USER.nameAr
     };
@@ -858,12 +1132,18 @@
 
     const subj = (currentDayData.subjects || []).find(s => s.id === activeSubjectId);
     if (subj){
-      subj.materials.push(materialData);
+      if (editingMaterialId){
+        const idx = subj.materials.findIndex(m => m.id === editingMaterialId);
+        if (idx !== -1) subj.materials[idx] = materialData;
+      } else {
+        subj.materials.push(materialData);
+      }
     }
+    const wasEditing = !!editingMaterialId;
     closeMaterialModal();
     renderDay();
     await saveDay();
-    showToast(currentLang==='ar' ? 'تمت الإضافة' : 'Added');
+    showToast(wasEditing ? (currentLang==='ar' ? 'تم الحفظ' : 'Saved') : (currentLang==='ar' ? 'تمت الإضافة' : 'Added'));
   });
 
   async function deleteMaterial(subjectId, materialId){
@@ -876,6 +1156,7 @@
 
   /* ---------------- init ---------------- */
   renderDate();
+  renderCalBtnDate();
   loadDay();
 })();
 </script>
