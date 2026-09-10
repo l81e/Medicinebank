@@ -769,14 +769,22 @@
     authEmailField.classList.remove('invalid');
     authEmailField.querySelector('.mfield-err').classList.remove('show');
 
-    authSendCodeBtn.disabled = true;
+        authSendCodeBtn.disabled = true;
     authSendCodeBtn.textContent = currentLang==='ar' ? 'بيتبعت…' : 'Sending…';
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+
+    let error;
+    try {
+      const result = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+      error = result.error;
+    } catch (err) {
+      error = err;
+    }
+
     authSendCodeBtn.disabled = false;
     authSendCodeBtn.textContent = currentLang==='ar' ? 'ابعت الكود' : 'Send code';
 
     if (error){
-      showToast(currentLang==='ar' ? 'حصل خطأ، جرب تاني' : 'Something went wrong, try again');
+      showToast('DEBUG: ' + (error.message || String(error)));
       return;
     }
     pendingAuthEmail = email;
