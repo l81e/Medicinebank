@@ -1,1713 +1,1179 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Data of the Day — MedicineBank</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  <meta charset="UTF-8" />
+  <!--
+    VIEWPORT: user-scalable=no + maximum-scale=1 is what actually blocks
+    pinch-zoom and the iOS double-tap-to-zoom gesture. Kept exactly as
+    requested, but note for future-you: this also blocks legitimate
+    accessibility zoom for low-vision visitors, which is normally something
+    we'd flag rather than just ship. Doing it anyway since it was explicit.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>MedicineBank Initiative</title>
 
-  :root{
-    --bg:            #0b0b0b;
-    --panel:         #161616;
-    --panel-hi:      #1e1e1e;
-    --line:          #2b2b2b;
-    --line-soft:     #232323;
+  <!--
+    THEME-COLOR / STATUS BAR FIX (the "white shadow" issue):
+    The dark-fading-to-transparent band above the header in the screenshot
+    is Safari's own status-bar chrome rendering over the page, because the
+    page never claimed that region with real content. Two things fix it,
+    for a page opened normally in a Safari TAB (which is what the
+    screenshot shows — visible URL bar and tab chrome at the bottom):
+      1. theme-color below, so Safari tints its own UI to match instead of
+         defaulting to a translucent dark overlay.
+      2. The safe-area-inset-top padding added to .site-header in the CSS,
+         so the header's own solid black background physically extends up
+         under the notch/status bar, leaving no gap for Safari to shade.
+    Both are needed — theme-color alone doesn't help if there's still a gap
+    under the notch with nothing but page background behind it.
 
-    --text:          #f2f2f2;
-    --text-dim:      #a8a8a8;
-    --text-faint:    #6b6b6b;
+    NOTE (this revision): theme-color is now set dynamically by the theme
+    switcher script below, since the header itself no longer forces black
+    in light mode the way the rest of the chrome does. See the theme
+    section near the bottom of the script.
 
-    --accent:        #e8e8e8;
-    --accent-dark:   #ffffff;
-    --accent-glow:   rgba(255,255,255,0.08);
-    --err:           #c7c7c7;
+    The two apple-mobile-web-app-* tags below are DIFFERENT and NOT part of
+    that fix: per Apple's docs, they only take effect once a page has been
+    added to the iOS home screen and launched as a standalone app — they do
+    nothing for a normal Safari-tab visit like this screenshot. Left in
+    here as a no-cost head start in case MedicineBank adds "Add to Home
+    Screen" support later; if that's never going to happen, they can be
+    deleted with no effect on the bug being fixed here.
+  -->
+  <meta name="theme-color" content="#0b0b0b" id="themeColorMeta" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    --today-green:   #3ba55c;
-    --today-green-hi:#46bd68;
-  }
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;700&display=swap" rel="stylesheet" />
 
-  html,body{height:100%;}
-  body{
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    line-height:1.6;
-    position:relative;
-    min-height:100vh;
-    overflow-x:hidden;
-    touch-action:pan-x pan-y;
-  }
-  html[dir="rtl"] body{font-family:'Cairo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  <!-- Firebase Auth (matches Patholytica's login page auth provider) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // NOTE: same Firebase project as Patholytica's login page, reused as-is
+    // so a session started there is recognized here.
+    const firebaseConfig = {
+      apiKey: "AIzaSyBs6V0yY14cuLBXB1nciZ-X0eyAiodC-Ak",
+      authDomain: "patholytica.firebaseapp.com",
+      databaseURL: "https://patholytica-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "patholytica",
+      storageBucket: "patholytica.firebasestorage.app",
+      messagingSenderId: "738430635282",
+      appId: "1:738430635282:web:8451ef380447c7611137cb"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    window.__mbAuth = auth;
+    onAuthStateChanged(auth, (user) => {
+      window.dispatchEvent(new CustomEvent('mb-auth-changed', { detail: { user } }));
+    });
+  </script>
 
-  a{color:inherit;text-decoration:none;}
-  ul{list-style:none;}
-  button{font-family:inherit;}
+  <!-- Supabase client (data only — anon/publishable key, RLS-respecting) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  /* ---------- HEADER ---------- */
-  .site-header{
-    position:relative; z-index:30;
-    padding:20px 40px 4px;
-    display:flex; align-items:flex-start; justify-content:space-between;
-  }
-  .header-left{display:flex; flex-direction:column; align-items:flex-start; gap:2px;}
-  .logo-wrap{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
-  .logo-img{height:28px; width:auto; display:block;}
-  .logo-fallback{
-    display:flex; align-items:center; justify-content:center;
-    width:28px; height:28px; border-radius:6px;
-    border:1px solid var(--line-soft);
-    font-weight:800; font-size:0.72rem; letter-spacing:0.2px; color:var(--text);
-  }
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .header-right{display:flex; align-items:center; gap:8px;}
-  html[dir="rtl"] .header-right{flex-direction:row-reverse;}
+    :root {
+      --black: #0b0b0b;
+      --carbon-90: #1a1a1a;
+      --carbon-80: #2b2b2b;
+      --carbon-60: #58585b;
+      --carbon-40: #8e8e8e;
+      --carbon-30: #b9b9bb;
+      --carbon-20: #d9d9d9;
+      --carbon-05: #f5f5f5;
+      --white: #f7f5f4;
 
-  .auth-chip{
-    display:flex; align-items:center; gap:7px;
-    border:1px solid var(--line-soft); border-radius:20px;
-    padding:6px 12px 6px 6px; cursor:pointer;
-    background:transparent; color:var(--text-dim);
-    font-size:0.74rem; font-weight:700;
-    transition:border-color .15s, color .15s;
-  }
-  html[dir="rtl"] .auth-chip{padding:6px 6px 6px 12px;}
-  .auth-chip:hover{border-color:var(--text-dim); color:var(--text);}
-  .auth-chip .avatar-dot{
-    width:22px; height:22px; border-radius:50%;
-    background:var(--panel-hi); border:1px solid var(--line-soft);
-    display:flex; align-items:center; justify-content:center;
-    font-size:0.66rem; font-weight:800; color:var(--text-dim); flex-shrink:0;
-  }
-  .auth-chip.signed-out{padding:6px 14px;}
+      --blue:      #1a5fa8;
+      --blue-dark: #134a85;
+      --champ:     #b8973a;
+      --champ-dark:#9a7d2e;
+      --burg:      #7d2040;
+      --burg-dark: #621832;
+      --orange:    #c4601a;
+      --orange-dark:#a34e14;
 
-  .calendar-wrap{position:relative; z-index:31; display:flex; align-items:center; gap:8px;}
-  html[dir="rtl"] .calendar-wrap{flex-direction:row-reverse;}
-  .calendar-btn{
-    width:34px; height:34px; border-radius:50%;
-    background:transparent; border:1px solid var(--line-soft);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; color:var(--text-faint);
-    transition:border-color .15s, color .15s, background .15s;
-    flex-shrink:0;
-  }
-  .calendar-btn:hover{border-color:var(--text-faint); color:var(--text-dim);}
-  .calendar-btn svg{width:16px; height:16px;}
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  #calDateLabel{
-    font-size:0.68rem; color:var(--text-faint); font-weight:600;
-    white-space:nowrap;
-  }
+      /* ── THEME TOKENS (light = default) ──
+         Everything that used to be hardcoded to --white / --black for page
+         background & text now reads from these two instead, so the theme
+         switcher only has to flip these two variables (plus a couple of
+         surface tones) on <html>. The header, secondary nav and burger menu
+         intentionally stay on the fixed dark carbon palette in BOTH themes
+         (that was true before this change too — only the page body/sections
+         and footer are theme-reactive), except the footer, which point 6
+         now pins to black regardless of theme. */
+      --bg-page: var(--white);
+      --text-page: var(--black);
+      --surface-1: var(--white);   /* section backgrounds */
+      --surface-2: var(--carbon-05); /* sector strip / quicklinks-style surfaces */
+      --border-page: var(--carbon-20);
+      --text-muted: var(--carbon-60);
+      --text-faint: var(--carbon-40);
+    }
 
-  /* Calendar popup */
-  .calendar-popup{
-    position:absolute; top:calc(100% + 8px); right:0;
-    background:var(--panel-hi); border:1px solid var(--line-soft);
-    border-radius:12px; padding:14px;
-    width:280px;
-    display:none;
-    box-shadow:0 20px 45px rgba(0,0,0,0.6);
-    z-index:1000;
-  }
-  html[dir="rtl"] .calendar-popup{right:auto; left:0;}
-  .calendar-popup.open{display:block;}
+    html[data-theme="dark"] {
+      --bg-page: #121212;
+      --text-page: #f1f0ee;
+      --surface-1: #121212;
+      --surface-2: #1a1a1a;
+      --border-page: #2c2c2c;
+      --text-muted: #b7b5b2;
+      --text-faint: #85837f;
+    }
 
-  .cal-month-row{
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:10px;
-  }
-  .cal-month-nav{
-    width:26px; height:26px; border-radius:50%;
-    border:1px solid var(--line-soft); background:transparent;
-    color:var(--text-faint); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .cal-month-nav:hover{border-color:var(--text-dim); color:var(--text);}
-  .cal-month-nav svg{width:13px; height:13px;}
-  html[dir="rtl"] .cal-month-nav.cal-next svg{transform:scaleX(-1);}
-  html[dir="rtl"] .cal-month-nav.cal-prev svg{transform:scaleX(-1);}
-  .cal-month-label{font-size:0.85rem; font-weight:700;}
+    html {
+      /* Belt-and-suspenders against the same translucent-overlay issue:
+         a solid black background behind everything means there's never a
+         moment (e.g. during elastic overscroll bounce) where Safari has
+         white/transparent page background to blend its chrome against. */
+      background: var(--black);
+    }
 
-  .cal-grid{
-    display:grid; grid-template-columns:repeat(7,1fr);
-    gap:3px; margin-bottom:10px;
-  }
-  .cal-dow{
-    text-align:center; font-size:0.62rem; color:var(--text-faint);
-    font-weight:700; padding:4px 0;
-  }
-  .cal-day{
-    text-align:center; font-size:0.78rem; color:var(--text-dim);
-    padding:6px 0; border-radius:6px; cursor:pointer;
-    background:transparent; border:none; font-family:inherit;
-  }
-  .cal-day:hover{background:var(--panel);}
-  .cal-day.other-month{color:var(--text-faint); opacity:0.35;}
-  .cal-day.is-today{border:1px solid var(--text-dim);}
-  .cal-day.is-selected{background:var(--text); color:var(--bg); font-weight:700;}
+    body {
+      font-family: 'Inter', sans-serif; background: var(--bg-page); color: var(--text-page); line-height: 1.6;
+      /* Block iOS text-selection callout / long-press menu, per request */
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation; /* removes the 300ms double-tap-to-zoom delay & double-tap zoom gesture on elements that don't need pinch/pan */
+      transition: background .2s, color .2s;
+    }
+    /* Inputs still need to be selectable/editable to actually type into them */
+    input, textarea { -webkit-user-select: text; user-select: text; }
 
-  .cal-menu-divider{height:1px; background:var(--line-soft); margin:8px 0 10px;}
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+    button { font-family: inherit; }
 
-  .cal-menu-item{
-    display:flex; align-items:center; justify-content:space-between;
-    width:100%; padding:9px 8px; border-radius:6px;
-    background:none; border:none; color:var(--text-dim);
-    font-size:0.8rem; font-weight:600; cursor:pointer;
-    text-align:left; margin-bottom:2px;
-  }
-  html[dir="rtl"] .cal-menu-item{text-align:right;}
-  .cal-menu-item:hover{background:var(--panel);}
-  .cal-menu-item svg{width:14px; height:14px; color:var(--text-faint); flex-shrink:0;}
-  .cal-menu-item-left{display:flex; align-items:center; gap:8px;}
-  .cal-lang-value{font-size:0.72rem; color:var(--text-faint); font-weight:700;}
+    /* ── HEADER ──
+       Sign-in / account area removed per request (point 1) — it now lives
+       inside the burger menu instead. Header is just logo + search + burger. */
+    .site-header {
+      background: var(--black);
+      padding: var(--safe-top) 32px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      /* height now = safe-area + the original 56px bar, so the black box
+         itself covers the notch/status bar instead of stopping below it */
+      height: calc(var(--safe-top) + 56px);
+    }
 
-  /* ---------- DATE HERO ---------- */
-  .date-hero{
-    position:relative; z-index:2;
-    padding:0 40px 30px;
-    text-align:left;
-  }
-  html[dir="rtl"] .date-hero{text-align:right;}
-  .date-center{min-width:0;}
-  .date-big{
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    font-weight:700;
-    font-size:clamp(1.7rem, 6vw, 2.5rem);
-    letter-spacing:-0.02em;
-    line-height:1.05;
-  }
-  html[dir="rtl"] .date-big{font-family:'Cairo',sans-serif; font-weight:700;}
-  .date-sub{font-size:0.78rem; color:var(--text-faint); margin-top:6px;}
+    .logo img { height: 28px; width: auto; display: block; }
 
-  .today-pill{
-    display:inline-flex; align-items:center; gap:6px;
-    margin-top:10px;
-    text-align:left;
-    font-size:0.76rem; font-weight:700;
-    border-radius:20px; padding:7px 14px;
-    font-family:inherit;
-    border:1px solid var(--text-dim);
-    background:transparent;
-    color:var(--text);
-    cursor:default;
-    transition:border-color .18s ease, color .18s ease, background .18s ease;
-  }
-  html[dir="rtl"] .today-pill{text-align:right;}
-  .today-pill .today-pill-icon{
-    width:12px; height:12px; flex-shrink:0;
-    display:none;
-  }
-  .today-pill .today-pill-icon svg{width:100%; height:100%; display:block;}
+    /* ── HEADER RIGHT (search + burger only now) ── */
+    .header-right { display: flex; align-items: center; gap: 10px; }
 
-  .today-pill.is-jump{
-    cursor:pointer;
-    border-color:var(--today-green);
-    background:var(--today-green);
-    color:#0b0b0b;
-  }
-  .today-pill.is-jump:hover{
-    border-color:var(--today-green-hi);
-    background:var(--today-green-hi);
-  }
-  .today-pill.is-jump .today-pill-icon{display:inline-flex;}
+    .icon-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; background: none; border: none; cursor: pointer;
+      color: var(--white); padding: 0; border-radius: 4px;
+      transition: background .15s;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.08); }
+    .icon-btn svg { width: 19px; height: 19px; }
 
-  /* ---------- MAIN ---------- */
-  main{position:relative; z-index:2; max-width:720px; margin:0 auto; padding:0 24px 90px; touch-action:pan-y; overflow:hidden;}
+    .burger-btn {
+      display: flex; flex-direction: column; justify-content: center; gap: 4px;
+      width: 34px; height: 34px; background: none; border: none; cursor: pointer;
+      padding: 0;
+    }
+    .burger-btn span {
+      display: block; width: 20px; height: 2px; background: var(--white);
+      transition: transform .25s, opacity .2s;
+    }
+    .burger-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .burger-btn.open span:nth-child(2) { opacity: 0; }
+    .burger-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-  .day-card{
-    width:100%;
-    transition:transform .28s ease, opacity .28s ease;
-  }
-  .day-card.slide-out-left{transform:translateX(-32px); opacity:0;}
-  .day-card.slide-out-right{transform:translateX(32px); opacity:0;}
-  .day-card.slide-in{transform:translateX(0); opacity:1;}
+    /* ── BURGER MENU: now full-page ──
+       Point 1 asks for the menu to "fill full page underneath" — it now
+       covers the full viewport below the header (100dvh - header height)
+       instead of being a small 260px dropdown, and holds: account/sign-in
+       status, theme switcher, nav links, and the membership/calendar/scope
+       links that used to be a separate quicklinks row. */
+    .burger-menu {
+      position: fixed;
+      top: calc(var(--safe-top) + 56px);
+      left: 0; right: 0;
+      bottom: 0;
+      height: calc(100dvh - var(--safe-top) - 56px);
+      background: var(--carbon-90);
+      z-index: 998;
+      transform: translateX(100%);
+      transition: transform .28s ease;
+      padding: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .burger-menu.open { transform: translateX(0); }
 
-  .day-empty{
-    text-align:center; padding:50px 20px 60px;
-    color:var(--text-faint);
-  }
-  .day-empty .big-icon{font-size:2rem; margin-bottom:14px; opacity:0.5;}
-  .day-empty h3{font-size:1rem; font-weight:700; color:var(--text-dim); margin-bottom:6px;}
-  .day-empty p{font-size:0.83rem; max-width:340px; margin:0 auto; line-height:1.7;}
+    .menu-section { padding: 22px 26px; border-bottom: 1px solid var(--carbon-80); }
+    .menu-section:last-child { border-bottom: none; margin-top: auto; }
 
-  .subject-card{
-    background:var(--panel);
-    border:1px solid var(--line-soft);
-    border-radius:10px;
-    margin-bottom:16px;
-    overflow:hidden;
-  }
+    .menu-account-row {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .menu-account-pfp {
+      width: 46px; height: 46px; border-radius: 50%;
+      object-fit: cover; background: var(--carbon-80);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700; color: var(--carbon-30);
+      flex-shrink: 0;
+    }
+    .menu-account-info { display: flex; flex-direction: column; line-height: 1.3; overflow: hidden; }
+    .menu-account-name { font-size: 0.95rem; font-weight: 700; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .menu-account-sub { font-size: 0.75rem; color: var(--carbon-40); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .subject-head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:15px 18px;
-    cursor:pointer;
-  }
-  .subject-head.has-content{border-bottom:1px solid var(--line-soft);}
-  .subject-head-left{display:flex; align-items:center; gap:11px; min-width:0;}
-  .subject-chevron{
-    flex-shrink:0; width:16px; height:16px; color:var(--text-faint);
-    transition:transform .15s;
-  }
-  .subject-chevron.expanded{transform:rotate(90deg);}
-  html[dir="rtl"] .subject-chevron{transform:rotate(180deg);}
-  html[dir="rtl"] .subject-chevron.expanded{transform:rotate(90deg);}
+    .menu-signin-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 3px; padding: 11px 18px;
+      font-size: 0.85rem; font-weight: 600; color: var(--white);
+      cursor: pointer; transition: background .2s; width: 100%;
+    }
+    .menu-signin-btn:hover { background: rgba(255,255,255,0.12); }
+    .menu-signin-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-  .subject-name-row{display:flex; align-items:center; gap:8px; min-width:0;}
-  .subject-color-dot{
-    flex-shrink:0; width:10px; height:10px; border-radius:50%;
-    background:var(--subj-color, var(--text-dim));
-  }
-  .subject-name{font-size:0.98rem; font-weight:700; word-break:break-word;}
-  .subject-count{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
+    .menu-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+      color: var(--carbon-40); margin-bottom: 12px;
+    }
 
-  .subject-head-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+    .burger-menu a.menu-link, .burger-menu a {
+      display: block; padding: 13px 0; font-size: 0.92rem; font-weight: 600;
+      color: var(--carbon-30); transition: color .15s;
+    }
+    .burger-menu a.menu-link:hover, .burger-menu a:hover { color: var(--white); }
+    .burger-menu .menu-link svg { width: 15px; height: 15px; margin-right: 10px; vertical-align: -3px; opacity: .8; }
 
-  .subject-add-btn{
-    flex-shrink:0;
-    width:30px; height:30px; border-radius:50%;
-    border:1px solid var(--line-soft); background:transparent;
-    color:var(--text-dim); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    transition:border-color .15s, color .15s;
-  }
-  .subject-add-btn:hover{border-color:var(--text-dim); color:var(--text);}
-  .subject-add-btn svg{width:14px; height:14px;}
+    /* Theme switcher row inside the menu */
+    .theme-switch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 0;
+    }
+    .theme-switch-label { font-size: 0.85rem; font-weight: 600; color: var(--carbon-30); display: flex; align-items: center; gap: 9px; }
+    .theme-switch-label svg { width: 16px; height: 16px; }
 
-  .material-list{padding:6px 10px; display:none;}
-  .material-list.expanded{display:block;}
-  .material-row{
-    display:flex; align-items:flex-start; gap:11px;
-    padding:11px 8px;
-    border-bottom:1px solid var(--line-soft);
-    cursor:pointer;
-  }
-  .material-row:last-child{border-bottom:none;}
-  .material-row:hover{background:var(--panel-hi);}
-  .material-icon{
-    flex-shrink:0; width:30px; height:30px; border-radius:7px;
-    display:flex; align-items:center; justify-content:center;
-    margin-top:1px;
-    background:var(--panel-hi); color:var(--text-dim);
-  }
-  .material-icon svg{width:14px; height:14px;}
+    .theme-toggle {
+      position: relative; width: 46px; height: 26px; border-radius: 999px;
+      background: var(--carbon-80); border: 1px solid var(--carbon-60);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .theme-toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--white);
+      transition: transform .2s ease;
+    }
+    .theme-toggle.is-dark::after { transform: translateX(20px); }
+    .theme-toggle.is-dark { background: var(--carbon-60); }
 
-  .material-body{flex:1; min-width:0;}
-  .material-title{font-size:0.87rem; font-weight:600; word-break:break-word;}
-  .material-meta{font-size:0.72rem; color:var(--text-faint); margin-top:2px;}
-  .material-caption{font-size:0.76rem; color:var(--text-dim); margin-top:4px; font-style:italic; line-height:1.5;}
-  .material-uploader{font-size:0.7rem; color:var(--text-faint); margin-top:3px; opacity:0.85;}
-  .material-link{font-size:0.78rem; color:var(--text-dim); word-break:break-all; margin-top:2px; display:inline-block;}
-  .material-link:hover{color:var(--text);}
+    /* ── SEARCH OVERLAY (point 3) ──
+       Opens dynamically (no page nav) beside the burger; fetches only from
+       the four allowed sector libraries — same 888/777/555/444 ids used
+       for the newsletter (point 5). */
+    .search-overlay {
+      position: fixed; inset: 0; z-index: 1200;
+      background: rgba(11,11,11,0.72);
+      backdrop-filter: blur(2px);
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 0;
+      opacity: 0; pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .search-overlay.open { opacity: 1; pointer-events: auto; }
 
-  .material-del{
-    flex-shrink:0; width:24px; height:24px; border-radius:6px;
-    border:none; background:none; color:var(--text-faint); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0.5; transition:opacity .15s, color .15s;
-  }
-  .material-del:hover{opacity:1; color:var(--text);}
-  .material-del svg{width:13px; height:13px;}
+    .search-panel {
+      width: 100%; max-width: 640px;
+      background: var(--carbon-90);
+      margin-top: 0;
+      padding: calc(var(--safe-top) + 18px) 20px 20px;
+      max-height: 100dvh;
+      overflow-y: auto;
+      border-bottom: 1px solid var(--carbon-80);
+    }
+    .search-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .search-input-row svg { width: 18px; height: 18px; color: var(--carbon-40); flex-shrink: 0; }
+    .search-input {
+      flex: 1; background: none; border: none; border-bottom: 2px solid var(--carbon-80);
+      color: var(--white); font-size: 1.05rem; font-weight: 600; padding: 8px 2px;
+      outline: none;
+    }
+    .search-input:focus { border-bottom-color: var(--white); }
+    .search-input::placeholder { color: var(--carbon-40); }
+    .search-close-btn {
+      background: none; border: none; color: var(--carbon-30); cursor: pointer;
+      width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .search-close-btn svg { width: 18px; height: 18px; }
 
-  .add-subject-btn{
-    width:100%;
-    background:transparent;
-    border:1.5px dashed var(--line-soft);
-    border-radius:10px;
-    color:var(--text-faint);
-    font-size:0.85rem; font-weight:600;
-    padding:16px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:border-color .15s, color .15s;
-  }
-  .add-subject-btn:hover{border-color:var(--text-dim); color:var(--text);}
-  .add-subject-btn svg{width:15px; height:15px;}
+    .search-scope-note { font-size: 0.72rem; color: var(--carbon-40); margin: 10px 0 4px; }
 
-  .loading-row{text-align:center; padding:40px 0; color:var(--text-faint); font-size:0.85rem;}
-  .error-row{text-align:center; padding:40px 20px; color:var(--err); font-size:0.85rem;}
+    .search-results { margin-top: 14px; display: flex; flex-direction: column; gap: 2px; }
+    .search-result-item {
+      display: block; padding: 12px 4px; border-top: 1px solid var(--carbon-80);
+      cursor: pointer;
+    }
+    .search-result-item:first-child { border-top: none; }
+    .search-result-item:hover .search-result-title { text-decoration: underline; }
+    .search-result-title { font-size: 0.9rem; font-weight: 700; color: var(--white); margin-bottom: 3px; }
+    .search-result-meta { font-size: 0.72rem; color: var(--carbon-40); }
+    .search-state { padding: 20px 4px; font-size: 0.85rem; color: var(--carbon-40); }
+    .search-state.is-error { color: var(--orange); }
 
-  /* ---------- MODAL ---------- */
-  .modal-overlay{
-    position:fixed; inset:0; z-index:50;
-    background:rgba(0,0,0,0.72);
-    display:none; align-items:center; justify-content:center;
-    padding:20px;
-  }
-  .modal-overlay.open{display:flex;}
-  .modal-sheet{
-    background:var(--panel-hi);
-    border:1px solid var(--line-soft);
-    border-radius:14px;
-    width:100%; max-width:480px;
-    max-height:88vh; overflow-y:auto;
-    padding:22px 22px 26px;
-  }
+    /* ── SECONDARY NAV ── */
+    .secondary-nav {
+      background: var(--carbon-90);
+      border-bottom: 1px solid var(--carbon-80);
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: calc(var(--safe-top) + 56px);
+      z-index: 999;
+    }
+    .secondary-nav ul { display: inline-flex; padding: 0 32px; }
+    .secondary-nav li a {
+      display: block;
+      padding: 12px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--carbon-30);
+      transition: color .2s;
+      border-bottom: 3px solid transparent;
+    }
+    .secondary-nav li a:hover,
+    .secondary-nav li a.active { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
 
-  .modal-title{font-size:1.02rem; font-weight:700; margin-bottom:18px;}
-  .modal-subtitle{font-size:0.8rem; color:var(--text-faint); margin-top:-12px; margin-bottom:18px; line-height:1.6;}
+    /* ── SECTOR QUICK-ROW (point 4) ──
+       Replaces the old Membership/Calendar/Scope quicklinks strip beneath
+       the header. Now shows the four sectors with a redirect button each.
+       (Membership/Calendar/Scope moved into the burger menu — point 8.) */
+    .sector-quickrow {
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border-page);
+    }
+    .sector-quickrow .inner {
+      display: flex; gap: 10px; padding: 18px 40px; flex-wrap: wrap;
+    }
+    .sector-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 16px; border-radius: 2px;
+      border: 1px solid var(--border-page);
+      font-size: 0.8rem; font-weight: 700; color: var(--text-muted);
+      transition: border-color .2s, color .2s, background .2s;
+      flex: 1 1 auto; justify-content: center; min-width: 130px;
+    }
+    .sector-chip::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .sector-chip.log::before { background: var(--champ); }
+    .sector-chip.res::before { background: var(--blue); }
+    .sector-chip.rel::before { background: var(--orange); }
+    .sector-chip.med::before { background: var(--burg); }
+    .sector-chip:hover { border-color: var(--text-muted); color: var(--text-page); }
 
-  .mfield{margin-bottom:16px;}
-  .mfield label{display:block; font-size:0.76rem; font-weight:700; color:var(--text-dim); margin-bottom:7px;}
-  .mfield input[type="text"], .mfield input[type="url"], .mfield input[type="email"], .mfield select, .mfield textarea{
-    width:100%; font-family:inherit; font-size:16px;
-    padding:10px 12px; background:var(--panel);
-    border:1.5px solid var(--line-soft); border-radius:6px; color:var(--text);
-  }
-  .mfield textarea{resize:vertical; min-height:64px; line-height:1.5;}
-  .mfield input::placeholder, .mfield textarea::placeholder{color:var(--text-faint);}
-  .mfield input:focus, .mfield select:focus, .mfield textarea:focus{outline:none; border-color:var(--text-dim); box-shadow:0 0 0 3px var(--accent-glow);}
-  .mfield-hint{font-size:0.71rem; color:var(--text-faint); margin-top:5px;}
-  .mfield-err{font-size:0.71rem; color:var(--err); margin-top:5px; display:none;}
-  .mfield-err.show{display:block;}
-  .mfield.invalid input, .mfield.invalid select, .mfield.invalid textarea{border-color:var(--text);}
+    @media (max-width: 640px) {
+      .sector-quickrow .inner { padding: 14px 20px; }
+      .sector-chip { min-width: calc(50% - 5px); }
+    }
 
-  .otp-input{letter-spacing:0.5em; text-align:center; font-size:1.1rem !important; font-weight:700;}
+    /* ── SECTIONS ── */
+    section { padding: 60px 40px; }
+    .inner { max-width: 1160px; margin: 0 auto; }
 
-  .type-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
-  .type-opt{
-    display:flex; align-items:center; gap:8px;
-    border:1.5px solid var(--line-soft); border-radius:8px;
-    padding:10px 11px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text-dim);
-  }
-  .type-opt input{position:absolute; opacity:0; width:0; height:0;}
-  .type-opt.checked{border-color:var(--text); background:var(--accent-glow); color:var(--text);}
-  .type-opt svg{width:14px; height:14px; flex-shrink:0;}
-  .type-opt.disabled{opacity:0.4; pointer-events:none;}
+    .section-header { margin-bottom: 32px; }
+    .label-tag {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 6px;
+    }
+    .section-title { font-size: 1.45rem; font-weight: 700; }
 
-  .source-toggle{display:flex; gap:8px; margin-bottom:14px;}
-  .source-opt{
-    flex:1; text-align:center; padding:9px; border-radius:7px;
-    border:1.5px solid var(--line-soft); font-size:0.78rem; font-weight:700;
-    color:var(--text-faint); cursor:pointer;
-  }
-  .source-opt.active{border-color:var(--text); color:var(--text); background:var(--accent-glow);}
+    /* ── NEWSLETTER / ARTICLE CARDS (point 5 + point 7) ──
+       Cards now mirror Patholytica's real feed-card structure — author
+       row with pfp/name, real thumbnail-or-fallback handling (a plain
+       initial/icon tile instead of the old bare 📰 emoji block sitting in
+       for "no image"), and like/comment counts — rather than the previous
+       minimal title+excerpt+emoji layout. */
+    .newsletter-stack { display: flex; flex-direction: column; gap: 0; }
 
-  .upload-drop{
-    border:1.5px dashed var(--line-soft); border-radius:8px;
-    padding:22px 14px; text-align:center; cursor:pointer;
-    color:var(--text-faint); font-size:0.8rem;
-    transition:border-color .15s;
-  }
-  .upload-drop:hover{border-color:var(--text-dim);}
-  .upload-drop.has-file{border-color:var(--text); color:var(--text-dim);}
-  .upload-drop.uploading{opacity:0.6; pointer-events:none;}
-  .upload-drop svg{width:18px; height:18px; margin-bottom:8px; opacity:0.6;}
+    .article-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 24px 0;
+      border-top: 1px solid var(--border-page);
+      cursor: pointer;
+    }
+    .article-card:last-child { border-bottom: 1px solid var(--border-page); }
+    .article-card:hover .article-title { text-decoration: underline; }
 
-  .modal-btn-row{display:flex; gap:10px; margin-top:20px;}
-  .modal-btn{
-    flex:1; padding:12px; border-radius:7px; font-size:0.85rem; font-weight:700;
-    cursor:pointer; border:1.5px solid var(--line-soft); background:transparent; color:var(--text-dim);
-  }
-  .modal-btn.primary{background:var(--text); border-color:var(--text); color:var(--bg);}
-  .modal-btn.primary:hover{background:var(--text-dim);}
-  .modal-btn.primary:disabled{background:var(--panel); color:var(--text-faint); cursor:not-allowed; border-color:var(--line-soft);}
-  .modal-btn.danger{color:var(--err);}
+    .article-author-row { display: flex; align-items: center; gap: 10px; }
+    .article-author-pfp {
+      width: 32px; height: 32px; border-radius: 50%;
+      object-fit: cover; background: var(--surface-2);
+      border: 1px solid var(--border-page);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .article-author-name { font-size: 0.8rem; font-weight: 700; color: var(--text-page); }
+    .article-author-date { font-size: 0.72rem; color: var(--text-faint); }
 
-  .toast{
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
-    background:var(--panel-hi); border:1px solid var(--line-soft); color:var(--text);
-    padding:11px 20px; border-radius:30px; font-size:0.82rem; font-weight:600;
-    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
-    z-index:60; white-space:nowrap; max-width:88vw; overflow:hidden; text-overflow:ellipsis;
-  }
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+    .article-body { display: grid; grid-template-columns: 1fr 200px; gap: 24px; align-items: start; }
+    .article-body.no-media { grid-template-columns: 1fr; }
 
-  @media (max-width:560px){
-    .site-header{padding:16px 18px 4px;}
-    .date-hero{padding:0 18px 26px;}
-    main{padding:0 14px 80px;}
-  }
-</style>
+    .article-meta {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .article-sector-tag {
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #fff; padding: 3px 8px; border-radius: 2px;
+    }
+    .article-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; color: var(--text-page); }
+    .article-excerpt { font-size: 0.83rem; color: var(--text-muted); line-height: 1.7; }
+
+    /* Real thumbnail when media exists; when it doesn't, the whole thumb
+       slot is simply not rendered (article-body.no-media / 1-col layout)
+       rather than showing an empty placeholder box or emoji standing in
+       for a missing image. */
+    .article-thumb {
+      width: 200px; height: 130px; border-radius: 3px;
+      object-fit: cover; display: block; flex-shrink: 0;
+      background: var(--surface-2);
+    }
+
+    .article-stats-row {
+      display: flex; align-items: center; gap: 18px;
+      font-size: 0.76rem; color: var(--text-faint);
+    }
+    .article-stat { display: inline-flex; align-items: center; gap: 5px; }
+    .article-stat svg { width: 14px; height: 14px; }
+
+    @media (max-width: 640px) {
+      .article-body { grid-template-columns: 1fr; }
+      .article-thumb { width: 100%; height: 160px; }
+    }
+
+    .newsletter-state {
+      padding: 40px 0; text-align: center; color: var(--text-faint); font-size: 0.85rem;
+    }
+    .newsletter-state.is-error { color: var(--orange-dark); }
+
+    /* ── FOOTER ──
+       Point 6: footer is now ALWAYS black regardless of theme (it no
+       longer follows --surface-1 / --bg-page like the rest of the page
+       does), and its "Navigate" link column is removed entirely — the
+       footer keeps only the about blurb, social links, and legal row. */
+    footer {
+      background: var(--black);
+      color: var(--white);
+      padding: 48px 40px calc(28px + var(--safe-bottom));
+      border-top: 1px solid var(--carbon-80);
+    }
+    .footer-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr; gap: 48px; margin-bottom: 36px;
+    }
+    @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
+
+    .footer-logo { margin-bottom: 14px; }
+    /* Footer is black in both themes now, so the logo goes back to needing
+       the white-ify filter (it's dark artwork by default). */
+    .footer-logo img { height: 26px; filter: brightness(0) invert(1); }
+    .footer-desc { font-size: 0.83rem; color: var(--carbon-30); line-height: 1.7; margin-bottom: 20px; }
+    .footer-accred { font-size: 0.75rem; color: var(--carbon-40); }
+
+    .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-40); margin-bottom: 14px; }
+
+    .social-icons { display: flex; gap: 10px; margin-top: 4px; }
+    .social-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--carbon-80);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s; flex-shrink: 0;
+    }
+    .social-icon:hover { background: var(--carbon-60); }
+    .social-icon svg { width: 16px; height: 16px; fill: var(--white); }
+
+    .footer-divider { max-width: 1160px; margin: 0 auto 18px; border: none; border-top: 1px solid var(--carbon-80); }
+    .footer-bottom {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 10px 24px;
+      font-size: 0.73rem; color: var(--carbon-40);
+    }
+    .footer-bottom a { color: var(--carbon-40); }
+    .footer-bottom a:hover { color: var(--carbon-30); }
+
+    @media (max-width: 600px) {
+      section { padding: 48px 20px; }
+      .site-header { padding-left: 20px; padding-right: 20px; }
+      .sector-quickrow .inner { padding: 14px 20px; }
+      footer { padding: 48px 20px calc(24px + var(--safe-bottom)); }
+    }
+  </style>
 </head>
 <body>
 
+<!-- HEADER: logo · search · burger only (sign-in/account moved into menu) -->
 <header class="site-header">
-  <div class="header-left">
-    <div class="logo-wrap">
-      <img src="IMG_3083.png" alt="MedicineBank" class="logo-img" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';" />
-      <div class="logo-fallback" id="logoFallback" style="display:none;">MB</div>
-    </div>
-  </div>
+  <a href="/" class="logo">
+    <img src="IMG_3083.png" alt="MedicineBank" />
+  </a>
+
   <div class="header-right">
-    <button type="button" class="auth-chip signed-out" id="authChip">
-      <span data-en="Sign in" data-ar="تسجيل الدخول">Sign in</span>
+    <button class="icon-btn" id="searchBtn" type="button" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </button>
-    <div class="calendar-wrap" id="calendarWrap">
-      <button class="calendar-btn" id="calendarBtn" aria-label="Open calendar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3 9.5h18"/></svg>
-      </button>
-      <div class="calendar-popup" id="calendarPopup">
-        <div class="cal-month-row">
-          <button class="cal-month-nav cal-prev" id="calPrevMonth" aria-label="Previous month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <div class="cal-month-label" id="calMonthLabel">—</div>
-          <button class="cal-month-nav cal-next" id="calNextMonth" aria-label="Next month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="cal-grid" id="calDowRow"></div>
-        <div class="cal-grid" id="calDaysGrid"></div>
-        <div class="cal-menu-divider"></div>
-        <button class="cal-menu-item" id="adminDashboardBtn">
-          <span class="cal-menu-item-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-            <span data-en="Admin dashboard" data-ar="لوحة الأدمن">Admin dashboard</span>
-          </span>
-        </button>
-        <button class="cal-menu-item" id="langToggleBtn">
-          <span class="cal-menu-item-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20z"/></svg>
-            <span data-en="Language" data-ar="اللغة">Language</span>
-          </span>
-          <span class="cal-lang-value" id="langValueLabel">EN</span>
-        </button>
-      </div>
-    </div>
+
+    <button class="burger-btn" id="burgerBtn" type="button" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
-<section class="date-hero">
-  <div class="date-center">
-    <div class="date-big" id="dateBig">—</div>
-    <div class="date-sub" id="dateSub"></div>
-    <button type="button" class="today-pill" id="todayPill">
-      <span class="today-pill-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l7-7M3 12l7 7M3 12h18"/></svg>
-      </span>
-      <span id="todayPillLabel" data-en="Today" data-ar="النهاردة">Today</span>
+<!-- SEARCH OVERLAY (point 3) -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-panel">
+    <div class="search-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search MedicineBank articles…" autocomplete="off" />
+      <button class="search-close-btn" id="searchCloseBtn" type="button" aria-label="Close search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="search-scope-note">Searching Media, Research, Logistics &amp; Relations libraries only</p>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- BURGER MENU PANEL — now full-page (point 1), holds account/sign-in
+     status, theme switcher (point 2), nav links, and the former
+     Membership/Calendar/Scope quicklinks (point 8) -->
+<nav class="burger-menu" id="burgerMenu">
+
+  <div class="menu-section">
+    <button class="menu-signin-btn" id="menuSignedOut" type="button" onclick="window.location.href='login.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Sign in
     </button>
+    <div class="menu-account-row" id="menuSignedIn" style="display:none;" onclick="window.location.href='profile.html';">
+      <div class="menu-account-pfp" id="menuAcctPfp">–</div>
+      <div class="menu-account-info">
+        <span class="menu-account-name" id="menuAcctName">–</span>
+        <span class="menu-account-sub" id="menuAcctSub">–</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu-section">
+    <p class="menu-label">Appearance</p>
+    <div class="theme-switch-row">
+      <span class="theme-switch-label">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <span id="themeLabelText">Light mode</span>
+      </span>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode"></button>
+    </div>
+  </div>
+
+  <div class="menu-section">
+    <p class="menu-label">Browse</p>
+    <a href="#newsletter" class="nav-link menu-link" data-target="newsletter">Newsletter</a>
+    <a href="#" onclick="window.location.href='profile.html'; return false;">My Profile</a>
+    <a href="#" onclick="window.location.href='saved.html'; return false;">Saved Articles</a>
+  </div>
+
+  <div class="menu-section">
+    <p class="menu-label">More</p>
+    <a class="menu-link" href="#" onclick="window.location.href='membership.html'; return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Membership
+    </a>
+    <a class="menu-link" href="#" onclick="window.location.href='calendar.html'; return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Calendar
+    </a>
+    <a class="menu-link" href="#" onclick="window.location.href='scope.html'; return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+      Scope
+    </a>
+  </div>
+
+  <div class="menu-section">
+    <a href="#" onclick="window.location.href='about.html'; return false;">About Us</a>
+    <a href="mailto:eyadd@icloud.com">Contact</a>
+    <a href="#" onclick="window.location.href='settings.html'; return false;">Settings</a>
+  </div>
+</nav>
+
+<!-- SECONDARY NAV -->
+<nav class="secondary-nav" id="secondary-nav">
+  <ul>
+    <li><a href="#newsletter" class="nav-link active" data-target="newsletter">Newsletter</a></li>
+  </ul>
+</nav>
+
+<!-- SECTOR QUICK-ROW (point 4) — replaces the old Membership/Calendar/Scope
+     chips beneath the header with the 4 sectors, each redirecting out. -->
+<div class="sector-quickrow">
+  <div class="inner">
+    <a class="sector-chip log" href="https://logistics.medicinebank.org">Logistics</a>
+    <a class="sector-chip res" href="https://research.medicinebank.org">Research</a>
+    <a class="sector-chip rel" href="https://relations.medicinebank.org">Relations</a>
+    <a class="sector-chip med" href="https://media.medicinebank.org">Media</a>
+  </div>
+</div>
+
+<!-- NEWSLETTER -->
+<section id="newsletter" style="background:var(--surface-1);">
+  <div class="inner">
+    <div class="section-header">
+      <p class="label-tag">From MedicineBank</p>
+      <h2 class="section-title">Newsletter & Articles</h2>
+    </div>
+    <div class="newsletter-stack" id="newsletterStack">
+      <div class="newsletter-state" id="newsletterState">Loading articles…</div>
+    </div>
   </div>
 </section>
 
-<main id="mainContent">
-  <div class="loading-row" id="loadingRow" data-en="Loading…" data-ar="جاري التحميل…">Loading…</div>
-</main>
-
-<!-- SIGN IN MODAL -->
-<div class="modal-overlay" id="authModalOverlay">
-  <div class="modal-sheet">
-    <div class="modal-title" id="authModalTitle" data-en="Sign in" data-ar="تسجيل الدخول">Sign in</div>
-
-    <div id="authStepEmail">
-      <div class="modal-subtitle" data-en="Enter your email and we'll send you a one-time code." data-ar="اكتب إيميلك وهنبعتلك كود دخول.">Enter your email and we'll send you a one-time code.</div>
-      <div class="mfield" id="authEmailField">
-        <label data-en="Email" data-ar="الإيميل">Email</label>
-        <input type="email" id="authEmailInput" placeholder="you@example.com" autocomplete="email" />
-        <div class="mfield-err" data-en="Please enter a valid email." data-ar="من فضلك حط إيميل صحيح.">Please enter a valid email.</div>
+<!-- FOOTER -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">
+        <img src="IMG_3083.png" alt="MedicineBank" />
       </div>
-      <div class="modal-btn-row">
-        <button class="modal-btn" id="authCancelBtn1" data-en="Cancel" data-ar="إلغاء">Cancel</button>
-        <button class="modal-btn primary" id="authSendCodeBtn" data-en="Send code" data-ar="ابعت الكود">Send code</button>
-      </div>
+      <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — serving medical students across Egypt and the Arab region.</p>
+      <p class="footer-accred">Accredited by Mansoura National University · March 2026</p>
     </div>
-
-    <div id="authStepOtp" style="display:none;">
-      <div class="modal-subtitle" id="authOtpSubtitle" data-en="Enter the 6-digit code we sent you." data-ar="اكتب الكود المكون من ٦ أرقام اللي بعتناهولك.">Enter the 6-digit code we sent you.</div>
-      <div class="mfield" id="authOtpField">
-        <label data-en="Code" data-ar="الكود">Code</label>
-        <input type="text" id="authOtpInput" class="otp-input" inputmode="numeric" maxlength="6" placeholder="••••••" />
-        <div class="mfield-err" data-en="Please enter the 6-digit code." data-ar="من فضلك اكتب الكود المكون من ٦ أرقام.">Please enter the 6-digit code.</div>
-      </div>
-      <div class="modal-btn-row">
-        <button class="modal-btn" id="authBackBtn" data-en="Back" data-ar="رجوع">Back</button>
-        <button class="modal-btn primary" id="authVerifyBtn" data-en="Verify" data-ar="تأكيد">Verify</button>
-      </div>
-    </div>
-
-    <div id="authStepName" style="display:none;">
-      <div class="modal-subtitle" data-en="What should we show as your name on things you add?" data-ar="هيظهر اسمك ازاي على الداتا اللي هتضيفها؟">What should we show as your name on things you add?</div>
-      <div class="mfield" id="authNameField">
-        <label data-en="Your name" data-ar="اسمك">Your name</label>
-        <input type="text" id="authNameInput" placeholder="e.g. Eyad" />
-        <div class="mfield-err" data-en="Please enter a name." data-ar="من فضلك اكتب اسم.">Please enter a name.</div>
-      </div>
-      <div class="modal-btn-row">
-        <button class="modal-btn primary" id="authSaveNameBtn" data-en="Continue" data-ar="استمرار">Continue</button>
+    <div>
+      <p class="footer-col-title">Follow Us</p>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/medicinebank.in?igsh=MXUzdmx6YXM3cW1xeQ==" target="_blank" class="social-icon" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.332 3.608 1.308.975.975 1.245 2.242 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.332 2.633-1.308 3.608-.975.975-2.242 1.245-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.332-3.608-1.308C2.495 19.483 2.225 18.216 2.163 16.85 2.105 15.584 2.093 15.204 2.093 12s.012-3.584.07-4.85c.062-1.366.332-2.633 1.308-3.608C4.446 2.495 5.713 2.225 7.079 2.163 8.345 2.105 8.725 2.093 12 2.093zm0-2.163C8.741 0 8.332.013 7.052.072 5.197.157 3.355.673 1.998 2.03.641 3.387.125 5.229.04 7.084-.019 8.364 0 8.773 0 12c0 3.227.013 3.636.072 4.916.085 1.855.601 3.697 1.958 5.054 1.357 1.357 3.199 1.873 5.054 1.958C8.364 23.987 8.773 24 12 24c3.227 0 3.636-.013 4.916-.072 1.855-.085 3.697-.601 5.054-1.958 1.357-1.357 1.873-3.199 1.958-5.054.059-1.28.072-1.689.072-4.916 0-3.227-.013-3.636-.072-4.916-.085-1.855-.601-3.697-1.958-5.054C20.613.673 18.771.157 16.916.072 15.636.013 15.227 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/company/medicinebank/" target="_blank" class="social-icon" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a href="https://discord.gg/jsY3mGPKC4" target="_blank" class="social-icon" aria-label="Discord">
+          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        </a>
+        <a href="https://youtube.com/@medicinebank.initiative?si=7f8DzbPTSvQMQuYL" target="_blank" class="social-icon" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
       </div>
     </div>
   </div>
-</div>
-
-<!-- ACCOUNT MODAL (signed in) -->
-<div class="modal-overlay" id="accountModalOverlay">
-  <div class="modal-sheet">
-    <div class="modal-title" data-en="Your account" data-ar="حسابك">Your account</div>
-    <div class="mfield">
-      <label data-en="Signed in as" data-ar="مسجل الدخول بإيميل">Signed in as</label>
-      <div id="accountEmailDisplay" style="font-size:0.9rem; color:var(--text-dim); padding:4px 0;"></div>
-    </div>
-    <div class="mfield" id="accountNameField">
-      <label data-en="Display name" data-ar="الاسم الظاهر">Display name</label>
-      <input type="text" id="accountNameInput" placeholder="e.g. Eyad" />
-    </div>
-    <div class="modal-btn-row">
-      <button class="modal-btn danger" id="signOutBtn" data-en="Sign out" data-ar="تسجيل الخروج">Sign out</button>
-      <button class="modal-btn primary" id="accountSaveBtn" data-en="Save" data-ar="حفظ">Save</button>
-    </div>
+  <hr class="footer-divider" />
+  <div class="footer-bottom">
+    <span>© 2026 MedicineBank Initiative</span>
+    <span>Dakahlia, Egypt</span>
+    <a href="mailto:eyadd@icloud.com">Contact Us</a>
   </div>
-</div>
-
-<!-- ADD SUBJECT MODAL -->
-<div class="modal-overlay" id="subjectModalOverlay">
-  <div class="modal-sheet">
-    <div class="modal-title" data-en="Add a subject" data-ar="إضافة داتا">Add a subject</div>
-    <div class="mfield" id="subjectNameField">
-      <label data-en="Subject / lecture name" data-ar="اسم المادة / المحاضرة">Subject / lecture name</label>
-      <input type="text" id="subjectNameInput" data-ph-en="e.g. Cardiology — Arrhythmias" data-ph-ar="اكتب اسم المادة بعدها على طول اسم المحاضرة" placeholder="e.g. Cardiology — Arrhythmias" />
-      <div class="mfield-err" data-en="Please enter a name." data-ar="من فضلك اكتب اسم.">Please enter a name.</div>
-    </div>
-    <div class="mfield">
-      <label data-en="Color" data-ar="اللون">Color</label>
-      <div id="subjectColorSwatches" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
-      <input type="hidden" id="subjectColorInput" value="#7aaee8" />
-    </div>
-    <div class="modal-btn-row">
-      <button class="modal-btn" id="subjectCancelBtn" data-en="Cancel" data-ar="إلغاء">Cancel</button>
-      <button class="modal-btn primary" id="subjectSaveBtn" data-en="Add subject" data-ar="إضافة">Add subject</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD / EDIT MATERIAL MODAL -->
-<div class="modal-overlay" id="materialModalOverlay">
-  <div class="modal-sheet">
-    <div class="modal-title" id="materialModalTitle" data-en="Add material" data-ar="إضافة داتا للمحاضرة">Add material</div>
-
-    <div class="mfield">
-      <label data-en="Type" data-ar="النوع">Type</label>
-      <div class="type-grid" id="typeGrid">
-        <label class="type-opt" data-type="pdf">
-          <input type="radio" name="mtype" value="pdf" checked />
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-          <span data-en="Lecture PDF" data-ar="ملف محاضرة">Lecture PDF</span>
-        </label>
-        <label class="type-opt" data-type="q">
-          <input type="radio" name="mtype" value="q" />
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>
-          <span data-en="Questions" data-ar="أسئلة">Questions</span>
-        </label>
-        <label class="type-opt" data-type="spotify">
-          <input type="radio" name="mtype" value="spotify" />
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M7.5 10.5c3-1 6.5-.7 9 .8M8 14c2.3-.7 4.8-.5 7 .7M8.5 7.3c2.6-.6 5.7-.3 8.3 1.2"/></svg>
-          <span data-en="Podcast (Spotify)" data-ar="بودكاست (Spotify)">Podcast (Spotify)</span>
-        </label>
-        <label class="type-opt" data-type="youtube">
-          <input type="radio" name="mtype" value="youtube" />
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>
-          <span data-en="YouTube video" data-ar="فيديو YouTube">YouTube video</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="mfield" id="materialTitleField">
-      <label data-en="Title" data-ar="العنوان">Title</label>
-      <input type="text" id="materialTitleInput" data-ph-en="e.g. Lecture 4 — Slides" data-ph-ar="مثال: محاضرة ٤ — سلايدات" placeholder="e.g. Lecture 4 — Slides" />
-      <div class="mfield-err" data-en="Please enter a title." data-ar="من فضلك اكتب عنوان.">Please enter a title.</div>
-    </div>
-
-    <div class="mfield" id="pdfSourceField">
-      <label data-en="How are you adding this file?" data-ar="هتضيف الملف إزاي؟">How are you adding this file?</label>
-      <div class="source-toggle">
-        <div class="source-opt active" id="srcLinkOpt" data-en="Paste a link" data-ar="حط لينك">Paste a link</div>
-        <div class="source-opt" id="srcUploadOpt" data-en="Upload file" data-ar="ارفع ملف">Upload file</div>
-      </div>
-      <div id="linkInputWrap">
-        <input type="url" id="materialLinkInput" data-ph-en="https://drive.google.com/…" data-ph-ar="https://drive.google.com/…" placeholder="https://drive.google.com/…" />
-      </div>
-      <div id="uploadInputWrap" style="display:none;">
-        <div class="upload-drop" id="uploadDrop">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:block;margin:0 auto 8px;"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
-          <span id="uploadDropText" data-en="Tap to choose a PDF" data-ar="اضغط لاختيار ملف PDF">Tap to choose a PDF</span>
-        </div>
-        <input type="file" id="fileInput" accept="application/pdf" style="display:none;" />
-      </div>
-      <div class="mfield-err" data-en="Add a link or upload a file." data-ar="حط لينك أو ارفع ملف.">Add a link or upload a file.</div>
-    </div>
-
-    <div class="mfield" id="urlOnlyField" style="display:none;">
-      <label id="urlOnlyLabel" data-en="Spotify link" data-ar="لينك Spotify">Spotify link</label>
-      <input type="url" id="urlOnlyInput" placeholder="" />
-      <div class="mfield-err" data-en="Please enter a valid link." data-ar="من فضلك حط لينك صحيح.">Please enter a valid link.</div>
-    </div>
-
-    <div class="mfield">
-      <label data-en="Caption (optional)" data-ar="وصف (اختياري)">Caption (optional)</label>
-      <textarea id="materialCaptionInput" data-ph-en="Add a short note about this material…" data-ph-ar="اكتب ملاحظة قصيرة عن المحتوى ده…" placeholder="Add a short note about this material…"></textarea>
-    </div>
-
-    <div class="modal-btn-row">
-      <button class="modal-btn" id="materialCancelBtn" data-en="Cancel" data-ar="إلغاء">Cancel</button>
-      <button class="modal-btn primary" id="materialSaveBtn" data-en="Add" data-ar="إضافة">Add</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+</footer>
 
 <script>
-(function(){
-  const htmlEl = document.documentElement;
-  let currentLang = 'en';
-
-  /* ================================================================
-     SUPABASE SETUP
-     ================================================================ */
-  const SUPABASE_URL = 'https://igfooetzorzhhvpakgqa.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnZm9vZXR6b3J6aGh2cGFrZ3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODg2NTksImV4cCI6MjEwNDU2NDY1OX0.1XLeeRi4KFJptk73JKx_vs0FlO5EXM17KIyFSaKWLCA';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const MATERIALS_BUCKET = 'materials';
-  const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // Supabase Storage can handle far more than the old 4.5MB dataURL cap
-
-  /* ---------------- auth state ---------------- */
-  let currentSession = null;
-  let currentProfile = null; // { id, name_en, name_ar }
-  let pendingAuthEmail = null;
-
-  function isSignedIn(){ return !!currentSession; }
-
-  async function initAuth(){
-    const { data } = await supabase.auth.getSession();
-    currentSession = data.session;
-    if (currentSession) await loadOwnProfile();
-    renderAuthChip();
-
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      currentSession = session;
-      if (session) {
-        await loadOwnProfile();
-      } else {
-        currentProfile = null;
-      }
-      renderAuthChip();
-      renderDay();
-    });
-  }
-
-  async function loadOwnProfile(){
-    if (!currentSession) return;
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name_en, name_ar')
-      .eq('id', currentSession.user.id)
-      .maybeSingle();
-    if (!error && data) currentProfile = data;
-  }
-
-  function renderAuthChip(){
-    const chip = document.getElementById('authChip');
-    if (isSignedIn()){
-      const label = currentProfile ? currentProfile.name_en : (currentSession.user.email || '');
-      const initial = (label || '?').trim().charAt(0).toUpperCase();
-      chip.classList.remove('signed-out');
-      chip.innerHTML = `<span class="avatar-dot">${escapeHtml(initial)}</span><span>${escapeHtml(label)}</span>`;
-    } else {
-      chip.classList.add('signed-out');
-      chip.innerHTML = `<span data-en="Sign in" data-ar="تسجيل الدخول">${currentLang==='ar' ? 'تسجيل الدخول' : 'Sign in'}</span>`;
-    }
-  }
-
-  document.getElementById('authChip').addEventListener('click', () => {
-    if (isSignedIn()) openAccountModal(); else openAuthModal();
-  });
-
-  /* Gate: call before any write action. Returns true if allowed to proceed. */
-  function requireAuth(){
-    if (isSignedIn()) return true;
-    openAuthModal();
-    return false;
-  }
-
-  /* ---------------- auth modal ---------------- */
-  const authModalOverlay = document.getElementById('authModalOverlay');
-  const authStepEmail = document.getElementById('authStepEmail');
-  const authStepOtp = document.getElementById('authStepOtp');
-  const authStepName = document.getElementById('authStepName');
-  const authEmailInput = document.getElementById('authEmailInput');
-  const authEmailField = document.getElementById('authEmailField');
-  const authOtpInput = document.getElementById('authOtpInput');
-  const authOtpField = document.getElementById('authOtpField');
-  const authNameInput = document.getElementById('authNameInput');
-  const authNameField = document.getElementById('authNameField');
-  const authOtpSubtitle = document.getElementById('authOtpSubtitle');
-  const authSendCodeBtn = document.getElementById('authSendCodeBtn');
-  const authVerifyBtn = document.getElementById('authVerifyBtn');
-  const authSaveNameBtn = document.getElementById('authSaveNameBtn');
-
-  function openAuthModal(){
-    pendingAuthEmail = null;
-    authEmailInput.value = '';
-    authOtpInput.value = '';
-    authNameInput.value = '';
-    [authEmailField, authOtpField, authNameField].forEach(f => f.classList.remove('invalid'));
-    document.querySelectorAll('#authModalOverlay .mfield-err').forEach(e => e.classList.remove('show'));
-    authStepEmail.style.display = '';
-    authStepOtp.style.display = 'none';
-    authStepName.style.display = 'none';
-    authModalOverlay.classList.add('open');
-    setTimeout(() => authEmailInput.focus(), 50);
-  }
-  function closeAuthModal(){ authModalOverlay.classList.remove('open'); }
-
-  document.getElementById('authCancelBtn1').addEventListener('click', closeAuthModal);
-  authModalOverlay.addEventListener('click', (e) => { if (e.target === authModalOverlay) closeAuthModal(); });
-
-  function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-
-  authSendCodeBtn.addEventListener('click', async () => {
-    const email = authEmailInput.value.trim();
-    if (!isValidEmail(email)){
-      authEmailField.classList.add('invalid');
-      authEmailField.querySelector('.mfield-err').classList.add('show');
-      return;
-    }
-    authEmailField.classList.remove('invalid');
-    authEmailField.querySelector('.mfield-err').classList.remove('show');
-
-        authSendCodeBtn.disabled = true;
-    authSendCodeBtn.textContent = currentLang==='ar' ? 'بيتبعت…' : 'Sending…';
-
-    let error;
-    try {
-      const result = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
-      error = result.error;
-    } catch (err) {
-      error = err;
-    }
-
-    authSendCodeBtn.disabled = false;
-    authSendCodeBtn.textContent = currentLang==='ar' ? 'ابعت الكود' : 'Send code';
-
-    if (error){
-      showToast('DEBUG: ' + (error.message || String(error)));
-      return;
-    }
-    pendingAuthEmail = email;
-    authOtpSubtitle.textContent = (currentLang==='ar' ? `بعتنا كود على ${email}` : `We sent a code to ${email}`);
-    authStepEmail.style.display = 'none';
-    authStepOtp.style.display = '';
-    setTimeout(() => authOtpInput.focus(), 50);
-  });
-
-  document.getElementById('authBackBtn').addEventListener('click', () => {
-    authStepOtp.style.display = 'none';
-    authStepEmail.style.display = '';
-  });
-
-  authVerifyBtn.addEventListener('click', async () => {
-    const token = authOtpInput.value.trim();
-    if (!/^\d{6}$/.test(token)){
-      authOtpField.classList.add('invalid');
-      authOtpField.querySelector('.mfield-err').classList.add('show');
-      return;
-    }
-    authOtpField.classList.remove('invalid');
-    authOtpField.querySelector('.mfield-err').classList.remove('show');
-
-    authVerifyBtn.disabled = true;
-    authVerifyBtn.textContent = currentLang==='ar' ? 'بيتأكد…' : 'Verifying…';
-    const { data, error } = await supabase.auth.verifyOtp({ email: pendingAuthEmail, token, type: 'email' });
-    authVerifyBtn.disabled = false;
-    authVerifyBtn.textContent = currentLang==='ar' ? 'تأكيد' : 'Verify';
-
-    if (error || !data.session){
-      showToast(currentLang==='ar' ? 'كود غلط، جرب تاني' : 'Wrong code, try again');
-      return;
-    }
-
-    currentSession = data.session;
-    await loadOwnProfile();
-
-    // If the profile row's name still looks like the auto-generated email-prefix guess
-    // (i.e. no real name has been set), ask for one before closing.
-    const looksUnset = !currentProfile || !currentProfile.name_en || currentProfile.name_en === pendingAuthEmail.split('@')[0];
-    if (looksUnset){
-      authStepOtp.style.display = 'none';
-      authStepName.style.display = '';
-      setTimeout(() => authNameInput.focus(), 50);
-    } else {
-      closeAuthModal();
-      renderAuthChip();
-      renderDay();
-      showToast(currentLang==='ar' ? 'تم تسجيل الدخول' : 'Signed in');
-    }
-  });
-
-  authSaveNameBtn.addEventListener('click', async () => {
-    const name = authNameInput.value.trim();
-    if (!name){
-      authNameField.classList.add('invalid');
-      authNameField.querySelector('.mfield-err').classList.add('show');
-      return;
-    }
-    const { error } = await supabase.from('profiles').update({ name_en: name }).eq('id', currentSession.user.id);
-    if (error){
-      showToast(currentLang==='ar' ? 'حصل خطأ في الحفظ' : 'Something went wrong saving');
-      return;
-    }
-    currentProfile = { ...(currentProfile || {}), id: currentSession.user.id, name_en: name };
-    closeAuthModal();
-    renderAuthChip();
-    renderDay();
-    showToast(currentLang==='ar' ? 'تم تسجيل الدخول' : 'Signed in');
-  });
-
-  /* ---------------- account modal ---------------- */
-  const accountModalOverlay = document.getElementById('accountModalOverlay');
-  const accountEmailDisplay = document.getElementById('accountEmailDisplay');
-  const accountNameInput = document.getElementById('accountNameInput');
-
-  function openAccountModal(){
-    accountEmailDisplay.textContent = currentSession.user.email || '';
-    accountNameInput.value = currentProfile ? (currentProfile.name_en || '') : '';
-    accountModalOverlay.classList.add('open');
-  }
-  function closeAccountModal(){ accountModalOverlay.classList.remove('open'); }
-  accountModalOverlay.addEventListener('click', (e) => { if (e.target === accountModalOverlay) closeAccountModal(); });
-
-  document.getElementById('accountSaveBtn').addEventListener('click', async () => {
-    const name = accountNameInput.value.trim();
-    if (!name) return;
-    const { error } = await supabase.from('profiles').update({ name_en: name }).eq('id', currentSession.user.id);
-    if (error){
-      showToast(currentLang==='ar' ? 'حصل خطأ في الحفظ' : 'Something went wrong saving');
-      return;
-    }
-    currentProfile = { ...(currentProfile || {}), name_en: name };
-    closeAccountModal();
-    renderAuthChip();
-    renderDay();
-    showToast(currentLang==='ar' ? 'تم الحفظ' : 'Saved');
-  });
-
-  document.getElementById('signOutBtn').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    currentSession = null;
-    currentProfile = null;
-    closeAccountModal();
-    renderAuthChip();
-    renderDay();
-    showToast(currentLang==='ar' ? 'تم تسجيل الخروج' : 'Signed out');
-  });
-
-  /* ---------------- fixed subject color palette ---------------- */
-  const SUBJECT_COLORS = ['#e05a4f','#e0a23a','#3ba55c','#3a8ee0','#7a5ce0','#c94fa0'];
-
-  /* ---------------- date state ---------------- */
-  function fmtKey(d){
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-  function todayDate(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
-  function fmtDMY(d){
-    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-  }
-
-  let viewDate = todayDate();
-  let calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-
-  const dateBig = document.getElementById('dateBig');
-  const todayPill = document.getElementById('todayPill');
-  const todayPillLabel = document.getElementById('todayPillLabel');
-
-  const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-  const DAYS_EN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const DAYS_AR = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-  const DOW_SHORT_EN = ["S","M","T","W","T","F","S"];
-  const DOW_SHORT_AR = ["ح","ن","ث","ر","خ","ج","س"];
-
-  function renderDate(){
-    const days = currentLang === 'ar' ? DAYS_AR : DAYS_EN;
-    dateBig.textContent = days[viewDate.getDay()];
-
-    const isToday = fmtKey(viewDate) === fmtKey(todayDate());
-    todayPill.classList.toggle('is-jump', !isToday);
-    todayPill.disabled = isToday;
-    todayPill.setAttribute('aria-live', 'polite');
-
-    if (isToday){
-      todayPillLabel.textContent = currentLang === 'ar' ? 'النهاردة' : 'Today';
-      todayPill.removeAttribute('aria-label');
-    } else {
-      todayPillLabel.textContent = currentLang === 'ar' ? ' ارجع لتاريخ اليوم' : 'Back to today';
-      todayPill.setAttribute('aria-label', currentLang === 'ar' ? 'ارجع لتاريخ اليوم ' : 'Back to today');
-    }
-  }
-
-  function renderCalBtnDate(){
-    let label = document.getElementById('calDateLabel');
-    if (!label){
-      label = document.createElement('div');
-      label.id = 'calDateLabel';
-      document.getElementById('calendarWrap').appendChild(label);
-    }
-    label.textContent = fmtDMY(viewDate);
-  }
-
-  function goToDate(d, direction){
-    const newDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    if (direction){
-      animateDayChange(newDate, direction);
-    } else {
-      viewDate = newDate;
-      calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-      renderDate();
-      renderCalBtnDate();
-      loadDay();
-    }
-  }
-
-  todayPill.addEventListener('click', () => {
-    if (!todayPill.classList.contains('is-jump')) return;
-    const t = todayDate();
-    const direction = t.getTime() === viewDate.getTime() ? undefined : (t > viewDate ? 'next' : 'prev');
-    goToDate(t, direction);
-  });
-
-  /* ---------------- swipe navigation ---------------- */
-  const mainEl = document.getElementById('mainContent');
-  let touchStartX = 0, touchStartY = 0, touchActive = false;
-  let isAnimating = false;
-
-  mainEl.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1 || isAnimating) return;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    touchActive = true;
-  }, { passive: true });
-
-  mainEl.addEventListener('touchend', (e) => {
-    if (!touchActive) return;
-    touchActive = false;
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    const dy = e.changedTouches[0].clientY - touchStartY;
-    const SWIPE_THRESHOLD = 50;
-    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.3) return;
-
-    const rtl = htmlEl.getAttribute('dir') === 'rtl';
-    const swipedLeft = dx < 0;
-    const goNext = rtl ? !swipedLeft : swipedLeft;
-
-    const next = new Date(viewDate);
-    next.setDate(next.getDate() + (goNext ? 1 : -1));
-    goToDate(next, goNext ? 'next' : 'prev');
-  }, { passive: true });
-
-  async function animateDayChange(newDate, direction){
-    if (isAnimating) return;
-    isAnimating = true;
-
-    const card = mainEl.querySelector('.day-card');
-    const outClass = direction === 'next' ? 'slide-out-left' : 'slide-out-right';
-
-    if (card){
-      card.classList.add(outClass);
-      await wait(190);
-    }
-
-    viewDate = newDate;
-    calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-    renderDate();
-    renderCalBtnDate();
-    await loadDay(true);
-
-    const newCard = mainEl.querySelector('.day-card');
-    if (newCard){
-      newCard.style.transition = 'none';
-      newCard.style.transform = direction === 'next' ? 'translateX(32px)' : 'translateX(-32px)';
-      newCard.style.opacity = '0';
-      requestAnimationFrame(() => {
-        newCard.style.transition = 'transform .28s ease, opacity .28s ease';
-        newCard.style.transform = 'translateX(0)';
-        newCard.style.opacity = '1';
-      });
-    }
-
-    await wait(300);
-    isAnimating = false;
-  }
-
-  function wait(ms){ return new Promise(res => setTimeout(res, ms)); }
-
-  /* ---------------- calendar popup ---------------- */
-  const calendarBtn = document.getElementById('calendarBtn');
-  const calendarPopup = document.getElementById('calendarPopup');
-  const calMonthLabel = document.getElementById('calMonthLabel');
-  const calDowRow = document.getElementById('calDowRow');
-  const calDaysGrid = document.getElementById('calDaysGrid');
-
-  calendarBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const willOpen = !calendarPopup.classList.contains('open');
-    calendarPopup.classList.toggle('open');
-    if (willOpen){
-      calMonthCursor = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-      renderCalendarPopup();
-    }
-  });
-  document.addEventListener('click', () => calendarPopup.classList.remove('open'));
-  calendarPopup.addEventListener('click', (e) => e.stopPropagation());
-
-  document.getElementById('calPrevMonth').addEventListener('click', () => {
-    calMonthCursor = new Date(calMonthCursor.getFullYear(), calMonthCursor.getMonth() - 1, 1);
-    renderCalendarPopup();
-  });
-  document.getElementById('calNextMonth').addEventListener('click', () => {
-    calMonthCursor = new Date(calMonthCursor.getFullYear(), calMonthCursor.getMonth() + 1, 1);
-    renderCalendarPopup();
-  });
-
-  function renderCalendarPopup(){
-    const months = currentLang === 'ar' ? MONTHS_AR : MONTHS_EN;
-    const dowShort = currentLang === 'ar' ? DOW_SHORT_AR : DOW_SHORT_EN;
-    calMonthLabel.textContent = `${months[calMonthCursor.getMonth()]} ${calMonthCursor.getFullYear()}`;
-
-    calDowRow.innerHTML = dowShort.map(d => `<div class="cal-dow">${d}</div>`).join('');
-
-    const firstOfMonth = new Date(calMonthCursor.getFullYear(), calMonthCursor.getMonth(), 1);
-    const startOffset = firstOfMonth.getDay();
-    const gridStart = new Date(firstOfMonth);
-    gridStart.setDate(gridStart.getDate() - startOffset);
-
-    const todayKey = fmtKey(todayDate());
-    const selectedKey = fmtKey(viewDate);
-
-    let cellsHtml = '';
-    for (let i = 0; i < 42; i++){
-      const cellDate = new Date(gridStart);
-      cellDate.setDate(gridStart.getDate() + i);
-      const isOtherMonth = cellDate.getMonth() !== calMonthCursor.getMonth();
-      const key = fmtKey(cellDate);
-      const classes = ['cal-day'];
-      if (isOtherMonth) classes.push('other-month');
-      if (key === todayKey) classes.push('is-today');
-      if (key === selectedKey) classes.push('is-selected');
-      cellsHtml += `<button type="button" class="${classes.join(' ')}" data-date="${key}">${cellDate.getDate()}</button>`;
-    }
-    calDaysGrid.innerHTML = cellsHtml;
-
-    calDaysGrid.querySelectorAll('.cal-day').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const [y,m,d] = btn.dataset.date.split('-').map(Number);
-        const picked = new Date(y, m-1, d);
-        const direction = picked.getTime() === viewDate.getTime() ? undefined : (picked > viewDate ? 'next' : 'prev');
-        goToDate(picked, direction);
-        calendarPopup.classList.remove('open');
-      });
-    });
-  }
-
-  document.getElementById('adminDashboardBtn').addEventListener('click', () => {
-    showToast(currentLang==='ar' ? 'لوحة الأدمن قريبًا' : 'Admin dashboard coming soon');
-    calendarPopup.classList.remove('open');
-  });
-
-  const langToggleBtn = document.getElementById('langToggleBtn');
-  const langValueLabel = document.getElementById('langValueLabel');
-  langToggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    setLang(currentLang === 'en' ? 'ar' : 'en');
-  });
-
-  /* ---------------- language ---------------- */
-  function applyStaticText(lang){
-    document.querySelectorAll('[data-en]').forEach(el => {
-      const t = lang === 'ar' ? el.dataset.ar : el.dataset.en;
-      if (t != null) el.textContent = t;
-    });
-    document.querySelectorAll('[data-ph-en]').forEach(el => {
-      const ph = lang === 'ar' ? el.dataset.phAr : el.dataset.phEn;
-      if (ph != null) el.setAttribute('placeholder', ph);
-    });
-    langValueLabel.textContent = lang === 'ar' ? 'AR' : 'EN';
-  }
-
-  function setLang(lang){
-    currentLang = lang;
-    htmlEl.setAttribute('lang', lang);
-    htmlEl.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    applyStaticText(lang);
-    renderDate();
-    renderCalBtnDate();
-    renderCalendarPopup();
-    renderAuthChip();
-    renderDay();
-  }
-
-  /* ================================================================
-     DATA LAYER — Supabase (lectures + materials)
-     ================================================================ */
-  let currentDayData = { subjects: [] }; // kept as "subjects" in-memory to minimize render-code diff; maps to `lectures` table
-
-  async function loadDay(skipDefaultRender){
-    const dateKey = fmtKey(viewDate);
-    if (!skipDefaultRender){
-      const main = document.getElementById('mainContent');
-      main.innerHTML = `<div class="loading-row">${currentLang==='ar'?'جاري التحميل…':'Loading…'}</div>`;
-    }
-
-    const { data: lectures, error: lecError } = await supabase
-      .from('lectures')
-      .select('id, name, color, created_at')
-      .eq('date', dateKey)
-      .order('created_at', { ascending: true });
-
-    if (lecError){
-      renderLoadError();
-      return;
-    }
-
-    if (!lectures || lectures.length === 0){
-      currentDayData = { subjects: [] };
-      renderDay();
-      return;
-    }
-
-    const lectureIds = lectures.map(l => l.id);
-    const { data: materials, error: matError } = await supabase
-      .from('materials')
-      .select('id, lecture_id, type, kind, title, url, file_name, caption, uploaded_by, created_at')
-      .in('lecture_id', lectureIds)
-      .order('created_at', { ascending: true });
-
-    if (matError){
-      renderLoadError();
-      return;
-    }
-
-    // fetch uploader profile names for display
-    const uploaderIds = [...new Set((materials || []).map(m => m.uploaded_by).filter(Boolean))];
-    let profileMap = {};
-    if (uploaderIds.length){
-      const { data: profs } = await supabase
-        .from('profiles')
-        .select('id, name_en, name_ar')
-        .in('id', uploaderIds);
-      (profs || []).forEach(p => { profileMap[p.id] = p; });
-    }
-
-    currentDayData = {
-      subjects: lectures.map(l => ({
-        id: l.id,
-        name: l.name,
-        color: l.color,
-        collapsed: collapsedState[l.id] !== undefined ? collapsedState[l.id] : true,
-        materials: (materials || [])
-          .filter(m => m.lecture_id === l.id)
-          .map(m => ({
-            id: m.id,
-            type: m.type,
-            kind: m.kind,
-            title: m.title,
-            url: m.url,
-            fileName: m.file_name,
-            caption: m.caption,
-            uploaderName: profileMap[m.uploaded_by] ? profileMap[m.uploaded_by].name_en : '',
-            uploaderNameAr: profileMap[m.uploaded_by] ? profileMap[m.uploaded_by].name_ar : ''
-          }))
-      }))
-    };
-
-    renderDay();
-  }
-
-  function renderLoadError(){
-    const main = document.getElementById('mainContent');
-    main.innerHTML = `<div class="error-row">${currentLang==='ar' ? 'حصل خطأ في تحميل البيانات. حاول تاني.' : 'Something went wrong loading data. Please try again.'}</div>`;
-  }
-
-  // collapsed/expanded is per-viewer UI state only — not synced to the backend
-  const collapsedState = {};
-
-  function uid(){ return Math.random().toString(36).slice(2,10); }
-
-  /* ---------------- render ---------------- */
-  const TYPE_META = {
-    pdf:     { labelEn:'PDF',      labelAr:'ملف PDF' },
-    q:       { labelEn:'Questions',labelAr:'أسئلة' },
-    spotify: { labelEn:'Podcast',  labelAr:'بودكاست' },
-    youtube: { labelEn:'Video',    labelAr:'فيديو' },
+  // ══════════════════════════════════════════════════════════
+  // SUPABASE CONFIG — Patholytica's URL + PUBLISHABLE (anon) key.
+  //
+  // IMPORTANT, read before deploying:
+  // This must be the ANON/PUBLISHABLE key, never the service role key.
+  // Patholytica's own Tag Studio admin tool uses the service role key
+  // because it's a local/trusted-admin-only page that intentionally
+  // bypasses row-level security — that key must never appear in a public
+  // page like this one, since anyone can read it from view-source and get
+  // full read/write access to every table with no RLS restriction.
+  // The anon key is safe here because Supabase enforces RLS policies
+  // against it — it can only do what your RLS rules allow (e.g. public
+  // SELECT on published articles), not everything.
+  // ══════════════════════════════════════════════════════════
+  const SUPABASE_URL = 'https://ltxgafwywkdcxdlobcah.supabase.co'; // Patholytica project URL (from patholytica login page's supabase client)
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0eGdhZnd5d2tkY3hkbG9iY2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MjU3NzUsImV4cCI6MjEwMDUwMTc3NX0.CR-FvlL1HODWjsD7VrZkWQvg_pEasIhPQBXbSHbbNoE'; // ⚠️ anon key only — see note above. Find it in Supabase → Project Settings → API → "anon public" key.
+
+  const ARTICLES_TABLE = 'articles';
+  const TAGS_COLUMN = 'tags';
+
+  // ── POINT 5 ──
+  // Newsletter (and search, point 3) now key off specific LIBRARY IDs
+  // rather than the sector-name tags used before:
+  //   888 = Media, 777 = Research, 555 = Logistics, 444 = Relations
+  // NOTE ON DATA MODEL: the schema currently on file for `articles` has no
+  // dedicated `library_id` column — only `tags` (a text array). There's
+  // also no separate `libraries` table in the schema. So this still reads
+  // from the `tags` column, but now looks for the numeric ID itself
+  // (as a string, e.g. "888") among an article's tags, instead of the old
+  // sector-name / "medbankinterface" tag scheme. If Patholytica actually
+  // has a proper library_id column/table that isn't in the schema you
+  // shared, swap LIBRARY_TAG_COLUMN below to that column name and this
+  // will work unchanged.
+  const LIBRARY_TAG_COLUMN = TAGS_COLUMN;
+  const LIBRARY_IDS = {
+    media: '888',
+    research: '777',
+    logistics: '555',
+    relations: '444'
+  };
+  const ALL_LIBRARY_IDS = Object.values(LIBRARY_IDS);
+
+  const SECTOR_BY_LIBRARY_ID = {
+    '888': { key: 'med', label: 'MEDIA', colorVar: '--burg' },
+    '777': { key: 'res', label: 'RESEARCH', colorVar: '--blue' },
+    '555': { key: 'log', label: 'LOGISTICS', colorVar: '--champ' },
+    '444': { key: 'rel', label: 'RELATIONS', colorVar: '--orange' }
   };
 
-  function iconSvg(type){
-    if(type==='pdf') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>';
-    if(type==='q') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg>';
-    if(type==='spotify') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M7.5 10.5c3-1 6.5-.7 9 .8M8 14c2.3-.7 4.8-.5 7 .7M8.5 7.3c2.6-.6 5.7-.3 8.3 1.2"/></svg>';
-    if(type==='youtube') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>';
-    return '';
+  let sbClient = null;
+  function getSupabaseClient() {
+    if (sbClient) return sbClient;
+    if (!window.supabase) return null;
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return sbClient;
   }
 
-  function escapeHtml(str){
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : str;
-    return div.innerHTML;
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function renderDay(){
-    const main = document.getElementById('mainContent');
-    const subjects = currentDayData.subjects || [];
+  // Same tolerant tag-cell parser as Patholytica's AlgoTag sync tool, so a
+  // postgres array literal, a JSON-stringified array, or a plain comma
+  // string are all handled the same way here as there.
+  function parseTagsCell(raw) {
+    if (raw == null) return [];
+    if (Array.isArray(raw)) return raw.map(t => String(t).trim().toLowerCase()).filter(Boolean);
+    let str = String(raw).trim();
+    if (!str) return [];
+    if (str.startsWith('{') && str.endsWith('}')) {
+      str = str.slice(1, -1);
+      return str.split(',').map(t => t.trim().replace(/^"|"$/g,'').toLowerCase()).filter(Boolean);
+    }
+    if (str.startsWith('[')) {
+      try {
+        const arr = JSON.parse(str);
+        if (Array.isArray(arr)) return arr.map(t => String(t).trim().toLowerCase()).filter(Boolean);
+      } catch (e) { /* fall through */ }
+    }
+    return str.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  }
 
-    if (subjects.length === 0){
-      main.innerHTML = `
-        <div class="day-card slide-in">
-          <div class="day-empty">
-            <div class="big-icon">🗓️</div>
-            <h3>${currentLang==='ar'?'لسه مفيش حد رفع داتا لليوم ده':'No one uploaded data for this day yet'}</h3>
-            <p>${currentLang==='ar'?'لو عندك حاجة تقدر ترفعهااضغط على علامة ال + الي تحت    .':'Be the first to add one by the + button below.'}</p>
-          </div>
-          <button class="add-subject-btn" id="addSubjectBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            <span>${currentLang==='ar'?'إضافة داتا':'Add a subject'}</span>
-          </button>
-        </div>
-      `;
-      document.getElementById('addSubjectBtn').addEventListener('click', () => { if (requireAuth()) openSubjectModal(); });
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  function libraryIdFromTags(tags) {
+    return ALL_LIBRARY_IDS.find(id => tags.includes(id)) || null;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ARTICLE CARD RENDERING (point 7)
+  // Mirrors Patholytica's real article-card structure: author row (pfp +
+  // name + date), title/excerpt, a real thumbnail ONLY when media exists
+  // (no placeholder box / emoji standing in for "no image" — the layout
+  // just collapses to full-width text, same as the main feed does), and a
+  // stats row for likes/comments instead of nothing.
+  // Requires a join against `users` (for author pfp/name) and, ideally,
+  // `media` + a comments count; done client-side per-article below since
+  // this page has no server-side rendering layer.
+  // ══════════════════════════════════════════════════════════
+  function renderArticleCard(article, authorProfile, mediaUrl, commentCount) {
+    const tags = parseTagsCell(article[TAGS_COLUMN]);
+    const libId = libraryIdFromTags(tags);
+    const sector = libId ? SECTOR_BY_LIBRARY_ID[libId] : null;
+    const sectorLabel = sector ? sector.label : '—';
+    const sectorColorVar = sector ? sector.colorVar : '--carbon-40';
+
+    const title = article.title || '(Untitled)';
+    const contentStr = typeof article.content === 'string' ? article.content : JSON.stringify(article.content || '');
+    const excerpt = contentStr.slice(0, 220);
+    const dateStr = formatDate(article.created_at);
+
+    const authorName = (authorProfile && (authorProfile.full_name || authorProfile.username)) || 'MedicineBank';
+    const authorPfpUrl = authorProfile && authorProfile.pfp;
+    const authorInitial = (authorName || '?').trim().charAt(0).toUpperCase();
+
+    const hasMedia = !!mediaUrl;
+    const likes = typeof article.likes === 'number' ? article.likes : 0;
+    const comments = typeof commentCount === 'number' ? commentCount : 0;
+
+    return '<div class="article-card" data-article-id="' + escHtml(String(article.id)) + '">' +
+      '<div class="article-author-row">' +
+        (authorPfpUrl
+          ? '<img class="article-author-pfp" src="' + escHtml(authorPfpUrl) + '" alt="" />'
+          : '<div class="article-author-pfp">' + escHtml(authorInitial) + '</div>') +
+        '<div>' +
+          '<div class="article-author-name">' + escHtml(authorName) + '</div>' +
+          '<div class="article-author-date">' + escHtml(dateStr) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="article-body' + (hasMedia ? '' : ' no-media') + '">' +
+        '<div>' +
+          '<div class="article-meta">' +
+            '<span class="article-sector-tag" style="background:var(' + sectorColorVar + ');">' + escHtml(sectorLabel) + '</span>' +
+          '</div>' +
+          '<div class="article-title">' + escHtml(title) + '</div>' +
+          (excerpt ? '<div class="article-excerpt">' + escHtml(excerpt) + '</div>' : '') +
+        '</div>' +
+        (hasMedia ? '<img class="article-thumb" src="' + escHtml(mediaUrl) + '" alt="" />' : '') +
+      '</div>' +
+      '<div class="article-stats-row">' +
+        '<span class="article-stat">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>' +
+          escHtml(String(likes)) +
+        '</span>' +
+        '<span class="article-stat">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>' +
+          escHtml(String(comments)) +
+        '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function loadNewsletterArticles() {
+    const stack = document.getElementById('newsletterStack');
+    const stateEl = document.getElementById('newsletterState');
+    const client = getSupabaseClient();
+
+    if (!client) {
+      stateEl.textContent = 'Unable to connect — check your connection and reload.';
+      stateEl.classList.add('is-error');
       return;
     }
 
-    let html = '<div class="day-card slide-in">';
-    subjects.forEach(subj => {
-      const count = subj.materials.length;
-      const countLabel = currentLang === 'ar'
-        ? `${count} ${count===1 ? 'عنصر' : 'عناصر'}`
-        : `${count} item${count===1?'':'s'}`;
-      const expanded = !subj.collapsed;
-      const color = subj.color || SUBJECT_COLORS[0];
-      html += `
-        <div class="subject-card" data-subject-id="${subj.id}" style="--subj-color:${escapeHtml(color)}">
-          <div class="subject-head ${count>0?'has-content':''}" data-toggle-subject="${subj.id}">
-            <div class="subject-head-left">
-              <svg class="subject-chevron ${expanded?'expanded':''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-              <div>
-                <div class="subject-name-row">
-                  <span class="subject-color-dot"></span>
-                  <span class="subject-name">${escapeHtml(subj.name)}</span>
-                </div>
-                <div class="subject-count">${countLabel}</div>
-              </div>
-            </div>
-            <div class="subject-head-actions">
-              <button type="button" class="subject-add-btn" data-add-material="${subj.id}" aria-label="Add material">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="material-list ${expanded?'expanded':''}" data-materials-for="${subj.id}">
-            ${subj.materials.length === 0 ? `<div style="padding:14px 8px;font-size:0.8rem;color:var(--text-faint);">${currentLang==='ar'?'اضغط على ال + فوق عالشمال عشان ترفع داتا للمحاضرة دي.':'No materials yet.'}</div>` :
-              subj.materials.map(m => {
-                const meta = TYPE_META[m.type] || TYPE_META.pdf;
-                const label = currentLang === 'ar' ? meta.labelAr : meta.labelEn;
-                let bodyExtra = '';
-                if (m.kind === 'link'){
-                  bodyExtra = `<a class="material-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escapeHtml(m.url)}</a>`;
-                } else if (m.kind === 'upload'){
-                  bodyExtra = `<a class="material-link" href="${escapeHtml(m.url)}" target="_blank" rel="noopener" download="${escapeHtml(m.fileName||'file.pdf')}" onclick="event.stopPropagation()">${currentLang==='ar'?'تحميل الملف':'Download file'}</a>`;
-                }
-                const captionLine = m.caption ? `<div class="material-caption">${escapeHtml(m.caption)}</div>` : '';
-                const uploaderName = currentLang === 'ar' ? (m.uploaderNameAr || m.uploaderName || '') : (m.uploaderName || m.uploaderNameAr || '');
-                const uploadedByLabel = currentLang === 'ar' ? 'بواسطة' : 'Uploaded by';
-                const uploaderLine = uploaderName ? `<div class="material-uploader">${uploadedByLabel} ${escapeHtml(uploaderName)}</div>` : '';
-                return `
-                  <div class="material-row" data-material-id="${m.id}" data-edit-subject="${subj.id}" data-edit-material="${m.id}">
-                    <div class="material-icon">${iconSvg(m.type)}</div>
-                    <div class="material-body">
-                      <div class="material-title">${escapeHtml(m.title)}</div>
-                      <div class="material-meta">${label}</div>
-                      ${bodyExtra}
-                      ${captionLine}
-                      ${uploaderLine}
-                    </div>
-                    <button class="material-del" data-del-subject="${subj.id}" data-del-material="${m.id}" aria-label="Delete">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-                `;
-              }).join('')
-            }
-          </div>
-        </div>
-      `;
-    });
+    try {
+      // Pull candidate rows, then keep only ones whose tags contain one of
+      // the four allowed library ids. `or(...)` with per-id `.cs.` filters
+      // does this server-side without needing a dedicated library_id
+      // column, same containment approach the old tag-based query used.
+      const orFilter = ALL_LIBRARY_IDS.map(id => TAGS_COLUMN + '.cs.{' + id + '}').join(',');
+      const { data, error } = await client
+        .from(ARTICLES_TABLE)
+        .select('id,title,content,firebase_user_id,likes,' + TAGS_COLUMN + ',created_at')
+        .or(orFilter)
+        .order('created_at', { ascending: false })
+        .limit(30);
 
-    html += `
-      <button class="add-subject-btn" id="addSubjectBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span>${currentLang==='ar'?'إضافة داتا':'Add a subject'}</span>
-      </button>
-    `;
-    html += '</div>';
+      if (error) throw error;
 
-    main.innerHTML = html;
-    document.getElementById('addSubjectBtn').addEventListener('click', () => { if (requireAuth()) openSubjectModal(); });
+      const articles = data || [];
+      if (articles.length === 0) {
+        stateEl.textContent = 'No articles yet.';
+        stateEl.classList.remove('is-error');
+        return;
+      }
 
-    main.querySelectorAll('[data-toggle-subject]').forEach(head => {
-      head.addEventListener('click', () => toggleSubject(head.dataset.toggleSubject));
-    });
-    main.querySelectorAll('[data-add-material]').forEach(btn => {
-      btn.addEventListener('click', (e) => { e.stopPropagation(); if (requireAuth()) openMaterialModal(btn.dataset.addMaterial); });
-    });
-    main.querySelectorAll('.material-del').forEach(btn => {
-      btn.addEventListener('click', (e) => { e.stopPropagation(); if (requireAuth()) deleteMaterial(btn.dataset.delSubject, btn.dataset.delMaterial); });
-    });
-    main.querySelectorAll('[data-edit-material]').forEach(row => {
-      row.addEventListener('click', () => { if (requireAuth()) openMaterialModal(row.dataset.editSubject, row.dataset.editMaterial); });
-    });
-  }
+      // Batch-fetch author profiles (users.firebase_uid) and each
+      // article's first media row + comment count, so cards can show a
+      // real author + real thumbnail-or-nothing + real comment count
+      // instead of placeholders.
+      const authorUids = [...new Set(articles.map(a => a.firebase_user_id).filter(Boolean))];
+      const articleIds = articles.map(a => a.id);
 
-  function toggleSubject(subjectId){
-    const subj = (currentDayData.subjects || []).find(s => s.id === subjectId);
-    if (!subj) return;
-    subj.collapsed = !subj.collapsed;
-    collapsedState[subjectId] = subj.collapsed; // remember for this session only
-    renderDay();
-  }
+      const [usersRes, mediaRes, commentsRes] = await Promise.all([
+        authorUids.length
+          ? client.from('users').select('firebase_uid,username,full_name,pfp').in('firebase_uid', authorUids)
+          : Promise.resolve({ data: [] }),
+        articleIds.length
+          ? client.from('media').select('article_id,url,display_order').in('article_id', articleIds).order('display_order', { ascending: true })
+          : Promise.resolve({ data: [] }),
+        articleIds.length
+          ? client.from('comments').select('article_id').in('article_id', articleIds)
+          : Promise.resolve({ data: [] })
+      ]);
 
-  /* ---------------- toast ---------------- */
-  function showToast(msg){
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2200);
-  }
+      const usersByUid = {};
+      (usersRes.data || []).forEach(u => { usersByUid[u.firebase_uid] = u; });
 
-  /* ---------------- subject modal ---------------- */
-  const subjectModalOverlay = document.getElementById('subjectModalOverlay');
-  const subjectNameInput = document.getElementById('subjectNameInput');
-  const subjectNameField = document.getElementById('subjectNameField');
-  const subjectColorInput = document.getElementById('subjectColorInput');
-  const subjectColorSwatches = document.getElementById('subjectColorSwatches');
+      const firstMediaByArticle = {};
+      (mediaRes.data || []).forEach(m => {
+        if (!(m.article_id in firstMediaByArticle)) firstMediaByArticle[m.article_id] = m.url;
+      });
 
-  function renderSubjectColorSwatches(selected){
-    subjectColorSwatches.innerHTML = SUBJECT_COLORS.map(c => `
-      <button type="button" class="swatch-btn ${c===selected?'selected':''}" style="background:${c}; width:30px; height:30px; border-radius:50%; border:2px solid ${c===selected?'#fff':'transparent'}; cursor:pointer;" data-pick="${c}"></button>
-    `).join('');
-    subjectColorSwatches.querySelectorAll('[data-pick]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        subjectColorInput.value = btn.dataset.pick;
-        subjectColorSwatches.querySelectorAll('.swatch-btn').forEach(b => {
-          b.style.border = b === btn ? '2px solid #fff' : '2px solid transparent';
+      const commentCountByArticle = {};
+      (commentsRes.data || []).forEach(c => {
+        commentCountByArticle[c.article_id] = (commentCountByArticle[c.article_id] || 0) + 1;
+      });
+
+      stack.innerHTML = articles.map(article => renderArticleCard(
+        article,
+        usersByUid[article.firebase_user_id] || null,
+        firstMediaByArticle[article.id] || null,
+        commentCountByArticle[article.id] || 0
+      )).join('');
+
+      stack.querySelectorAll('.article-card').forEach(card => {
+        card.addEventListener('click', () => {
+          window.location.href = 'article.html?id=' + encodeURIComponent(card.dataset.articleId);
         });
       });
-    });
-  }
-
-  function openSubjectModal(){
-    subjectNameInput.value = '';
-    const randomColor = SUBJECT_COLORS[Math.floor(Math.random()*SUBJECT_COLORS.length)];
-    subjectColorInput.value = randomColor;
-    renderSubjectColorSwatches(randomColor);
-    subjectNameField.classList.remove('invalid');
-    subjectModalOverlay.classList.add('open');
-    setTimeout(() => subjectNameInput.focus(), 50);
-  }
-  function closeSubjectModal(){ subjectModalOverlay.classList.remove('open'); }
-
-  document.getElementById('subjectCancelBtn').addEventListener('click', closeSubjectModal);
-  subjectModalOverlay.addEventListener('click', (e) => { if(e.target === subjectModalOverlay) closeSubjectModal(); });
-
-  document.getElementById('subjectSaveBtn').addEventListener('click', async () => {
-    if (!requireAuth()) return;
-    const name = subjectNameInput.value.trim();
-    if (!name){ subjectNameField.classList.add('invalid'); return; }
-
-    const saveBtn = document.getElementById('subjectSaveBtn');
-    saveBtn.disabled = true;
-
-    const { data, error } = await supabase
-      .from('lectures')
-      .insert({
-        date: fmtKey(viewDate),
-        name,
-        color: subjectColorInput.value,
-        created_by: currentSession.user.id
-      })
-      .select('id, name, color, created_at')
-      .single();
-
-    saveBtn.disabled = false;
-
-    if (error){
-      showToast(currentLang==='ar' ? 'حصل خطأ، جرب تاني' : 'Something went wrong, try again');
-      return;
+    } catch (err) {
+      console.error('Article load failed:', err);
+      stateEl.textContent = 'Could not load articles right now.';
+      stateEl.classList.add('is-error');
     }
+  }
 
-    currentDayData.subjects = currentDayData.subjects || [];
-    currentDayData.subjects.push({ id: data.id, name: data.name, color: data.color, collapsed: true, materials: [] });
-    closeSubjectModal();
-    renderDay();
-    showToast(currentLang==='ar' ? 'تمت إضافة المرجع' : 'Subject added');
+  // ══════════════════════════════════════════════════════════
+  // SEARCH (point 3) — opens dynamically, fetches only from the 4
+  // allowed sector libraries (same 888/777/555/444 scope as the
+  // newsletter above).
+  // ══════════════════════════════════════════════════════════
+  const searchBtn = document.getElementById('searchBtn');
+  const searchOverlay = document.getElementById('searchOverlay');
+  const searchInput = document.getElementById('searchInput');
+  const searchCloseBtn = document.getElementById('searchCloseBtn');
+  const searchResults = document.getElementById('searchResults');
+
+  let searchDebounceTimer = null;
+
+  function openSearch() {
+    searchOverlay.classList.add('open');
+    setTimeout(() => searchInput.focus(), 50);
+  }
+  function closeSearch() {
+    searchOverlay.classList.remove('open');
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+  }
+
+  searchBtn.addEventListener('click', openSearch);
+  searchCloseBtn.addEventListener('click', closeSearch);
+  searchOverlay.addEventListener('click', (e) => { if (e.target === searchOverlay) closeSearch(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && searchOverlay.classList.contains('open')) closeSearch(); });
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const q = searchInput.value.trim();
+    if (!q) { searchResults.innerHTML = ''; return; }
+    searchDebounceTimer = setTimeout(() => runSearch(q), 280);
   });
 
-  /* ---------------- material modal (add + edit) ---------------- */
-  const materialModalOverlay = document.getElementById('materialModalOverlay');
-  const materialModalTitle = document.getElementById('materialModalTitle');
-  const materialTitleInput = document.getElementById('materialTitleInput');
-  const materialTitleField = document.getElementById('materialTitleField');
-  const materialCaptionInput = document.getElementById('materialCaptionInput');
-  const pdfSourceField = document.getElementById('pdfSourceField');
-  const urlOnlyField = document.getElementById('urlOnlyField');
-  const urlOnlyInput = document.getElementById('urlOnlyInput');
-  const urlOnlyLabel = document.getElementById('urlOnlyLabel');
-  const materialLinkInput = document.getElementById('materialLinkInput');
-  const linkInputWrap = document.getElementById('linkInputWrap');
-  const uploadInputWrap = document.getElementById('uploadInputWrap');
-  const uploadDrop = document.getElementById('uploadDrop');
-  const uploadDropText = document.getElementById('uploadDropText');
-  const fileInput = document.getElementById('fileInput');
-  const srcLinkOpt = document.getElementById('srcLinkOpt');
-  const srcUploadOpt = document.getElementById('srcUploadOpt');
-  const materialSaveBtn = document.getElementById('materialSaveBtn');
-
-  let activeSubjectId = null;
-  let editingMaterialId = null;
-  let currentType = 'pdf';
-  let currentSource = 'link';
-  let uploadedFile = null; // { fileName, storagePath, publicUrl } after successful upload
-
-  function openMaterialModal(subjectId, materialId){
-    activeSubjectId = subjectId;
-    editingMaterialId = materialId || null;
-
-    materialTitleInput.value = '';
-    materialLinkInput.value = '';
-    urlOnlyInput.value = '';
-    materialCaptionInput.value = '';
-    uploadedFile = null;
-    fileInput.value = '';
-    uploadDrop.classList.remove('has-file');
-    uploadDropText.textContent = currentLang === 'ar' ? 'اضغط لاختيار ملف PDF' : 'Tap to choose a PDF';
-    [materialTitleField, pdfSourceField, urlOnlyField].forEach(f => f.classList.remove('invalid'));
-    document.querySelectorAll('#materialModalOverlay .mfield-err').forEach(e => e.classList.remove('show'));
-
-    let existing = null;
-    if (editingMaterialId){
-      const subj = (currentDayData.subjects || []).find(s => s.id === subjectId);
-      existing = subj ? subj.materials.find(m => m.id === editingMaterialId) : null;
+  async function runSearch(query) {
+    const client = getSupabaseClient();
+    searchResults.innerHTML = '<div class="search-state">Searching…</div>';
+    if (!client) {
+      searchResults.innerHTML = '<div class="search-state is-error">Unable to connect — check your connection.</div>';
+      return;
     }
+    try {
+      // Scope to the 4 allowed libraries the same way the newsletter does,
+      // AND require the search term to appear in title or content.
+      const libFilter = ALL_LIBRARY_IDS.map(id => LIBRARY_TAG_COLUMN + '.cs.{' + id + '}').join(',');
+      const { data, error } = await client
+        .from(ARTICLES_TABLE)
+        .select('id,title,content,' + TAGS_COLUMN + ',created_at')
+        .or(libFilter)
+        .or('title.ilike.%' + query + '%,content.ilike.%' + query + '%')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    if (existing){
-      materialModalTitle.textContent = currentLang==='ar' ? 'تعديل المحتوى' : 'Edit material';
-      document.querySelector(`input[name="mtype"][value="${existing.type}"]`).checked = true;
-      updateTypeVisual(existing.type);
-      materialTitleInput.value = existing.title || '';
-      materialCaptionInput.value = existing.caption || '';
-      if (existing.type === 'pdf' || existing.type === 'q'){
-        if (existing.kind === 'upload'){
-          setSource('upload');
-          uploadedFile = { fileName: existing.fileName, publicUrl: existing.url };
-          uploadDrop.classList.add('has-file');
-          uploadDropText.textContent = existing.fileName || (currentLang==='ar'?'ملف مرفوع':'Uploaded file');
-        } else {
-          setSource('link');
-          materialLinkInput.value = existing.url || '';
-        }
-      } else {
-        urlOnlyInput.value = existing.url || '';
+      if (error) throw error;
+
+      const results = data || [];
+      if (results.length === 0) {
+        searchResults.innerHTML = '<div class="search-state">No matching articles in the allowed libraries.</div>';
+        return;
       }
-      materialSaveBtn.textContent = currentLang==='ar' ? 'حفظ' : 'Save changes';
-    } else {
-      materialModalTitle.textContent = currentLang==='ar' ? 'إضافة حاجة للمحاضرة' : 'Add material';
-      document.querySelector('input[name="mtype"][value="pdf"]').checked = true;
-      updateTypeVisual('pdf');
-      setSource('link');
-      materialSaveBtn.textContent = currentLang==='ar' ? 'إضافة' : 'Add';
-    }
 
-    materialModalOverlay.classList.add('open');
-    setTimeout(() => materialTitleInput.focus(), 50);
-  }
-  function closeMaterialModal(){ materialModalOverlay.classList.remove('open'); editingMaterialId = null; }
+      searchResults.innerHTML = results.map(article => {
+        const tags = parseTagsCell(article[TAGS_COLUMN]);
+        const libId = libraryIdFromTags(tags);
+        const sector = libId ? SECTOR_BY_LIBRARY_ID[libId] : null;
+        const sectorLabel = sector ? sector.label : '';
+        const dateStr = formatDate(article.created_at);
+        return '<a class="search-result-item" data-article-id="' + escHtml(String(article.id)) + '">' +
+          '<div class="search-result-title">' + escHtml(article.title || '(Untitled)') + '</div>' +
+          '<div class="search-result-meta">' + escHtml([sectorLabel, dateStr].filter(Boolean).join(' · ')) + '</div>' +
+        '</a>';
+      }).join('');
 
-  document.getElementById('materialCancelBtn').addEventListener('click', closeMaterialModal);
-  materialModalOverlay.addEventListener('click', (e) => { if(e.target === materialModalOverlay) closeMaterialModal(); });
-
-  document.querySelectorAll('input[name="mtype"]').forEach(radio => {
-    radio.addEventListener('change', () => updateTypeVisual(radio.value));
-  });
-
-  function updateTypeVisual(type){
-    currentType = type;
-    document.querySelectorAll('.type-opt').forEach(opt => {
-      opt.classList.toggle('checked', opt.dataset.type === type);
-    });
-
-    if (type === 'pdf' || type === 'q'){
-      pdfSourceField.style.display = '';
-      urlOnlyField.style.display = 'none';
-      setSource(currentSource);
-    } else {
-      pdfSourceField.style.display = 'none';
-      urlOnlyField.style.display = '';
-      if (type === 'spotify'){
-        urlOnlyLabel.textContent = currentLang==='ar' ? 'لينك Spotify' : 'Spotify link';
-        urlOnlyInput.placeholder = 'https://open.spotify.com/episode/…';
-      } else {
-        urlOnlyLabel.textContent = currentLang==='ar' ? 'لينك YouTube' : 'YouTube link';
-        urlOnlyInput.placeholder = 'https://youtube.com/watch?v=…';
-      }
+      searchResults.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+          window.location.href = 'article.html?id=' + encodeURIComponent(item.dataset.articleId);
+        });
+      });
+    } catch (err) {
+      console.error('Search failed:', err);
+      searchResults.innerHTML = '<div class="search-state is-error">Search failed — try again.</div>';
     }
   }
 
-  function setSource(src){
-    currentSource = src;
-    srcLinkOpt.classList.toggle('active', src === 'link');
-    srcUploadOpt.classList.toggle('active', src === 'upload');
-    linkInputWrap.style.display = src === 'link' ? '' : 'none';
-    uploadInputWrap.style.display = src === 'upload' ? '' : 'none';
-  }
-  srcLinkOpt.addEventListener('click', () => setSource('link'));
-  srcUploadOpt.addEventListener('click', () => setSource('upload'));
+  // ══════════════════════════════════════════════════════════
+  // THEME SWITCHER (point 2) — persists to localStorage, applied via
+  // data-theme on <html>. Also nudges the theme-color meta tag so the
+  // Safari status-bar chrome stays consistent with the active theme.
+  // ══════════════════════════════════════════════════════════
+  const THEME_STORAGE_KEY = 'mb-theme-preference';
+  const themeToggle = document.getElementById('themeToggle');
+  const themeLabelText = document.getElementById('themeLabelText');
+  const themeColorMeta = document.getElementById('themeColorMeta');
 
-  uploadDrop.addEventListener('click', () => { if (!uploadDrop.classList.contains('uploading')) fileInput.click(); });
-
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    if (file.size > MAX_UPLOAD_BYTES){
-      showToast(currentLang==='ar' ? 'الملف كبير أوي (الحد الأقصى ٢٠ ميجا)' : 'File is too large (20MB max)');
-      fileInput.value = '';
-      return;
-    }
-    if (!requireAuth()){ fileInput.value = ''; return; }
-
-    uploadDrop.classList.add('uploading');
-    uploadDropText.textContent = currentLang==='ar' ? 'بيترفع…' : 'Uploading…';
-
-    const ext = file.name.split('.').pop();
-    const path = `${activeSubjectId}/${uid()}-${Date.now()}.${ext}`;
-
-    const { error: upErr } = await supabase.storage.from(MATERIALS_BUCKET).upload(path, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-
-    uploadDrop.classList.remove('uploading');
-
-    if (upErr){
-      showToast(currentLang==='ar' ? 'حصل خطأ في رفع الملف' : 'File upload failed');
-      uploadDropText.textContent = currentLang==='ar' ? 'اضغط لاختيار ملف PDF' : 'Tap to choose a PDF';
-      fileInput.value = '';
-      return;
-    }
-
-    const { data: pub } = supabase.storage.from(MATERIALS_BUCKET).getPublicUrl(path);
-    uploadedFile = { fileName: file.name, storagePath: path, publicUrl: pub.publicUrl };
-    uploadDrop.classList.add('has-file');
-    uploadDropText.textContent = file.name;
-  });
-
-  materialSaveBtn.addEventListener('click', async () => {
-    if (!requireAuth()) return;
-
-    const title = materialTitleInput.value.trim();
-    const caption = materialCaptionInput.value.trim();
-    let ok = true;
-
-    if (!title){ materialTitleField.classList.add('invalid'); ok = false; }
-    else materialTitleField.classList.remove('invalid');
-
-    let payload = {
-      type: currentType,
-      title,
-      caption: caption || null,
-    };
-
-    if (currentType === 'pdf' || currentType === 'q'){
-      if (currentSource === 'link'){
-        const url = materialLinkInput.value.trim();
-        if (!url){ pdfSourceField.classList.add('invalid'); ok = false; }
-        else { pdfSourceField.classList.remove('invalid'); payload.kind = 'link'; payload.url = url; payload.file_name = null; }
-      } else {
-        if (!uploadedFile){ pdfSourceField.classList.add('invalid'); ok = false; }
-        else { pdfSourceField.classList.remove('invalid'); payload.kind = 'upload'; payload.url = uploadedFile.publicUrl; payload.file_name = uploadedFile.fileName; }
-      }
-    } else {
-      const url = urlOnlyInput.value.trim();
-      if (!url){ urlOnlyField.classList.add('invalid'); ok = false; }
-      else { urlOnlyField.classList.remove('invalid'); payload.kind = 'link'; payload.url = url; payload.file_name = null; }
-    }
-
-    if (!ok) return;
-
-    materialSaveBtn.disabled = true;
-
-    let savedRow, error;
-    if (editingMaterialId){
-      ({ data: savedRow, error } = await supabase
-        .from('materials')
-        .update(payload)
-        .eq('id', editingMaterialId)
-        .select('id, type, kind, title, url, file_name, caption, uploaded_by')
-        .single());
-    } else {
-      ({ data: savedRow, error } = await supabase
-        .from('materials')
-        .insert({ ...payload, lecture_id: activeSubjectId, uploaded_by: currentSession.user.id })
-        .select('id, type, kind, title, url, file_name, caption, uploaded_by')
-        .single());
-    }
-
-    materialSaveBtn.disabled = false;
-
-    if (error){
-      showToast(currentLang==='ar' ? 'حصل خطأ، جرب تاني' : 'Something went wrong, try again');
-      return;
-    }
-
-    const subj = (currentDayData.subjects || []).find(s => s.id === activeSubjectId);
-    if (subj){
-      const uploaderName = currentProfile ? currentProfile.name_en : '';
-      const uploaderNameAr = currentProfile ? currentProfile.name_ar : '';
-      const materialData = {
-        id: savedRow.id,
-        type: savedRow.type,
-        kind: savedRow.kind,
-        title: savedRow.title,
-        url: savedRow.url,
-        fileName: savedRow.file_name,
-        caption: savedRow.caption,
-        uploaderName,
-        uploaderNameAr
-      };
-      if (editingMaterialId){
-        const idx = subj.materials.findIndex(m => m.id === editingMaterialId);
-        if (idx !== -1) subj.materials[idx] = materialData;
-      } else {
-        subj.materials.push(materialData);
-      }
-    }
-    const wasEditing = !!editingMaterialId;
-    closeMaterialModal();
-    renderDay();
-    showToast(wasEditing ? (currentLang==='ar' ? 'تم الحفظ' : 'Saved') : (currentLang==='ar' ? 'تمت الإضافة' : 'Added'));
-  });
-
-  async function deleteMaterial(subjectId, materialId){
-    const subj = (currentDayData.subjects || []).find(s => s.id === subjectId);
-    if (!subj) return;
-
-    const { error } = await supabase.from('materials').delete().eq('id', materialId);
-    if (error){
-      showToast(currentLang==='ar' ? 'حصل خطأ، جرب تاني' : 'Something went wrong, try again');
-      return;
-    }
-    subj.materials = subj.materials.filter(m => m.id !== materialId);
-    renderDay();
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    themeToggle.classList.toggle('is-dark', theme === 'dark');
+    themeLabelText.textContent = theme === 'dark' ? 'Dark mode' : 'Light mode';
+    // Header/menu/search chrome is always the dark carbon palette regardless
+    // of page theme, so theme-color stays black either way — this keeps it
+    // explicit rather than accidentally drifting if that ever changes.
+    themeColorMeta.setAttribute('content', '#0b0b0b');
   }
 
-  /* ---------------- init ---------------- */
-  (async function init(){
-    await initAuth();
-    renderDate();
-    renderCalBtnDate();
-    await loadDay();
+  function getStoredTheme() {
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY);
+    } catch (e) {
+      return null; // localStorage unavailable (private mode, etc.) — fall back silently
+    }
+  }
+  function storeTheme(theme) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (e) { /* ignore — theme still applies for this session */ }
+  }
+
+  (function initTheme() {
+    const stored = getStoredTheme();
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initial = stored === 'dark' || stored === 'light' ? stored : (prefersDark ? 'dark' : 'light');
+    applyTheme(initial);
   })();
-})();
+
+  themeToggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    storeTheme(next);
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // AUTH — now renders inside the burger menu instead of the header
+  // ══════════════════════════════════════════════════════════
+  async function handleAuthChange(user) {
+    const signedOutEl = document.getElementById('menuSignedOut');
+    const signedInEl = document.getElementById('menuSignedIn');
+    const pfpEl = document.getElementById('menuAcctPfp');
+    const nameEl = document.getElementById('menuAcctName');
+    const subEl = document.getElementById('menuAcctSub');
+
+    if (!user) {
+      signedOutEl.style.display = 'inline-flex';
+      signedInEl.style.display = 'none';
+      return;
+    }
+
+    signedOutEl.style.display = 'none';
+    signedInEl.style.display = 'flex';
+
+    // Look up the matching Supabase users row via firebase_uid, same join
+    // key Patholytica's login page writes on account creation/sign-in.
+    const client = getSupabaseClient();
+    let profile = null;
+    if (client) {
+      try {
+        const { data } = await client
+          .from('users')
+          .select('username,full_name,pfp')
+          .eq('firebase_uid', user.uid)
+          .maybeSingle();
+        profile = data;
+      } catch (err) {
+        console.warn('Profile lookup failed:', err);
+      }
+    }
+
+    const displayName = (profile && (profile.full_name || profile.username)) || user.displayName || (user.email ? user.email.split('@')[0] : 'Account');
+    nameEl.textContent = displayName;
+    subEl.textContent = profile && profile.username ? '@' + profile.username : (user.email || '');
+
+    const pfpUrl = (profile && profile.pfp) || user.photoURL || null;
+    if (pfpUrl) {
+      pfpEl.innerHTML = '<img src="' + escHtml(pfpUrl) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+    } else {
+      pfpEl.textContent = (displayName || '?').trim().charAt(0).toUpperCase();
+    }
+  }
+
+  window.addEventListener('mb-auth-changed', (e) => { handleAuthChange(e.detail.user); });
+
+  // ══════════════════════════════════════════════════════════
+  // BURGER MENU (now full-page — point 1)
+  // ══════════════════════════════════════════════════════════
+  const burgerBtn = document.getElementById('burgerBtn');
+  const burgerMenu = document.getElementById('burgerMenu');
+  burgerBtn.addEventListener('click', () => {
+    const isOpen = burgerMenu.classList.toggle('open');
+    burgerBtn.classList.toggle('open', isOpen);
+    burgerBtn.setAttribute('aria-expanded', String(isOpen));
+    if (isOpen) closeSearch(); // don't allow both overlays open at once
+  });
+  document.addEventListener('click', (e) => {
+    if (!burgerMenu.contains(e.target) && !burgerBtn.contains(e.target)) {
+      burgerMenu.classList.remove('open');
+      burgerBtn.classList.remove('open');
+      burgerBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // NAV / SCROLL SPY
+  // ══════════════════════════════════════════════════════════
+  function smoothScrollTo(targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const headerH = document.querySelector('.site-header').offsetHeight;
+    const secondaryH = document.querySelector('.secondary-nav').offsetHeight;
+    const offset = headerH + secondaryH;
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      smoothScrollTo(link.dataset.target);
+      burgerMenu.classList.remove('open');
+      burgerBtn.classList.remove('open');
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // BOOT
+  // ══════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    loadNewsletterArticles();
+    // Prevent double-tap-to-zoom on browsers where touch-action alone
+    // isn't fully honored (older WebKit). Blocks the synthetic dblclick
+    // that iOS Safari fires from a fast double-tap.
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // Block the iOS "copy / look up / share" callout on long-press, and
+    // right-click context menu on desktop, per the "no text editor" ask.
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
 </script>
 </body>
 </html>
