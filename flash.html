@@ -1,15 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flashcard Studio — MedicineBank</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Merriweather:ital,wght@1,300&display=swap" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
-<style>
+  <meta charset="UTF-8" />
+  <!--
+    VIEWPORT: user-scalable=no + maximum-scale=1 is what actually blocks
+    pinch-zoom and the iOS double-tap-to-zoom gesture. Kept exactly as
+    requested, but note for future-you: this also blocks legitimate
+    accessibility zoom for low-vision visitors, which is normally something
+    we'd flag rather than just ship. Doing it anyway since it was explicit.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>MedicineBank Initiative</title>
+
+  <!--
+    THEME-COLOR / STATUS BAR FIX (the "white shadow" issue):
+    The dark-fading-to-transparent band above the header in the screenshot
+    is Safari's own status-bar chrome rendering over the page, because the
+    page never claimed that region with real content. Two things fix it,
+    for a page opened normally in a Safari TAB (which is what the
+    screenshot shows — visible URL bar and tab chrome at the bottom):
+      1. theme-color below, so Safari tints its own UI to match instead of
+         defaulting to a translucent dark overlay.
+      2. The safe-area-inset-top padding added to .site-header in the CSS,
+         so the header's own solid black background physically extends up
+         under the notch/status bar, leaving no gap for Safari to shade.
+    Both are needed — theme-color alone doesn't help if there's still a gap
+    under the notch with nothing but page background behind it.
+
+    The two apple-mobile-web-app-* tags below are DIFFERENT and NOT part of
+    that fix: per Apple's docs, they only take effect once a page has been
+    added to the iOS home screen and launched as a standalone app — they do
+    nothing for a normal Safari-tab visit like this screenshot. Left in
+    here as a no-cost head start in case MedicineBank adds "Add to Home
+    Screen" support later; if that's never going to happen, they can be
+    deleted with no effect on the bug being fixed here.
+
+    NOTE (kept theme-invariant on purpose): the header, burger menu, search
+    overlay and footer all stay this same fixed dark chrome regardless of
+    the new light/dark content theme added below. That's deliberate — it
+    means there's only ever one header color to keep in sync with
+    theme-color above, not two, so this fix never has to be re-derived per
+    theme.
+  -->
+  <meta name="theme-color" content="#0b0b0b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;700&display=swap" rel="stylesheet" />
+
+  <!-- Firebase Auth (matches Patholytica's login page auth provider) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // NOTE: same Firebase project as Patholytica's login page, reused as-is
+    // so a session started there is recognized here.
+    const firebaseConfig = {
+      apiKey: "AIzaSyBs6V0yY14cuLBXB1nciZ-X0eyAiodC-Ak",
+      authDomain: "patholytica.firebaseapp.com",
+      databaseURL: "https://patholytica-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "patholytica",
+      storageBucket: "patholytica.firebasestorage.app",
+      messagingSenderId: "738430635282",
+      appId: "1:738430635282:web:8451ef380447c7611137cb"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    window.__mbAuth = auth;
+    onAuthStateChanged(auth, (user) => {
+      window.dispatchEvent(new CustomEvent('mb-auth-changed', { detail: { user } }));
+    });
+  </script>
+
+  <!-- Supabase client (data only — anon/publishable key, RLS-respecting) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -31,581 +98,597 @@
       --burg-dark: #621832;
       --orange:    #c4601a;
       --orange-dark:#a34e14;
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); line-height: 1.6; }
+    html {
+      /* Belt-and-suspenders against the same translucent-overlay issue:
+         a solid black background behind everything means there's never a
+         moment (e.g. during elastic overscroll bounce) where Safari has
+         white/transparent page background to blend its chrome against.
+         Stays plain black (not theme-linked) because the header and
+         footer — the two things that actually border this overscroll
+         region — are themselves always black regardless of theme; see
+         the theme-token block on body below. */
+      background: var(--black);
+    }
+
+    body {
+      /*
+        THEME TOKENS — LIGHT (default), living directly on body so the
+        page still renders sensibly if JS never runs (no theme class ever
+        gets applied) instead of falling back to unset custom properties.
+        body.theme-light below just restates the same values so toggling
+        back from dark is a plain class swap, not a special case; body.
+        theme-dark overrides them for the dark variant.
+
+        SCOPE: only the main content region (the sector strip, the
+        newsletter section and its article cards, the general page
+        background) reads these tokens. The header, secondary nav, burger
+        menu, search overlay and footer are deliberately NOT theme-aware —
+        see the note on the theme-color meta tag above for why.
+      */
+      --page-bg: var(--white);
+      --surface-bg: #ffffff;
+      --surface-alt-bg: var(--carbon-05);
+      --text-primary: var(--black);
+      --text-secondary: var(--carbon-60);
+      --text-tertiary: var(--carbon-40);
+      --divider: var(--carbon-20);
+
+      font-family: 'Inter', sans-serif; background: var(--page-bg); color: var(--text-primary); line-height: 1.6;
+      /* Block iOS text-selection callout / long-press menu, per request */
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation; /* removes the 300ms double-tap-to-zoom delay & double-tap zoom gesture on elements that don't need pinch/pan */
+      transition: background .2s ease, color .2s ease;
+    }
+    body.theme-light {
+      --page-bg: var(--white);
+      --surface-bg: #ffffff;
+      --surface-alt-bg: var(--carbon-05);
+      --text-primary: var(--black);
+      --text-secondary: var(--carbon-60);
+      --text-tertiary: var(--carbon-40);
+      --divider: var(--carbon-20);
+    }
+    body.theme-dark {
+      --page-bg: #0e0e0e;
+      --surface-bg: #161616;
+      --surface-alt-bg: #1c1c1c;
+      --text-primary: var(--white);
+      --text-secondary: #b9b9bb;
+      --text-tertiary: #8e8e8e;
+      --divider: #2b2b2b;
+    }
+    /* Inputs still need to be selectable/editable to actually type into them */
+    input, textarea { -webkit-user-select: text; user-select: text; }
+
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
+    button { font-family: inherit; }
+
+    /* Locks background scroll while the full-page menu or search overlay
+       is open — see syncBodyLock() in the script. */
+    body.menu-open { overflow: hidden; }
 
     /* ── HEADER ── */
     .site-header {
       background: var(--black);
-      padding: 0 32px;
+      padding: var(--safe-top) 32px 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 1000;
-      height: 56px;
+      /* height now = safe-area + the original 56px bar, so the black box
+         itself covers the notch/status bar instead of stopping below it */
+      height: calc(var(--safe-top) + 56px);
     }
-    .logo img { height: 28px; width: auto; display: block; }
-    .search-wrap {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 2px; padding: 6px 12px; cursor: text;
-      transition: background .2s;
-    }
-    .search-wrap:hover { background: rgba(255,255,255,0.11); }
-    .search-wrap svg { fill: var(--carbon-40); flex-shrink: 0; }
-    .search-wrap input {
-      background: none; border: none; outline: none;
-      font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--white);
-      width: 160px;
-    }
-    .search-wrap input::placeholder { color: var(--carbon-40); }
 
-    /* ── SECONDARY NAV ── */
+    .logo img { height: 28px; width: auto; display: block; }
+
+    /* ── HEADER RIGHT — search + burger only now. Sign-in/account status
+       moved into the burger menu (see .menu-account below); it no longer
+       has a header footprint at all. ── */
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .search-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; background: none; border: none; cursor: pointer;
+      color: var(--white); padding: 0;
+    }
+
+    .burger-btn {
+      display: flex; flex-direction: column; justify-content: center; gap: 4px;
+      width: 34px; height: 34px; background: none; border: none; cursor: pointer;
+      padding: 0;
+    }
+    .burger-btn span {
+      display: block; width: 20px; height: 2px; background: var(--white);
+      transition: transform .25s, opacity .2s;
+    }
+    .burger-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .burger-btn.open span:nth-child(2) { opacity: 0; }
+    .burger-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    /* ── BURGER MENU — now a full-page panel filling the viewport
+       underneath the header, not a small top-right dropdown, so it has
+       room for the account area, the theme switcher, and the membership/
+       calendar/scope links that used to be their own strip (removed —
+       see the newsletter section further down for where that used to
+       sit).
+       z-index bumped from the previous 998 to 1000: the menu and
+       .secondary-nav both pin to the exact same top offset once the page
+       is scrolled, and a narrow corner panel mostly avoided that overlap
+       before — a full-width one won't, so it needs to win that stacking
+       order outright now. ── */
+    .burger-menu {
+      position: fixed;
+      top: calc(var(--safe-top) + 56px);
+      left: 0; right: 0; bottom: 0;
+      background: var(--carbon-90);
+      z-index: 1000;
+      transform: translateX(100%);
+      visibility: hidden;
+      transition: transform .3s ease, visibility 0s linear .3s;
+      padding: 0 0 calc(20px + var(--safe-bottom));
+      overflow-y: auto;
+    }
+    .burger-menu.open {
+      transform: translateX(0);
+      visibility: visible;
+      transition: transform .3s ease;
+    }
+    .burger-menu a {
+      display: block; padding: 15px 24px; font-size: 0.9rem; font-weight: 600;
+      color: var(--carbon-30); transition: background .15s, color .15s;
+    }
+    .burger-menu a:hover { background: var(--carbon-80); color: var(--white); }
+    .burger-menu hr { border: none; border-top: 1px solid var(--carbon-80); margin: 10px 0; }
+
+    .menu-section-label {
+      font-size: 0.66rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+      color: var(--carbon-40); padding: 16px 24px 6px;
+    }
+
+    /* ── MENU ACCOUNT AREA — the sign-in chip / signed-in pfp+stats that
+       used to sit in the header, moved in here wholesale. Same element
+       IDs as before (acctSignedOut / acctSignedIn / acctPfp / acctName /
+       acctSubstat), so handleAuthChange() in the script below needed no
+       changes at all — only the wrapping classes and sizing did, to fit
+       a full-page menu instead of a compact header chip. ── */
+    .menu-account { padding: 20px 24px 16px; border-bottom: 1px solid var(--carbon-80); margin-bottom: 4px; }
+    .menu-account-signed-out {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 2px; padding: 12px 18px; width: 100%;
+      font-size: 0.86rem; font-weight: 700; color: var(--white);
+      cursor: pointer; transition: background .2s;
+    }
+    .menu-account-signed-out:hover { background: rgba(255,255,255,0.12); }
+
+    .menu-account-signed-in { display: none; align-items: center; gap: 12px; cursor: pointer; }
+    .menu-account-signed-in.visible { display: flex; }
+    .account-pfp {
+      width: 38px; height: 38px; border-radius: 50%;
+      object-fit: cover; background: var(--carbon-80);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; color: var(--carbon-30);
+      flex-shrink: 0;
+    }
+    .account-stats { display: flex; flex-direction: column; line-height: 1.3; }
+    .account-name { font-size: 0.86rem; font-weight: 700; color: var(--white); }
+    .account-substat { font-size: 0.72rem; color: var(--carbon-40); }
+
+    /* ── THEME SWITCHER (in-menu) ── */
+    .theme-toggle-row { display: flex; gap: 8px; padding: 0 24px 18px; }
+    .theme-pill {
+      flex: 1; padding: 10px 0; border-radius: 2px;
+      border: 1px solid var(--carbon-80); background: transparent;
+      color: var(--carbon-30); font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: background .15s, color .15s, border-color .15s;
+    }
+    .theme-pill.active { background: var(--white); color: var(--black); border-color: var(--white); }
+    .theme-pill:hover:not(.active) { border-color: var(--carbon-40); color: var(--white); }
+
+    /* ── MENU QUICK LINKS — Membership / Calendar / Scope, moved in from
+       the old .quicklinks strip that used to sit under the secondary
+       nav (removed entirely — see the markup for where it was). ── */
+    .menu-quicklink { display: flex; align-items: center; gap: 12px; }
+    .menu-quicklink svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--carbon-40); transition: color .15s; }
+    .menu-quicklink:hover svg { color: var(--white); }
+
+    /* ── SEARCH ──
+       Full-page overlay below the header, same footprint and stacking
+       approach as the burger menu (one z-index level above it, since
+       opening either one always closes the other — see the script — but
+       keeping it strictly higher removes any ambiguity regardless).
+       Its card/state colors are forced dark via the local custom-property
+       overrides below, independent of body.theme-*, since this panel
+       always sits on the same fixed dark chrome as the header and menu,
+       never on the light-theme content background. ── */
+    .search-overlay {
+      position: fixed;
+      top: calc(var(--safe-top) + 56px);
+      left: 0; right: 0; bottom: 0;
+      background: var(--carbon-90);
+      z-index: 1001;
+      opacity: 0;
+      transform: translateY(-10px);
+      visibility: hidden;
+      transition: opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
+      overflow-y: auto;
+      padding: 18px 24px calc(18px + var(--safe-bottom));
+
+      --surface-bg: var(--carbon-80);
+      --text-primary: var(--white);
+      --text-secondary: var(--carbon-30);
+      --text-tertiary: var(--carbon-40);
+      --divider: #3a3a3a;
+    }
+    .search-overlay.open {
+      opacity: 1;
+      transform: translateY(0);
+      visibility: visible;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .search-top { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .search-input-wrap {
+      flex: 1; display: flex; align-items: center; gap: 10px;
+      background: var(--carbon-80); border: 1px solid var(--carbon-60);
+      border-radius: 2px; padding: 11px 14px;
+    }
+    .search-input-wrap svg { width: 16px; height: 16px; color: var(--carbon-40); flex-shrink: 0; }
+    .search-input-wrap input {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--white); font-size: 0.9rem; font-family: inherit;
+    }
+    .search-input-wrap input::placeholder { color: var(--carbon-40); }
+    .search-close-btn {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+      color: var(--white); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .search-close-btn:hover { background: rgba(255,255,255,0.14); }
+    .search-results { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── SECONDARY NAV — "the gray strip under the header". Used to hold
+       a single in-page "Newsletter" tab; now holds the four sector
+       redirect links instead (the newsletter jump link lives in the
+       burger menu now, under "Newsletter"). Stays fixed dark chrome, not
+       theme-aware, same as the header/burger-menu/footer. ── */
     .secondary-nav {
       background: var(--carbon-90);
       border-bottom: 1px solid var(--carbon-80);
-      overflow-x: auto; white-space: nowrap;
-      position: sticky; top: 56px; z-index: 999;
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: calc(var(--safe-top) + 56px);
+      z-index: 999;
     }
     .secondary-nav ul { display: inline-flex; padding: 0 32px; }
     .secondary-nav li a {
-      display: block; padding: 12px 18px;
-      font-size: 0.82rem; font-weight: 600; color: var(--carbon-30);
-      transition: color .2s; border-bottom: 3px solid transparent;
+      display: block;
+      padding: 12px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--carbon-30);
+      transition: color .2s;
+      border-bottom: 3px solid transparent;
     }
-    .secondary-nav li a:hover, .secondary-nav li a.active { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
+    .secondary-nav li a:hover { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
+    .secondary-nav li a.sector-tab { display: flex; align-items: center; gap: 7px; }
+    .secondary-nav li a.sector-tab::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .secondary-nav li a.sector-tab.log::before { background: var(--champ); }
+    .secondary-nav li a.sector-tab.res::before { background: var(--blue); }
+    .secondary-nav li a.sector-tab.rel::before { background: var(--orange); }
+    .secondary-nav li a.sector-tab.med::before { background: var(--burg); }
 
-    /* ── BREADCRUMB ── */
-    .breadcrumb-strip {
-      background: var(--carbon-05);
-      border-bottom: 1px solid var(--carbon-20);
-      padding: 14px 40px;
-    }
-    .breadcrumb-inner {
-      max-width: 1160px; margin: 0 auto;
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.78rem; color: var(--carbon-60);
-    }
-    .breadcrumb-inner a { color: var(--carbon-60); transition: color .2s; }
-    .breadcrumb-inner a:hover { color: var(--black); text-decoration: underline; }
-    .breadcrumb-sep { color: var(--carbon-30); }
-    .breadcrumb-current { color: var(--black); font-weight: 600; }
+    /* ── SECTIONS ── */
+    section { padding: 60px 40px; }
+    .inner { max-width: 1160px; margin: 0 auto; }
 
-    /* ── MASTHEAD ── */
-    .article-masthead {
-      max-width: 780px; margin: 0 auto;
-      padding: 56px 40px 36px;
-    }
-    .masthead-rule {
-      display: flex; align-items: center; gap: 14px;
-      margin-bottom: 28px;
-    }
-    .masthead-rule .rule-line { flex: 1; height: 1px; background: var(--carbon-20); }
-    .sector-marker {
+    .section-header { margin-bottom: 32px; }
+    .label-tag {
       font-size: 0.68rem; font-weight: 700;
       letter-spacing: 2px; text-transform: uppercase;
-      padding: 4px 0; border-bottom: 3px solid;
+      color: var(--text-tertiary); margin-bottom: 6px;
     }
-    .sector-marker.tool { color: var(--champ-dark); border-color: var(--champ); }
+    .section-title { font-size: 1.45rem; font-weight: 700; color: var(--text-primary); }
 
-    .article-masthead h1 {
-      font-family: 'Merriweather', serif;
-      font-weight: 900;
-      font-size: clamp(1.9rem, 4.2vw, 2.7rem);
-      line-height: 1.18; letter-spacing: -0.01em;
-      margin-bottom: 18px;
+    /* ── NEWSLETTER / FEED CARDS ──
+       Redesigned to match how these same articles look on Patholytica:
+       real author identity (avatar + name), view/like/comment counts,
+       and — the specific complaint being fixed — no fallback image box
+       when an article has no image. The old version always rendered a
+       fixed 200px thumbnail column with a "📰" placeholder even when
+       there was nothing to show; here the image block simply isn't in
+       the markup at all unless the article actually has one. This same
+       card (and the .newsletter-state loading/empty/error style below
+       it) is reused by the search overlay — see the --surface-bg etc.
+       overrides on .search-overlay above for how it stays readable there
+       regardless of the site's light/dark theme. ── */
+    .newsletter-stack { display: flex; flex-direction: column; gap: 16px; }
+
+    .feed-article-card {
+      background: var(--surface-bg);
+      border: 1px solid var(--divider);
+      border-radius: 8px;
+      padding: 20px 22px;
+      cursor: pointer;
+      transition: border-color .2s ease, background .2s ease;
     }
-    .article-dek {
-      font-family: 'Merriweather', serif;
-      font-weight: 300; font-style: italic;
-      font-size: 1.15rem; color: var(--carbon-60);
-      line-height: 1.6;
+    .feed-article-card:hover { border-color: var(--text-tertiary); }
+    .feed-article-card:hover .feed-card-title { text-decoration: underline; }
+
+    .feed-card-header { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+    .feed-card-avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+      background: linear-gradient(135deg, var(--champ), var(--champ-dark));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700; color: #fff;
+    }
+    .feed-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .feed-card-authorinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+    .feed-card-author { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-card-date { font-size: 0.68rem; color: var(--text-tertiary); }
+    .feed-card-sector {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: #fff; padding: 3px 8px; border-radius: 2px; flex-shrink: 0;
     }
 
-    /* ── SECTION NAV (replaces old tabs) ── */
-    .section-nav {
-      max-width: 780px; margin: 0 auto;
-      padding: 0 40px 40px;
-      display: flex; gap: 10px; flex-wrap: wrap;
-      border-bottom: 1px solid var(--carbon-20);
-      padding-bottom: 0;
-    }
-    .section-btn {
-      background: none; border: none; cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.78rem; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-      color: var(--carbon-40);
-      padding: 12px 4px; margin-right: 22px;
-      border-bottom: 3px solid transparent;
-      transition: color .2s, border-color .2s;
-    }
-    .section-btn:hover { color: var(--carbon-90); }
-    .section-btn.active { color: var(--black); border-color: var(--champ); }
+    .feed-card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); line-height: 1.35; margin-bottom: 10px; }
 
-    .section-content { display: none; }
-    .section-content.active { display: block; }
+    .feed-card-stats { display: flex; gap: 16px; margin-bottom: 12px; }
+    .feed-stat { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 600; color: var(--text-tertiary); }
+    .feed-stat svg { width: 14px; height: 14px; }
 
-    /* ── READING LAYOUT (body + rail) ── */
-    .reading-layout {
-      max-width: 1160px; margin: 0 auto;
-      padding: 44px 40px 0;
+    .feed-card-image { margin-bottom: 12px; border-radius: 5px; overflow: hidden; }
+    .feed-card-image img { width: 100%; max-height: 260px; object-fit: cover; display: block; }
+
+    .feed-card-excerpt { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.7; }
+
+    .newsletter-state {
+      padding: 40px 0; text-align: center; color: var(--text-tertiary); font-size: 0.85rem;
+    }
+    .newsletter-state.is-error { color: var(--orange-dark); }
+
+    /* ── SECTOR STRIP ──
+       Unchanged in purpose: the four sector names linking out to their
+       subdomains. The secondary nav above now holds its own copy of
+       these same four links for quicker access, but that one stays fixed
+       dark chrome — this one is page content, so it follows the
+       light/dark toggle. */
+    .sector-strip {
+      background: var(--surface-alt-bg);
+      border-top: 1px solid var(--divider);
+      border-bottom: 1px solid var(--divider);
+    }
+    .sector-strip .inner {
       display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 64px; align-items: start;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 0;
     }
-    @media (max-width: 900px) {
-      .reading-layout { grid-template-columns: 1fr; gap: 40px; padding: 36px 24px 0; }
-    }
-
-    .article-body { max-width: 640px; }
-
-    /* ── PANEL (import / paste sections) ── */
-    .panel-heading {
-      font-family: 'Inter', sans-serif; font-weight: 700;
-      font-size: 0.98rem; color: var(--black);
-      margin-bottom: 18px; padding-bottom: 12px;
-      border-bottom: 1px solid var(--carbon-20);
-    }
-    .panel-heading .h2-eyebrow {
-      display: block; font-size: 0.66rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--champ-dark); margin-bottom: 6px;
-    }
-
-    .callout-box {
-      background: var(--carbon-05);
-      border: 1px solid var(--carbon-20);
-      border-left: 3px solid var(--champ);
-      border-radius: 2px;
-      padding: 18px 22px;
-      margin-bottom: 28px;
-      font-family: 'Inter', sans-serif;
-    }
-    .callout-box .callout-label {
-      font-size: 0.66rem; font-weight: 700;
-      letter-spacing: 1.6px; text-transform: uppercase;
-      color: var(--champ-dark); margin-bottom: 8px;
-    }
-    .callout-box p { font-size: 0.85rem; color: var(--carbon-90); line-height: 1.65; }
-    .callout-box code {
-      background: var(--white); border: 1px solid var(--carbon-20);
-      padding: 1px 6px; border-radius: 2px;
-      font-family: 'Courier New', monospace; font-size: 0.82em;
-      color: var(--blue-dark); font-weight: 700;
-    }
-
-    /* Dropzone */
-    .dropzone {
-      border: 1px dashed var(--carbon-30);
-      border-radius: 2px;
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-      font-family: 'Inter', sans-serif;
-      color: var(--carbon-60); font-weight: 600;
-      background: var(--carbon-05);
-    }
-    .dropzone.dragover { background: #eef2f6; border-color: var(--blue); }
-    .dropzone .sub { display: block; margin-top: 8px; color: var(--carbon-40); font-weight: 400; font-size: 0.82em; }
-    .dropzone input { display: none; }
-    .file-badge {
-      margin-top: 15px; display: none;
-      align-items: center; justify-content: space-between;
-      background: var(--carbon-05); border: 1px solid var(--carbon-20);
-      border-radius: 2px; padding: 10px 15px;
-      color: var(--carbon-90); font-size: 0.85em; font-family: 'Inter', sans-serif;
-    }
-    .file-badge .remove { color: var(--burg); cursor: pointer; font-weight: 700; }
-
-    textarea {
-      width: 100%; min-height: 260px;
-      padding: 15px; border: 1px solid var(--carbon-20); border-radius: 2px;
-      font-size: 0.92em; font-family: 'Courier New', monospace;
-      resize: vertical; background: var(--carbon-05); color: var(--black);
-    }
-    textarea:focus { outline: none; border-color: var(--blue); background: var(--white); }
-    textarea::placeholder { color: var(--carbon-40); }
-
-    .button-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-weight: 700; font-size: 0.83rem;
-      padding: 10px 20px; border-radius: 2px;
-      transition: opacity .2s, transform .1s; cursor: pointer;
-      border: none; font-family: 'Inter', sans-serif;
-      background: var(--black); color: var(--white);
-    }
-    .btn:hover:not(:disabled) { opacity: 0.85; }
-    .btn:disabled { background: var(--carbon-20); color: var(--carbon-40); cursor: not-allowed; }
-    .btn-secondary { background: var(--white); color: var(--black); border: 1px solid var(--carbon-30); }
-    .btn-secondary:hover:not(:disabled) { background: var(--carbon-05); opacity: 1; }
-    .btn-full { width: 100%; justify-content: center; }
-
-    .msg { padding: 13px 16px; border-radius: 2px; margin-top: 18px; font-size: 0.85em; line-height: 1.55; font-family: 'Inter', sans-serif; border: 1px solid; }
-    .msg.error { background: #fbecec; color: var(--burg-dark); border-color: #eec6cf; }
-    .msg.success { background: #eef6f0; color: #1f6b3f; border-color: #c3e2cd; }
-    .msg.info { background: #eef2f7; color: var(--blue-dark); border-color: #c9d8ea; }
-
-    .deck-list { margin-top: 15px; }
-    .deck-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-top: 1px solid var(--carbon-20);
-      font-size: 0.85em; color: var(--carbon-90); font-family: 'Inter', sans-serif;
-    }
-    .deck-row:first-child { border-top: none; }
-    .deck-row span.count { color: var(--carbon-40); font-weight: 600; }
-
-    .spinner {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(26,95,168,0.25);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle; margin-right: 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── STUDY: progress + stats ── */
-    .study-meta {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 14px;
-      padding-bottom: 22px; margin-bottom: 28px;
-      border-bottom: 1px solid var(--carbon-20);
-      font-family: 'Inter', sans-serif;
-    }
-    .study-stats { display: flex; gap: 26px; flex-wrap: wrap; }
-    .study-stat { }
-    .study-stat-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--carbon-40); display: block; margin-bottom: 4px; }
-    .study-stat-value { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.3rem; color: var(--black); }
-
-    .progress-track { width: 100%; height: 3px; background: var(--carbon-20); margin-bottom: 28px; }
-    .progress-fill { height: 100%; background: var(--champ); transition: width .3s ease; }
-
-    .deck-filter { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
-    .deck-chip {
-      padding: 6px 14px; background: var(--white);
-      color: var(--carbon-60); border: 1px solid var(--carbon-30);
-      border-radius: 20px; cursor: pointer;
-      font-size: 0.76rem; font-weight: 600; font-family: 'Inter', sans-serif;
-      transition: all .2s;
-    }
-    .deck-chip.active { background: var(--black); color: var(--white); border-color: var(--black); }
-    .deck-chip:hover:not(.active) { border-color: var(--carbon-60); color: var(--carbon-90); }
-
-    /* ── FLASHCARD ── fixed flip: both faces absolutely stacked */
-    .flashcard-container {
-      perspective: 1400px;
-      margin-bottom: 28px;
-      min-height: 360px;
-      display: flex; justify-content: center; align-items: center;
-    }
-    .flashcard {
-      width: 100%; height: 360px;
+    .sector-strip-link {
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      padding: 20px 12px;
+      font-size: 0.82rem; font-weight: 700;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--divider);
+      transition: background .2s, color .2s;
       position: relative;
-      cursor: pointer;
-      transform-style: preserve-3d;
-      transition: transform .5s cubic-bezier(.4,.2,.2,1);
     }
-    .flashcard.flipped { transform: rotateY(180deg); }
+    .sector-strip-link:last-child { border-right: none; }
+    .sector-strip-link::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .sector-strip-link.log::before { background: var(--champ); }
+    .sector-strip-link.res::before { background: var(--blue); }
+    .sector-strip-link.rel::before { background: var(--orange); }
+    .sector-strip-link.med::before { background: var(--burg); }
+    .sector-strip-link:hover { background: var(--surface-bg); color: var(--text-primary); }
 
-    .card-side {
-      position: absolute;
-      inset: 0;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      background: var(--white);
-      border: 1px solid var(--carbon-20);
-      border-top: 3px solid var(--blue);
-      border-radius: 2px;
-      padding: 36px 40px;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      text-align: center;
-      overflow: hidden;
-    }
-    .card-back { transform: rotateY(180deg); border-top-color: var(--champ); }
-
-    .deck-tag {
-      position: absolute; top: 18px; left: 40px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.66rem; color: var(--carbon-40);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    .card-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.66rem; font-weight: 700;
-      color: var(--blue-dark); margin-bottom: 20px;
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-    .card-back .card-label { color: var(--champ-dark); }
-
-    .card-text {
-      font-family: 'Merriweather', serif;
-      font-weight: 300;
-      font-size: 1.2em; color: var(--carbon-90);
-      line-height: 1.65;
-      max-height: 100%;
-      max-width: 100%;
-      overflow-y: auto;
-      padding: 0 6px;
-    }
-    .card-text::-webkit-scrollbar { width: 5px; }
-    .card-text::-webkit-scrollbar-track { background: transparent; }
-    .card-text::-webkit-scrollbar-thumb { background: var(--carbon-20); border-radius: 10px; }
-
-    .flip-hint {
-      position: absolute; bottom: 16px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.72rem; color: var(--carbon-40); font-style: italic;
+    @media (max-width: 640px) {
+      .sector-strip .inner { grid-template-columns: 1fr 1fr; }
+      .sector-strip-link { border-bottom: 1px solid var(--divider); }
     }
 
-    .controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-
-    .empty-state {
-      text-align: center; color: var(--carbon-40);
-      padding: 50px 20px; font-family: 'Inter', sans-serif;
-      border: 1px dashed var(--carbon-20); width: 100%;
+    /* ── FOOTER — forced black regardless of theme, per request. This one
+       does NOT read the theme tokens above, same as the header/menu/
+       search chrome. ── */
+    footer {
+      background: var(--black);
+      color: var(--white);
+      padding: 48px 40px calc(28px + var(--safe-bottom));
     }
-    .empty-state h2 { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.15em; margin-bottom: 8px; color: var(--carbon-60); }
-    .empty-state p { font-size: 0.88em; }
-
-    /* ── REFERENCE RAIL ── */
-    .reference-rail { position: sticky; top: 130px; }
-    .rail-block { margin-bottom: 32px; }
-    .rail-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.66rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--carbon-40); margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .rail-label::after { content: ''; flex: 1; height: 1px; background: var(--carbon-20); }
-
-    .ref-item { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--carbon-20); font-family: 'Inter', sans-serif; }
-    .ref-item:first-child { border-top: none; }
-    .ref-num { font-family: 'Merriweather', serif; font-size: 0.76rem; font-weight: 700; color: var(--champ-dark); flex-shrink: 0; padding-top: 1px; }
-    .ref-text { font-size: 0.78rem; line-height: 1.55; color: var(--carbon-60); }
-    .ref-text .ref-title { color: var(--black); font-weight: 600; display: block; margin-bottom: 2px; }
-
-    .rail-cta { background: var(--carbon-90); border-radius: 3px; padding: 20px; }
-    .rail-cta p { font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--carbon-30); line-height: 1.6; margin-bottom: 14px; }
-    .rail-cta .btn { background: var(--white); color: var(--black); }
-
-    @media (max-width: 900px) { .reference-rail { position: static; } }
-
-    /* ── FOOTER ── */
-    footer { background: var(--black); color: var(--white); padding: 48px 40px 28px; margin-top: 60px; }
     .footer-inner {
       max-width: 1160px; margin: 0 auto;
-      display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 36px;
+      display: grid; grid-template-columns: 1.6fr 1fr; gap: 48px; margin-bottom: 36px;
     }
     @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
+
     .footer-logo { margin-bottom: 14px; }
-    .footer-logo img { height: 26px; filter: brightness(0) invert(1) opacity(0.65); }
-    .footer-desc { font-size: 0.83rem; color: var(--carbon-40); line-height: 1.7; margin-bottom: 20px; }
-    .footer-accred { font-size: 0.75rem; color: var(--carbon-60); }
-    .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-60); margin-bottom: 14px; }
-    .footer-links li { margin-bottom: 9px; }
-    .footer-links a { font-size: 0.83rem; color: var(--carbon-30); transition: color .2s; }
-    .footer-links a:hover { color: var(--white); }
+    /*
+      LOGO COLOR FIX, reverted: an earlier pass made the footer white and
+      dropped this invert filter so the (dark) logo mark would still read
+      against a light background. The footer is black again now, so the
+      invert needs to come back too, or the logo disappears (dark mark on
+      a black field).
+    */
+    .footer-logo img { height: 26px; filter: brightness(0) invert(1); }
+    .footer-desc { font-size: 0.83rem; color: var(--carbon-30); line-height: 1.7; margin-bottom: 20px; }
+    .footer-accred { font-size: 0.75rem; color: var(--carbon-40); }
+
+    .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-40); margin-bottom: 14px; }
+
     .social-icons { display: flex; gap: 10px; margin-top: 4px; }
-    .social-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--carbon-80); display: flex; align-items: center; justify-content: center; transition: background .2s; flex-shrink: 0; }
-    .social-icon:hover { background: var(--carbon-60); }
+    .social-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s; flex-shrink: 0;
+    }
+    .social-icon:hover { background: rgba(255,255,255,0.16); }
     .social-icon svg { width: 16px; height: 16px; fill: var(--white); }
+
     .footer-divider { max-width: 1160px; margin: 0 auto 18px; border: none; border-top: 1px solid var(--carbon-80); }
-    .footer-bottom { max-width: 1160px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 0.73rem; color: var(--carbon-60); }
-    .footer-bottom a { color: var(--carbon-60); }
-    .footer-bottom a:hover { color: var(--carbon-30); }
+    .footer-bottom {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 10px 24px;
+      font-size: 0.73rem; color: var(--carbon-40);
+    }
+    .footer-bottom a { color: var(--carbon-40); }
+    .footer-bottom a:hover { color: var(--white); }
 
     @media (max-width: 600px) {
-      .site-header { padding: 0 20px; }
-      .breadcrumb-strip { padding: 12px 20px; }
-      .article-masthead { padding: 40px 20px 28px; }
-      .section-nav { padding: 0 20px 0; }
-      .reading-layout { padding: 32px 20px 0; }
-      .flashcard { height: 320px; padding: 24px; }
-      .card-side { padding: 26px 22px; }
-      .card-text { font-size: 1.05em; }
-      footer { padding: 48px 20px 24px; }
+      section { padding: 48px 20px; }
+      .site-header { padding-left: 20px; padding-right: 20px; }
+      footer { padding: 48px 20px calc(24px + var(--safe-bottom)); }
     }
-</style>
+  </style>
 </head>
 <body>
+<script>
+  // Applied synchronously, before anything else in the body paints, so the
+  // saved theme is already in place by the time the page is visible —
+  // avoids a flash of the wrong theme while the main script further down
+  // (which needs the Supabase/Firebase SDKs to have loaded first) boots.
+  (function () {
+    var saved = localStorage.getItem('mb_theme');
+    document.body.classList.add(saved === 'theme-dark' ? 'theme-dark' : 'theme-light');
+  })();
+</script>
 
 <!-- HEADER -->
 <header class="site-header">
   <a href="/" class="logo">
     <img src="IMG_3083.png" alt="MedicineBank" />
   </a>
-  <div class="search-wrap">
-    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="#8e8e8e" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-    <input type="text" placeholder="Search…" />
+
+  <div class="header-right">
+    <button class="search-btn" id="searchBtn" type="button" aria-label="Search" aria-expanded="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+    <button class="burger-btn" id="burgerBtn" type="button" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
-<!-- SECONDARY NAV -->
-<nav class="secondary-nav">
+<!-- SEARCH OVERLAY — dynamically searches only articles belonging to the
+     same four "allowed" libraries the newsletter pulls from (see
+     LIBRARY_META / getAllowedArticleMap in the script), not the full
+     articles table. -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-top">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search Logistics, Research, Relations & Media…" autocomplete="off" />
+    </div>
+    <button class="search-close-btn" id="searchCloseBtn" type="button" aria-label="Close search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="search-results" id="searchResults">
+    <div class="newsletter-state">Start typing to search across Logistics, Research, Relations &amp; Media.</div>
+  </div>
+</div>
+
+<!-- BURGER MENU PANEL — full page underneath the header. Holds the
+     account/sign-in area and theme switcher that used to live in the
+     header, plus the membership/calendar/scope links that used to be
+     their own strip (removed — see the newsletter section further
+     down for where it used to sit). -->
+<nav class="burger-menu" id="burgerMenu" aria-label="Main menu">
+  <div class="menu-account">
+    <button class="menu-account-signed-out" id="acctSignedOut" type="button" onclick="window.location.href='login.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Sign in
+    </button>
+    <div class="menu-account-signed-in" id="acctSignedIn">
+      <div class="account-pfp" id="acctPfp">–</div>
+      <div class="account-stats">
+        <span class="account-name" id="acctName">–</span>
+        <span class="account-substat" id="acctSubstat">–</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu-section-label">Appearance</div>
+  <div class="theme-toggle-row">
+    <button class="theme-pill" data-theme="theme-light" type="button">Light</button>
+    <button class="theme-pill" data-theme="theme-dark" type="button">Dark</button>
+  </div>
+  <hr />
+
+  <a href="#newsletter" class="nav-link" data-target="newsletter">Newsletter</a>
+  <a href="#" onclick="window.location.href='profile.html'; return false;">My Profile</a>
+  <a href="#" onclick="window.location.href='saved.html'; return false;">Saved Articles</a>
+  <hr />
+
+  <div class="menu-section-label">Quick Links</div>
+  <a class="menu-quicklink" href="#" onclick="window.location.href='membership.html'; return false;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Membership
+  </a>
+  <a class="menu-quicklink" href="#" onclick="window.location.href='calendar.html'; return false;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Calendar
+  </a>
+  <a class="menu-quicklink" href="#" onclick="window.location.href='scope.html'; return false;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+    Scope
+  </a>
+  <hr />
+
+  <a href="#" onclick="window.location.href='about.html'; return false;">About Us</a>
+  <a href="mailto:eyadd@icloud.com">Contact</a>
+  <a href="#" onclick="window.location.href='settings.html'; return false;">Settings</a>
+</nav>
+
+<!-- SECONDARY NAV — the strip directly under the header. Used to hold a
+     single "Newsletter" tab; now holds the four sector links instead
+     (the newsletter jump link moved into the burger menu above). -->
+<nav class="secondary-nav" id="secondary-nav" aria-label="Sectors">
   <ul>
-    <li><a href="/#hero"       class="nav-link">Home</a></li>
-    <li><a href="/#newsletter" class="nav-link">Newsletter</a></li>
-    <li><a href="/#mission"    class="nav-link">Mission & Vision</a></li>
-    <li><a href="/#sectors"    class="nav-link">Sectors</a></li>
+    <li><a class="sector-tab log" href="https://logistics.medicinebank.org">Logistics</a></li>
+    <li><a class="sector-tab res" href="https://research.medicinebank.org">Research</a></li>
+    <li><a class="sector-tab rel" href="https://relations.medicinebank.org">Relations</a></li>
+    <li><a class="sector-tab med" href="https://media.medicinebank.org">Media</a></li>
   </ul>
 </nav>
 
-<!-- BREADCRUMB -->
-<div class="breadcrumb-strip">
-  <div class="breadcrumb-inner">
-    <a href="/#sectors">Tools</a>
-    <span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">Flashcard Studio</span>
+<!-- NEWSLETTER -->
+<section id="newsletter">
+  <div class="inner">
+    <div class="section-header">
+      <p class="label-tag">From MedicineBank</p>
+      <h2 class="section-title">Newsletter & Articles</h2>
+    </div>
+    <div class="newsletter-stack" id="newsletterStack">
+      <div class="newsletter-state" id="newsletterState">Loading articles…</div>
+    </div>
   </div>
-</div>
+</section>
 
-<!-- MASTHEAD -->
-<div class="article-masthead">
-  <div class="masthead-rule">
-    <span class="sector-marker tool">Tool · STUDY</span>
-    <span class="rule-line"></span>
+<!-- SECTOR STRIP -->
+<section class="sector-strip" style="padding:0;">
+  <div class="inner">
+    <a class="sector-strip-link log" href="https://logistics.medicinebank.org">Logistics</a>
+    <a class="sector-strip-link res" href="https://research.medicinebank.org">Research</a>
+    <a class="sector-strip-link rel" href="https://relations.medicinebank.org">Relations</a>
+    <a class="sector-strip-link med" href="https://media.medicinebank.org">Media</a>
   </div>
-  <h1>Flashcard Studio</h1>
-  <p class="article-dek">Import an Anki .apkg deck, or paste Q&amp;A text — then study.</p>
-</div>
-
-<!-- SECTION NAV -->
-<div class="section-nav">
-  <button class="section-btn active" data-tab="apkg">Import .apkg</button>
-  <button class="section-btn" data-tab="text">Paste Text</button>
-  <button class="section-btn" data-tab="study">Study</button>
-</div>
-
-<!-- READING LAYOUT -->
-<div class="reading-layout">
-  <div class="article-body">
-
-    <!-- APKG TAB -->
-    <div id="apkg" class="section-content active">
-      <div class="panel-heading"><span class="h2-eyebrow">Section One</span>Import an Anki Deck</div>
-      <div class="callout-box">
-        <div class="callout-label">Format notes</div>
-        <p>An <code>.apkg</code> file is an Anki export — a zipped SQLite database. This reads <strong>Basic</strong> and <strong>Basic (and reversed)</strong> note types, which cover the large majority of decks. Cloze deletions and card types with extra template logic are imported using their raw field text, since re-deriving Anki's cloze rendering isn't reliable outside Anki itself.</p>
-      </div>
-      <div class="dropzone" id="apkgDrop">
-        <div id="apkgDropLabel">Drop your .apkg file here, or click to browse
-          <span class="sub">Only .apkg files are accepted</span>
-        </div>
-        <input type="file" id="apkgInput" accept=".apkg">
-      </div>
-      <div class="file-badge" id="apkgBadge">
-        <span id="apkgFileName"></span>
-        <span class="remove" id="apkgRemove">✕ remove</span>
-      </div>
-      <div class="button-group">
-        <button class="btn" id="apkgParseBtn" disabled>Import Deck</button>
-        <button class="btn btn-secondary" id="apkgClearBtn">Clear</button>
-      </div>
-      <div id="apkgMsg"></div>
-      <div id="apkgDeckList" class="deck-list"></div>
-    </div>
-
-    <!-- TEXT TAB -->
-    <div id="text" class="section-content">
-      <div class="panel-heading"><span class="h2-eyebrow">Section Two</span>Paste Your Q&amp;A Content</div>
-      <div class="callout-box">
-        <div class="callout-label">Format notes</div>
-        <p><strong>Format:</strong> each question on its own line, its answer on the line(s) after it.<br>
-        Questions start with <code>Q:</code> or a question word (What / How / Why / Does / Is / Are / Which / Where / When / Can / Should).<br>
-        Answers start with <code>A:</code> or a bullet (<code>-</code>, <code>•</code>, <code>*</code>) — or just follow directly on the next line.</p>
-        <p><strong>Example:</strong><br><code>What causes fever?</code><br><code>Infection, inflammation, or malignancy</code></p>
-      </div>
-      <textarea id="textInput" placeholder="Paste your Q&A content here..."></textarea>
-      <div class="button-group">
-        <button class="btn" id="textParseBtn">Create Flashcards</button>
-        <button class="btn btn-secondary" id="textClearBtn">Clear</button>
-      </div>
-      <div id="textMsg"></div>
-    </div>
-
-    <!-- STUDY TAB -->
-    <div id="study" class="section-content">
-      <div class="study-meta">
-        <div class="study-stats">
-          <div class="study-stat"><span class="study-stat-label">Current</span><span class="study-stat-value" id="currentCard">–</span></div>
-          <div class="study-stat"><span class="study-stat-label">Total</span><span class="study-stat-value" id="totalCards">0</span></div>
-          <div class="study-stat"><span class="study-stat-label">Progress</span><span class="study-stat-value" id="progressPercent">0%</span></div>
-        </div>
-      </div>
-
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-
-      <div class="deck-filter" id="deckFilter"></div>
-
-      <div class="flashcard-container" id="flashcardContainer">
-        <div class="empty-state">
-          <h2>No flashcards yet</h2>
-          <p>Import a .apkg file or paste Q&amp;A text to get started.</p>
-        </div>
-      </div>
-
-      <div class="controls">
-        <button class="btn btn-secondary" id="prevBtn" disabled>← Previous</button>
-        <button class="btn" id="shuffleBtn">Shuffle</button>
-        <button class="btn btn-secondary" id="resetBtn">Reset</button>
-        <button class="btn" id="nextBtn">Next →</button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- REFERENCE RAIL -->
-  <aside class="reference-rail">
-    <div class="rail-block">
-      <div class="rail-label">How it works</div>
-      <div class="ref-item">
-        <span class="ref-num">01</span>
-        <span class="ref-text"><span class="ref-title">Import or paste</span>Bring in an Anki deck or your own Q&amp;A text.</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">02</span>
-        <span class="ref-text"><span class="ref-title">Filter by deck</span>Study everything at once, or isolate one deck.</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">03</span>
-        <span class="ref-text"><span class="ref-title">Click to flip</span>Reveal the answer, then step through with Next.</span>
-      </div>
-    </div>
-
-    <div class="rail-block">
-      <div class="rail-label">Supported formats</div>
-      <div class="ref-item">
-        <span class="ref-num">·</span>
-        <span class="ref-text"><span class="ref-title">.apkg (Basic)</span>Front/Back note types, incl. reversed cards.</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">·</span>
-        <span class="ref-text"><span class="ref-title">.apkg (Cloze)</span>Raw field text, deletions marked as [...].</span>
-      </div>
-      <div class="ref-item">
-        <span class="ref-num">·</span>
-        <span class="ref-text"><span class="ref-title">Plain text</span>Q:/A: pairs or question-word detection.</span>
-      </div>
-    </div>
-
-    <div class="rail-cta">
-      <p>Have a deck you'd like to see supported better? Let the Research sector know.</p>
-      <a href="mailto:eyadd@icloud.com" class="btn btn-full">Send feedback</a>
-    </div>
-  </aside>
-</div>
+</section>
 
 <!-- FOOTER -->
 <footer id="contact">
@@ -616,14 +699,6 @@
       </div>
       <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — serving medical students across Egypt and the Arab region.</p>
       <p class="footer-accred">Accredited by Mansoura National University · March 2026</p>
-    </div>
-    <div>
-      <p class="footer-col-title">Navigate</p>
-      <ul class="footer-links">
-        <li><a href="/#newsletter" class="nav-link">Newsletter</a></li>
-        <li><a href="/#mission"    class="nav-link">Mission & Vision</a></li>
-        <li><a href="/#sectors"    class="nav-link">Sectors</a></li>
-      </ul>
     </div>
     <div>
       <p class="footer-col-title">Follow Us</p>
@@ -652,409 +727,496 @@
 </footer>
 
 <script>
-// ---------- shared state ----------
-let cards = [];
-let currentIndex = 0;
-let activeDeckFilter = null;
-let sqlPromise = null;
+  // ══════════════════════════════════════════════════════════
+  // SUPABASE CONFIG — Patholytica's URL + PUBLISHABLE (anon) key.
+  //
+  // IMPORTANT, read before deploying:
+  // This must be the ANON/PUBLISHABLE key, never the service role key.
+  // Patholytica's own Tag Studio admin tool uses the service role key
+  // because it's a local/trusted-admin-only page that intentionally
+  // bypasses row-level security — that key must never appear in a public
+  // page like this one, since anyone can read it from view-source and get
+  // full read/write access to every table with no RLS restriction.
+  // The anon key is safe here because Supabase enforces RLS policies
+  // against it — it can only do what your RLS rules allow (e.g. public
+  // SELECT on published articles), not everything.
+  //
+  // Drop in the real values here:
+  // ══════════════════════════════════════════════════════════
+  const SUPABASE_URL = 'https://ltxgafwywkdcxdlobcah.supabase.co'; // Patholytica project URL (from patholytica login page's supabase client)
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0eGdhZnd5d2tkY3hkbG9iY2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MjU3NzUsImV4cCI6MjEwMDUwMTc3NX0.CR-FvlL1HODWjsD7VrZkWQvg_pEasIhPQBXbSHbbNoE'; // ⚠️ anon key only — see note above. Find it in Supabase → Project Settings → API → "anon public" key.
 
-// ---------- tab switching ----------
-document.querySelectorAll('.section-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(tab).classList.add('active');
-        if (tab === 'study') { buildDeckFilter(); updateDisplay(); }
-    });
-});
+  const ARTICLES_TABLE = 'articles';
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+  // The newsletter and the search box both draw ONLY from these four
+  // Patholytica libraries (playlists) — not from tags, and not from the
+  // full articles table. Membership in one of these is now what decides
+  // the sector shown on each card (previously read off a tag on the
+  // article row itself).
+  const LIBRARY_META = {
+    888: { label: 'Media',      colorVar: '--burg'   },
+    777: { label: 'Research',   colorVar: '--blue'   },
+    555: { label: 'Logistics',  colorVar: '--champ'  },
+    444: { label: 'Relations',  colorVar: '--orange' },
+  };
+  const LIBRARY_IDS = Object.keys(LIBRARY_META).map(Number);
 
-// =====================================================================
-// APKG IMPORT
-// =====================================================================
-const apkgDrop = document.getElementById('apkgDrop');
-const apkgInput = document.getElementById('apkgInput');
-const apkgBadge = document.getElementById('apkgBadge');
-const apkgFileName = document.getElementById('apkgFileName');
-const apkgRemove = document.getElementById('apkgRemove');
-const apkgParseBtn = document.getElementById('apkgParseBtn');
-const apkgClearBtn = document.getElementById('apkgClearBtn');
-const apkgMsg = document.getElementById('apkgMsg');
-const apkgDeckList = document.getElementById('apkgDeckList');
+  let sbClient = null;
+  function getSupabaseClient() {
+    if (sbClient) return sbClient;
+    if (!window.supabase) return null;
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return sbClient;
+  }
 
-let pendingApkgFile = null;
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
-apkgDrop.addEventListener('click', () => apkgInput.click());
-apkgDrop.addEventListener('dragover', e => { e.preventDefault(); apkgDrop.classList.add('dragover'); });
-apkgDrop.addEventListener('dragleave', () => apkgDrop.classList.remove('dragover'));
-apkgDrop.addEventListener('drop', e => {
-    e.preventDefault();
-    apkgDrop.classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleApkgFile(e.dataTransfer.files[0]);
-});
-apkgInput.addEventListener('change', e => {
-    if (e.target.files.length) handleApkgFile(e.target.files[0]);
-});
-apkgRemove.addEventListener('click', e => {
-    e.stopPropagation();
-    resetApkgFile();
-});
-apkgClearBtn.addEventListener('click', resetApkgFile);
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
 
-function handleApkgFile(file) {
-    apkgMsg.innerHTML = '';
-    if (!file.name.toLowerCase().endsWith('.apkg')) {
-        apkgMsg.innerHTML = '<div class="msg error">That doesn\'t look like a .apkg file. Please choose the file Anki exported (File → Export → Anki Deck Package).</div>';
-        return;
-    }
-    pendingApkgFile = file;
-    apkgFileName.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
-    apkgBadge.style.display = 'flex';
-    apkgParseBtn.disabled = false;
-}
+  function formatCompactNumber(n) {
+    n = n || 0;
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return String(n);
+  }
 
-function resetApkgFile() {
-    pendingApkgFile = null;
-    apkgInput.value = '';
-    apkgBadge.style.display = 'none';
-    apkgParseBtn.disabled = true;
-    apkgMsg.innerHTML = '';
-    apkgDeckList.innerHTML = '';
-}
+  // ══════════════════════════════════════════════════════════
+  // SHARED DOM REFS — grabbed up front so the menu, search and theme
+  // sections below can reference each other (opening search closes the
+  // menu, and vice versa) regardless of which section runs first.
+  // ══════════════════════════════════════════════════════════
+  const burgerBtn = document.getElementById('burgerBtn');
+  const burgerMenu = document.getElementById('burgerMenu');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchOverlay = document.getElementById('searchOverlay');
+  const searchCloseBtn = document.getElementById('searchCloseBtn');
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
 
-function getSqlJs() {
-    if (!sqlPromise) {
-        sqlPromise = initSqlJs({
-            locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+  function isMenuOpen() { return burgerMenu.classList.contains('open'); }
+  function isSearchOpen() { return searchOverlay.classList.contains('open'); }
+  function syncBodyLock() {
+    document.body.classList.toggle('menu-open', isMenuOpen() || isSearchOpen());
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ALLOWED-LIBRARY LOOKUP — cached so the newsletter's initial load and
+  // any later search both reuse the same playlist_items round trip
+  // instead of each fetching it separately.
+  // ══════════════════════════════════════════════════════════
+  let _allowedMapPromise = null;
+  function getAllowedArticleMap() {
+    if (_allowedMapPromise) return _allowedMapPromise;
+    _allowedMapPromise = (async () => {
+      const client = getSupabaseClient();
+      const map = new Map();
+      if (!client) return map;
+      try {
+        const { data, error } = await client
+          .from('playlist_items')
+          .select('article_id,playlist_id')
+          .in('playlist_id', LIBRARY_IDS);
+        if (error) throw error;
+        (data || []).forEach(row => {
+          if (!map.has(row.article_id)) map.set(row.article_id, new Set());
+          map.get(row.article_id).add(row.playlist_id);
         });
-    }
-    return sqlPromise;
-}
+      } catch (err) {
+        console.error('Library lookup failed:', err);
+      }
+      return map;
+    })();
+    return _allowedMapPromise;
+  }
 
-apkgParseBtn.addEventListener('click', async () => {
-    if (!pendingApkgFile) return;
-    apkgParseBtn.disabled = true;
-    apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Reading deck file…</div>';
-    apkgDeckList.innerHTML = '';
+  function sectorMetaForArticle(articleId, allowedMap) {
+    const libs = allowedMap.get(articleId);
+    if (!libs) return null;
+    for (const libId of LIBRARY_IDS) {
+      if (libs.has(libId)) return LIBRARY_META[libId];
+    }
+    return null;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // ARTICLE ENRICHMENT + CARD RENDERING — shared by the newsletter list
+  // and the search results, so both display exactly the same way: real
+  // author, first image if one exists and NOTHING if it doesn't (no
+  // fallback placeholder box), and view/like/comment counts.
+  // ══════════════════════════════════════════════════════════
+  async function enrichArticles(rawArticles) {
+    const client = getSupabaseClient();
+    if (!client || !rawArticles.length) {
+      return rawArticles.map(a => ({ ...a, authorName: 'Anonymous', authorPfp: null, imageUrl: null, commentCount: 0 }));
+    }
+
+    const artIds = rawArticles.map(a => a.id);
+    const uids = [...new Set(rawArticles.map(a => a.firebase_user_id).filter(Boolean))];
+
+    let usersByUid = {};
+    if (uids.length) {
+      const { data: users } = await client.from('users').select('firebase_uid,username,full_name,pfp').in('firebase_uid', uids);
+      (users || []).forEach(u => { usersByUid[u.firebase_uid] = u; });
+    }
+
+    let firstImageByArticle = {};
+    const { data: media } = await client
+      .from('media')
+      .select('article_id,url,type,display_order')
+      .in('article_id', artIds)
+      .eq('type', 'image')
+      .order('display_order', { ascending: true });
+    (media || []).forEach(m => {
+      if (!(m.article_id in firstImageByArticle)) firstImageByArticle[m.article_id] = m.url;
+    });
+
+    let commentCounts = {};
+    const { data: comments } = await client.from('comments').select('article_id').in('article_id', artIds);
+    (comments || []).forEach(c => { commentCounts[c.article_id] = (commentCounts[c.article_id] || 0) + 1; });
+
+    return rawArticles.map(a => {
+      const u = usersByUid[a.firebase_user_id];
+      return {
+        ...a,
+        authorName: u?.username ? '@' + u.username : (u?.full_name || 'Anonymous'),
+        authorPfp: u?.pfp || null,
+        imageUrl: firstImageByArticle[a.id] || null,
+        commentCount: commentCounts[a.id] || 0,
+      };
+    });
+  }
+
+  function buildFeedCardHTML(article, sectorMeta) {
+    const initial = (article.authorName || '?').replace('@', '').charAt(0).toUpperCase();
+    const avatarHTML = article.authorPfp
+      ? '<img src="' + escHtml(article.authorPfp) + '" alt="" />'
+      : escHtml(initial);
+    const contentStr = typeof article.content === 'string' ? article.content : JSON.stringify(article.content || '');
+    const excerpt = contentStr.slice(0, 200);
+    const dateStr = formatDate(article.created_at);
+    const sectorHTML = sectorMeta
+      ? '<span class="feed-card-sector" style="background:var(' + sectorMeta.colorVar + ');">' + escHtml(sectorMeta.label) + '</span>'
+      : '';
+    // No fallback/placeholder box here on purpose — if there's no image,
+    // this whole block just isn't emitted, same as Patholytica's own card.
+    const imageHTML = article.imageUrl
+      ? '<div class="feed-card-image"><img src="' + escHtml(article.imageUrl) + '" alt="" loading="lazy" /></div>'
+      : '';
+
+    return (
+      '<div class="feed-article-card" data-article-id="' + escHtml(String(article.id)) + '">' +
+        '<div class="feed-card-header">' +
+          '<div class="feed-card-avatar">' + avatarHTML + '</div>' +
+          '<div class="feed-card-authorinfo">' +
+            '<span class="feed-card-author">' + escHtml(article.authorName) + '</span>' +
+            (dateStr ? '<span class="feed-card-date">' + escHtml(dateStr) + '</span>' : '') +
+          '</div>' +
+          sectorHTML +
+        '</div>' +
+        '<div class="feed-card-title">' + escHtml(article.title || '(Untitled)') + '</div>' +
+        '<div class="feed-card-stats">' +
+          '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' + formatCompactNumber(article.views) + '</span>' +
+          '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 -7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + formatCompactNumber(article.likes) + '</span>' +
+        '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + formatCompactNumber(article.commentCount) + '</span>' +
+        '</div>' +
+        imageHTML +
+        (excerpt ? '<div class="feed-card-excerpt">' + escHtml(excerpt) + '</div>' : '') +
+      '</div>'
+    );
+  }
+
+  function wireFeedCardClicks(container) {
+    container.querySelectorAll('.feed-article-card').forEach(card => {
+      card.addEventListener('click', () => {
+        window.location.href = 'article.html?id=' + encodeURIComponent(card.dataset.articleId);
+      });
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // NEWSLETTER — pulls only from the four allowed libraries above.
+  // ══════════════════════════════════════════════════════════
+  async function loadNewsletterArticles() {
+    const stack = document.getElementById('newsletterStack');
+    const stateEl = document.getElementById('newsletterState');
+    const client = getSupabaseClient();
+
+    if (!client) {
+      stateEl.textContent = 'Unable to connect — check your connection and reload.';
+      stateEl.classList.add('is-error');
+      return;
+    }
 
     try {
-        const zipBuffer = await pendingApkgFile.arrayBuffer();
-        const zip = await JSZip.loadAsync(zipBuffer);
+      const allowedMap = await getAllowedArticleMap();
+      const articleIds = [...allowedMap.keys()];
 
-        let dbEntry = zip.file('collection.anki21') || zip.file('collection.anki2');
-        if (!dbEntry) {
-            if (zip.file('collection.anki21b')) {
-                throw new Error(
-                    'This deck uses Anki\'s newer zstd-compressed format (collection.anki21b), ' +
-                    'which needs a decompression step this browser-only tool doesn\'t include. ' +
-                    'In Anki, try re-exporting with "Support older Anki versions" checked — that ' +
-                    'produces a collection.anki21 or collection.anki2 file this tool can read.'
-                );
-            }
-            throw new Error('Couldn\'t find a collection database inside this .apkg file. It may be corrupted or not a valid Anki export.');
-        }
+      if (!articleIds.length) {
+        stateEl.textContent = 'No articles yet.';
+        stateEl.classList.remove('is-error');
+        return;
+      }
 
-        apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Loading database engine…</div>';
-        const SQL = await getSqlJs();
+      const { data, error } = await client
+        .from(ARTICLES_TABLE)
+        .select('id,title,content,firebase_user_id,views,likes,created_at')
+        .in('id', articleIds)
+        .order('created_at', { ascending: false })
+        .limit(30);
 
-        apkgMsg.innerHTML = '<div class="msg info"><span class="spinner"></span>Parsing notes and cards…</div>';
-        const dbBuffer = await dbEntry.async('uint8array');
-        const db = new SQL.Database(dbBuffer);
+      if (error) throw error;
 
-        const colRes = db.exec('SELECT decks FROM col LIMIT 1');
-        let deckNames = {};
-        if (colRes.length) {
-            const decksJson = JSON.parse(colRes[0].values[0][0]);
-            for (const id in decksJson) {
-                deckNames[id] = decksJson[id].name || 'Default';
-            }
-        }
+      const articles = data || [];
+      if (articles.length === 0) {
+        stateEl.textContent = 'No articles yet.';
+        stateEl.classList.remove('is-error');
+        return;
+      }
 
-        const notesRes = db.exec('SELECT id, mid, flds FROM notes');
-        const cardsRes = db.exec('SELECT id, nid, did, ord FROM cards');
-        const modelsRes = db.exec('SELECT models FROM col LIMIT 1');
-
-        if (!notesRes.length) {
-            throw new Error('This deck doesn\'t contain any notes.');
-        }
-
-        const models = modelsRes.length ? JSON.parse(modelsRes[0].values[0][0]) : {};
-
-        const noteMap = {};
-        for (const row of notesRes[0].values) {
-            const [id, mid, flds] = row;
-            noteMap[id] = { mid: String(mid), fields: flds.split('\x1f') };
-        }
-
-        const cardRows = cardsRes.length ? cardsRes[0].values : [];
-
-        const importedCards = [];
-        let skippedCloze = 0;
-        let skippedUnknown = 0;
-
-        for (const row of cardRows) {
-            const [cardId, nid, did, ord] = row;
-            const note = noteMap[nid];
-            if (!note) continue;
-            const model = models[note.mid];
-            const deckName = deckNames[did] || 'Default';
-
-            if (!model) { skippedUnknown++; continue; }
-
-            const modelName = (model.name || '').toLowerCase();
-            const fieldNames = (model.flds || []).map(f => f.name.toLowerCase());
-
-            if (modelName.includes('cloze')) {
-                const text = note.fields[0] || '';
-                const extra = note.fields[1] || '';
-                const q = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '[...]');
-                const a = stripHtml(text).replace(/\{\{c\d+::(.*?)(::.*?)?\}\}/g, '$1') +
-                          (extra ? '\n\n' + stripHtml(extra) : '');
-                if (q.trim() && a.trim()) {
-                    importedCards.push({ q, a, deck: deckName });
-                } else {
-                    skippedCloze++;
-                }
-                continue;
-            }
-
-            let frontIdx = 0, backIdx = 1;
-            const frontFieldIdx = fieldNames.indexOf('front');
-            const backFieldIdx = fieldNames.indexOf('back');
-            if (frontFieldIdx !== -1) frontIdx = frontFieldIdx;
-            if (backFieldIdx !== -1) backIdx = backFieldIdx;
-
-            if (note.fields.length < 2) { skippedUnknown++; continue; }
-
-            const frontText = stripHtml(note.fields[frontIdx] ?? note.fields[0]);
-            const backText = stripHtml(note.fields[backIdx] ?? note.fields[1]);
-
-            if (!frontText.trim() || !backText.trim()) { skippedUnknown++; continue; }
-
-            if (ord === 1 && modelName.includes('reversed')) {
-                importedCards.push({ q: backText, a: frontText, deck: deckName });
-            } else {
-                importedCards.push({ q: frontText, a: backText, deck: deckName });
-            }
-        }
-
-        db.close();
-
-        if (importedCards.length === 0) {
-            apkgMsg.innerHTML = '<div class="msg error">Found the deck, but couldn\'t extract any readable cards from it. ' +
-                'This can happen with heavily customized note types or image-only cards.</div>';
-            apkgParseBtn.disabled = false;
-            return;
-        }
-
-        cards = cards.concat(importedCards);
-
-        const deckCounts = {};
-        importedCards.forEach(c => { deckCounts[c.deck] = (deckCounts[c.deck] || 0) + 1; });
-
-        let summary = `<div class="msg success">✓ Imported ${importedCards.length} card${importedCards.length === 1 ? '' : 's'}`;
-        if (skippedCloze || skippedUnknown) {
-            const skippedTotal = skippedCloze + skippedUnknown;
-            summary += ` (${skippedTotal} card${skippedTotal === 1 ? '' : 's'} skipped — unreadable or unsupported note type)`;
-        }
-        summary += '. Switch to the Study tab to begin.</div>';
-        apkgMsg.innerHTML = summary;
-
-        apkgDeckList.innerHTML =
-            Object.entries(deckCounts).map(([name, count]) =>
-                `<div class="deck-row"><span>${escapeHtml(name)}</span><span class="count">${count} card${count === 1 ? '' : 's'}</span></div>`
-            ).join('');
-
-        resetApkgFile();
-
+      const enriched = await enrichArticles(articles);
+      stack.innerHTML = enriched.map(a => buildFeedCardHTML(a, sectorMetaForArticle(a.id, allowedMap))).join('');
+      wireFeedCardClicks(stack);
     } catch (err) {
-        console.error(err);
-        apkgMsg.innerHTML = `<div class="msg error">Couldn't import this deck: ${escapeHtml(err.message || String(err))}</div>`;
-        apkgParseBtn.disabled = false;
+      console.error('Article load failed:', err);
+      stateEl.textContent = 'Could not load articles right now.';
+      stateEl.classList.add('is-error');
     }
-});
+  }
 
-function stripHtml(html) {
-    if (!html) return '';
-    const withBreaks = html
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/div>/gi, '\n')
-        .replace(/<\/p>/gi, '\n');
-    const div = document.createElement('div');
-    div.innerHTML = withBreaks;
-    let text = (div.textContent || div.innerText || '').replace(/\[sound:[^\]]*\]/g, '');
-    return text.replace(/\n{3,}/g, '\n\n').trim();
-}
+  // ══════════════════════════════════════════════════════════
+  // SEARCH — dynamic, debounced, restricted to the same allowed-library
+  // article set as the newsletter (reuses the cached Map above instead
+  // of fetching it a second time).
+  // ══════════════════════════════════════════════════════════
+  function sanitizeForIlike(term) {
+    // PostgREST's .or() filter string uses commas to separate conditions
+    // and parentheses for grouping; % and _ are ILIKE wildcards. Strip
+    // all of these out of user input so a stray comma or paren can't
+    // break the filter (or reach into conditions it shouldn't).
+    return term.replace(/[,()%_]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 
-// =====================================================================
-// TEXT PARSE
-// =====================================================================
-const textInput = document.getElementById('textInput');
-const textMsg = document.getElementById('textMsg');
+  function openSearch() {
+    closeBurgerMenu();
+    searchOverlay.classList.add('open');
+    searchBtn.setAttribute('aria-expanded', 'true');
+    syncBodyLock();
+    setTimeout(() => searchInput.focus(), 60);
+  }
+  function closeSearch() {
+    searchOverlay.classList.remove('open');
+    searchBtn.setAttribute('aria-expanded', 'false');
+    syncBodyLock();
+  }
+  searchBtn.addEventListener('click', () => { isSearchOpen() ? closeSearch() : openSearch(); });
+  searchCloseBtn.addEventListener('click', closeSearch);
 
-document.getElementById('textParseBtn').addEventListener('click', () => {
-    const text = textInput.value.trim();
-    textMsg.innerHTML = '';
+  let searchDebounceTimer = null;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const raw = searchInput.value.trim();
+    if (!raw) {
+      searchResults.innerHTML = '<div class="newsletter-state">Start typing to search across Logistics, Research, Relations &amp; Media.</div>';
+      return;
+    }
+    searchResults.innerHTML = '<div class="newsletter-state">Searching…</div>';
+    searchDebounceTimer = setTimeout(() => runSearch(raw), 320);
+  });
 
-    if (!text) {
-        textMsg.innerHTML = '<div class="msg error">Please paste some content first.</div>';
+  async function runSearch(term) {
+    const client = getSupabaseClient();
+    if (!client) {
+      searchResults.innerHTML = '<div class="newsletter-state is-error">Unable to connect — check your connection and reload.</div>';
+      return;
+    }
+    const safeTerm = sanitizeForIlike(term);
+    if (!safeTerm) {
+      searchResults.innerHTML = '<div class="newsletter-state">Keep typing to search.</div>';
+      return;
+    }
+    try {
+      const allowedMap = await getAllowedArticleMap();
+      const allowedIds = [...allowedMap.keys()];
+      if (!allowedIds.length) {
+        searchResults.innerHTML = '<div class="newsletter-state">No searchable articles available right now.</div>';
         return;
-    }
+      }
+      const { data, error } = await client
+        .from(ARTICLES_TABLE)
+        .select('id,title,content,firebase_user_id,views,likes,created_at')
+        .in('id', allowedIds)
+        .or('title.ilike.%' + safeTerm + '%,content.ilike.%' + safeTerm + '%')
+        .order('created_at', { ascending: false })
+        .limit(25);
+      if (error) throw error;
 
-    const parsed = [];
-    const lines = text.split('\n');
-    let currentQ = '';
-    let currentA = '';
-
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        if (line.match(/^(Q:|What|Which|How|Why|Where|When|Does|Is|Are|Can|Should)/i)) {
-            if (currentQ && currentA) parsed.push({ q: currentQ, a: currentA, deck: 'Pasted Text' });
-            currentQ = line.replace(/^Q:\s*/i, '');
-            currentA = '';
-        } else if (line.match(/^(A:|[-•*])/)) {
-            currentA = line.replace(/^(A:|[-•*])\s*/i, '');
-        } else if (currentQ) {
-            currentA = currentA ? currentA + '\n' + line : line;
-        }
-    }
-    if (currentQ && currentA) parsed.push({ q: currentQ, a: currentA, deck: 'Pasted Text' });
-
-    if (parsed.length === 0) {
-        textMsg.innerHTML = '<div class="msg error">Couldn\'t find any Q&amp;A pairs in that text. Check the format and try again.</div>';
+      const articles = data || [];
+      if (!articles.length) {
+        searchResults.innerHTML = '<div class="newsletter-state">No matching articles found.</div>';
         return;
+      }
+      const enriched = await enrichArticles(articles);
+      searchResults.innerHTML = enriched.map(a => buildFeedCardHTML(a, sectorMetaForArticle(a.id, allowedMap))).join('');
+      wireFeedCardClicks(searchResults);
+    } catch (err) {
+      console.error('Search failed:', err);
+      searchResults.innerHTML = '<div class="newsletter-state is-error">Search failed — please try again.</div>';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // AUTH — pfp + stats in the menu's account area (moved out of the
+  // header; see .menu-account in the CSS and the top of <nav
+  // class="burger-menu"> in the markup — same element IDs as before, so
+  // this function itself didn't need to change, only its surroundings).
+  // ══════════════════════════════════════════════════════════
+  async function handleAuthChange(user) {
+    const signedOutEl = document.getElementById('acctSignedOut');
+    const signedInEl = document.getElementById('acctSignedIn');
+    const pfpEl = document.getElementById('acctPfp');
+    const nameEl = document.getElementById('acctName');
+    const substatEl = document.getElementById('acctSubstat');
+
+    if (!user) {
+      signedOutEl.style.display = 'inline-flex';
+      signedInEl.classList.remove('visible');
+      return;
     }
 
-    cards = cards.concat(parsed);
-    textMsg.innerHTML = `<div class="msg success">✓ Created ${parsed.length} flashcard${parsed.length === 1 ? '' : 's'}. Switch to the Study tab to begin.</div>`;
-});
+    signedOutEl.style.display = 'none';
+    signedInEl.classList.add('visible');
+    signedInEl.onclick = () => { window.location.href = 'profile.html'; };
 
-document.getElementById('textClearBtn').addEventListener('click', () => {
-    textInput.value = '';
-    textMsg.innerHTML = '';
-});
-
-// =====================================================================
-// STUDY
-// =====================================================================
-function buildDeckFilter() {
-    const filterEl = document.getElementById('deckFilter');
-    const deckNames = [...new Set(cards.map(c => c.deck))];
-
-    if (deckNames.length <= 1) {
-        filterEl.innerHTML = '';
-        activeDeckFilter = null;
-        return;
+    const client = getSupabaseClient();
+    let profile = null;
+    if (client) {
+      try {
+        const { data } = await client
+          .from('users')
+          .select('username,full_name,pfp')
+          .eq('firebase_uid', user.uid)
+          .maybeSingle();
+        profile = data;
+      } catch (err) {
+        console.warn('Profile lookup failed:', err);
+      }
     }
 
-    if (activeDeckFilter && !deckNames.includes(activeDeckFilter)) activeDeckFilter = null;
+    const displayName = (profile && (profile.full_name || profile.username)) || user.displayName || (user.email ? user.email.split('@')[0] : 'Account');
+    nameEl.textContent = displayName;
+    substatEl.textContent = profile && profile.username ? '@' + profile.username : (user.email || '');
 
-    filterEl.innerHTML = `<div class="deck-chip ${activeDeckFilter === null ? 'active' : ''}" data-deck="">All decks</div>` +
-        deckNames.map(name =>
-            `<div class="deck-chip ${activeDeckFilter === name ? 'active' : ''}" data-deck="${escapeHtml(name)}">${escapeHtml(name)}</div>`
-        ).join('');
-
-    filterEl.querySelectorAll('.deck-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            activeDeckFilter = chip.dataset.deck || null;
-            currentIndex = 0;
-            buildDeckFilter();
-            updateDisplay();
-        });
-    });
-}
-
-function currentDeckCards() {
-    return activeDeckFilter ? cards.filter(c => c.deck === activeDeckFilter) : cards;
-}
-
-function updateDisplay() {
-    const container = document.getElementById('flashcardContainer');
-    const deckCards = currentDeckCards();
-    document.getElementById('totalCards').textContent = deckCards.length;
-
-    if (deckCards.length === 0) {
-        container.innerHTML = '<div class="empty-state"><h2>No flashcards yet</h2><p>Import a .apkg file or paste Q&amp;A text to get started.</p></div>';
-        document.getElementById('currentCard').textContent = '–';
-        document.getElementById('progressPercent').textContent = '0%';
-        document.getElementById('progressFill').style.width = '0%';
-        document.getElementById('prevBtn').disabled = true;
-        document.getElementById('nextBtn').disabled = true;
-        return;
-    }
-
-    if (currentIndex >= deckCards.length) currentIndex = deckCards.length - 1;
-    if (currentIndex < 0) currentIndex = 0;
-
-    const card = deckCards[currentIndex];
-    const progressPercent = Math.round(((currentIndex + 1) / deckCards.length) * 100);
-
-    document.getElementById('currentCard').textContent = currentIndex + 1;
-    document.getElementById('progressPercent').textContent = progressPercent + '%';
-    document.getElementById('progressFill').style.width = progressPercent + '%';
-
-    container.innerHTML = `
-        <div class="flashcard" id="card">
-            <div class="card-side card-front">
-                <span class="deck-tag">${escapeHtml(card.deck)}</span>
-                <span class="card-label">Question</span>
-                <div class="card-text">${escapeHtml(card.q).replace(/\n/g, '<br>')}</div>
-                <div class="flip-hint">Click to reveal answer</div>
-            </div>
-            <div class="card-side card-back">
-                <span class="deck-tag">${escapeHtml(card.deck)}</span>
-                <span class="card-label">Answer</span>
-                <div class="card-text">${escapeHtml(card.a).replace(/\n/g, '<br>')}</div>
-                <div class="flip-hint">Click to see question</div>
-            </div>
-        </div>
-    `;
-    document.getElementById('card').addEventListener('click', flipCard);
-
-    document.getElementById('prevBtn').disabled = currentIndex === 0;
-    document.getElementById('nextBtn').disabled = currentIndex === deckCards.length - 1;
-}
-
-function flipCard() {
-    const card = document.getElementById('card');
-    if (card) card.classList.toggle('flipped');
-}
-
-document.getElementById('nextBtn').addEventListener('click', () => {
-    const deckCards = currentDeckCards();
-    if (currentIndex < deckCards.length - 1) { currentIndex++; updateDisplay(); }
-});
-document.getElementById('prevBtn').addEventListener('click', () => {
-    if (currentIndex > 0) { currentIndex--; updateDisplay(); }
-});
-document.getElementById('shuffleBtn').addEventListener('click', () => {
-    const deckCards = currentDeckCards();
-    for (let i = deckCards.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deckCards[i], deckCards[j]] = [deckCards[j], deckCards[i]];
-    }
-    if (activeDeckFilter) {
-        let k = 0;
-        cards = cards.map(c => c.deck === activeDeckFilter ? deckCards[k++] : c);
+    const pfpUrl = (profile && profile.pfp) || user.photoURL || null;
+    if (pfpUrl) {
+      pfpEl.innerHTML = '<img src="' + escHtml(pfpUrl) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
     } else {
-        cards = deckCards;
+      pfpEl.textContent = (displayName || '?').trim().charAt(0).toUpperCase();
     }
-    currentIndex = 0;
-    updateDisplay();
-});
-document.getElementById('resetBtn').addEventListener('click', () => {
-    currentIndex = 0;
-    updateDisplay();
-});
+  }
+
+  window.addEventListener('mb-auth-changed', (e) => { handleAuthChange(e.detail.user); });
+
+  // ══════════════════════════════════════════════════════════
+  // THEME SWITCHER — persists to localStorage under 'mb_theme'; the tiny
+  // inline script at the very top of <body> applies the saved value
+  // before first paint (avoiding a flash of the wrong theme), this part
+  // just handles changes made from the menu during the session.
+  // ══════════════════════════════════════════════════════════
+  const THEME_KEY = 'mb_theme';
+  const THEME_CLASSES = ['theme-light', 'theme-dark'];
+
+  function applyTheme(themeClass) {
+    THEME_CLASSES.forEach(t => document.body.classList.remove(t));
+    document.body.classList.add(themeClass);
+    localStorage.setItem(THEME_KEY, themeClass);
+    syncThemePills();
+  }
+  function syncThemePills() {
+    const current = THEME_CLASSES.find(t => document.body.classList.contains(t)) || 'theme-light';
+    document.querySelectorAll('.theme-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === current);
+    });
+  }
+  document.querySelectorAll('.theme-pill').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // BURGER MENU — now a full-page panel (see .burger-menu in the CSS),
+  // so opening it also locks background scroll via syncBodyLock(), and
+  // opening search closes it (and vice versa — see openSearch() above).
+  // ══════════════════════════════════════════════════════════
+  function openBurgerMenu() {
+    closeSearch();
+    burgerMenu.classList.add('open');
+    burgerBtn.classList.add('open');
+    burgerBtn.setAttribute('aria-expanded', 'true');
+    syncBodyLock();
+  }
+  function closeBurgerMenu() {
+    burgerMenu.classList.remove('open');
+    burgerBtn.classList.remove('open');
+    burgerBtn.setAttribute('aria-expanded', 'false');
+    syncBodyLock();
+  }
+  burgerBtn.addEventListener('click', () => { isMenuOpen() ? closeBurgerMenu() : openBurgerMenu(); });
+  document.addEventListener('click', (e) => {
+    if (isMenuOpen() && !burgerMenu.contains(e.target) && !burgerBtn.contains(e.target)) {
+      closeBurgerMenu();
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // NAV / SCROLL SPY — only the in-menu "Newsletter" link uses this now;
+  // the sector links in the secondary nav and sector strip are plain
+  // outbound links to the subdomains, not in-page scroll targets.
+  // ══════════════════════════════════════════════════════════
+  function smoothScrollTo(targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const headerH = document.querySelector('.site-header').offsetHeight;
+    const secondaryH = document.querySelector('.secondary-nav').offsetHeight;
+    const offset = headerH + secondaryH;
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      smoothScrollTo(link.dataset.target);
+      closeBurgerMenu();
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // BOOT
+  // ══════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    loadNewsletterArticles();
+    syncThemePills();
+
+    // Prevent double-tap-to-zoom on browsers where touch-action alone
+    // isn't fully honored (older WebKit). Blocks the synthetic dblclick
+    // that iOS Safari fires from a fast double-tap.
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // Block the iOS "copy / look up / share" callout on long-press, and
+    // right-click context menu on desktop, per the "no text editor" ask.
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
 </script>
 </body>
 </html>
