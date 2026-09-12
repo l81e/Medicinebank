@@ -1,1133 +1,829 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>MedicineBank Initiative</title>
-
-  <meta name="theme-color" content="#0b0b0b" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply — MedicineBank Media</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Merriweather:wght@300;700&display=swap" rel="stylesheet" />
-
-  <!-- Firebase Auth (matches Patholytica's login page auth provider) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    const firebaseConfig = {
-      apiKey: "AIzaSyBs6V0yY14cuLBXB1nciZ-X0eyAiodC-Ak",
-      authDomain: "patholytica.firebaseapp.com",
-      databaseURL: "https://patholytica-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "patholytica",
-      storageBucket: "patholytica.firebasestorage.app",
-      messagingSenderId: "738430635282",
-      appId: "1:738430635282:web:8451ef380447c7611137cb"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    window.__mbAuth = auth;
-    onAuthStateChanged(auth, (user) => {
-      window.dispatchEvent(new CustomEvent('mb-auth-changed', { detail: { user } }));
-    });
-  </script>
-
-  <!-- Supabase client (data only — anon/publishable key, RLS-respecting) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --black: #0b0b0b;
-      --carbon-90: #1a1a1a;
-      --carbon-80: #2b2b2b;
-      --carbon-60: #58585b;
-      --carbon-40: #8e8e8e;
-      --carbon-30: #b9b9bb;
-      --carbon-20: #d9d9d9;
-      --carbon-05: #f5f5f5;
-      --white: #f7f5f4;
+      --bg:          #1c0d10;
+      --bg-deep:     #140809;
+      --panel:       #3a1a1f;
+      --panel-hi:    #4a2229;
+      --line:        #562832;
+      --line-soft:   #4a222a;
 
-      --blue:      #1a5fa8;
-      --blue-dark: #134a85;
-      --champ:     #b8973a;
-      --champ-dark:#9a7d2e;
-      /* Relations sector recolored to champagne per request. Own token
-         (not reused from --champ) so Logistics/Relations stay distinct
-         in code even though visually close now. */
-      --champagne:      #d9c48f;
-      --champagne-dark: #b8a06a;
-      --burg:      #7d2040;
-      --burg-dark: #621832;
-      --orange:    #c4601a;
-      --orange-dark:#a34e14;
+      --text:        #f7efec;
+      --text-dim:    #d8bcbc;
+      --text-faint:  #a3797d;
 
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --accent:      #c23e4a;
+      --accent-dark: #94232d;
+      --err:         #e2646f;
     }
-
-    html { background: var(--black); }
 
     body {
-      --page-bg: var(--white);
-      --surface-bg: #ffffff;
-      --surface-alt-bg: var(--carbon-05);
-      --text-primary: var(--black);
-      --text-secondary: var(--carbon-60);
-      --text-tertiary: var(--carbon-40);
-      --divider: var(--carbon-20);
-
-      font-family: 'Inter', sans-serif; background: var(--page-bg); color: var(--text-primary); line-height: 1.6;
-      -webkit-user-select: none; user-select: none;
-      -webkit-touch-callout: none;
-      touch-action: manipulation;
-      transition: background .2s ease, color .2s ease;
+      font-family: 'Cairo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
     }
-    body.theme-light {
-      --page-bg: var(--white);
-      --surface-bg: #ffffff;
-      --surface-alt-bg: var(--carbon-05);
-      --text-primary: var(--black);
-      --text-secondary: var(--carbon-60);
-      --text-tertiary: var(--carbon-40);
-      --divider: var(--carbon-20);
-    }
-    body.theme-dark {
-      --page-bg: #0e0e0e;
-      --surface-bg: #161616;
-      --surface-alt-bg: #1c1c1c;
-      --text-primary: var(--white);
-      --text-secondary: #b9b9bb;
-      --text-tertiary: #8e8e8e;
-      --divider: #2b2b2b;
-    }
-    input, textarea { -webkit-user-select: text; user-select: text; }
+    html[dir="ltr"] body { font-family: 'Inter', sans-serif; }
 
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
-    button { font-family: inherit; }
 
-    body.menu-open { overflow: hidden; }
-
-    /* ── HEADER ── */
+    /* ── HEADER (not sticky — scrolls away; never fades / never moves on lang switch) ── */
     .site-header {
-      background: var(--black);
-      padding: var(--safe-top) 32px 0;
+      padding: 22px 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      height: calc(var(--safe-top) + 56px);
     }
+    .logo img { height: 26px; width: auto; display: block; filter: brightness(0) invert(1) opacity(0.92); }
 
-    .logo img { height: 28px; width: auto; display: block; }
-
-    .header-right { display: flex; align-items: center; gap: 10px; }
-
-    .search-btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 34px; height: 34px; background: none; border: none; cursor: pointer;
-      color: var(--white); padding: 0;
-    }
-
-    .burger-btn {
-      display: flex; flex-direction: column; justify-content: center; gap: 4px;
-      width: 34px; height: 34px; background: none; border: none; cursor: pointer;
-      padding: 0;
-    }
-    .burger-btn span {
-      display: block; width: 20px; height: 2px; background: var(--white);
-      transition: transform .25s, opacity .2s;
-    }
-    .burger-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
-    .burger-btn.open span:nth-child(2) { opacity: 0; }
-    .burger-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
-
-    /* ── BURGER MENU ── */
-    .burger-menu {
-      position: fixed;
-      top: calc(var(--safe-top) + 56px);
-      left: 0; right: 0; bottom: 0;
-      background: var(--carbon-90);
-      z-index: 1000;
-      transform: translateX(100%);
-      visibility: hidden;
-      transition: transform .3s ease, visibility 0s linear .3s;
-      padding: 0 0 calc(20px + var(--safe-bottom));
-      overflow-y: auto;
-    }
-    .burger-menu.open {
-      transform: translateX(0);
-      visibility: visible;
-      transition: transform .3s ease;
-    }
-    .burger-menu a {
-      display: block; padding: 15px 24px; font-size: 0.9rem; font-weight: 600;
-      color: var(--carbon-30); transition: background .15s, color .15s;
-    }
-    .burger-menu a:hover { background: var(--carbon-80); color: var(--white); }
-    .burger-menu hr { border: none; border-top: 1px solid var(--carbon-80); margin: 10px 0; }
-
-    .menu-section-label {
-      font-size: 0.66rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-      color: var(--carbon-40); padding: 16px 24px 6px;
-    }
-
-    .menu-account { padding: 20px 24px 16px; border-bottom: 1px solid var(--carbon-80); margin-bottom: 4px; }
-    .menu-account-signed-out {
-      display: inline-flex; align-items: center; gap: 9px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 2px; padding: 12px 18px; width: 100%;
-      font-size: 0.86rem; font-weight: 700; color: var(--white);
-      cursor: pointer; transition: background .2s;
-    }
-    .menu-account-signed-out:hover { background: rgba(255,255,255,0.12); }
-
-    .menu-account-signed-in { display: none; align-items: center; gap: 12px; cursor: pointer; }
-    .menu-account-signed-in.visible { display: flex; }
-    .account-pfp {
-      width: 38px; height: 38px; border-radius: 50%;
-      object-fit: cover; background: var(--carbon-80);
-      border: 1px solid rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; font-weight: 700; color: var(--carbon-30);
+    .lang-toggle {
+      display: flex; align-items: center; gap: 2px;
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: 20px;
+      padding: 3px;
+      /* fixed width so the pill never resizes when EN <-> عربي swap */
+      width: 132px;
       flex-shrink: 0;
     }
-    .account-stats { display: flex; flex-direction: column; line-height: 1.3; }
-    .account-name { font-size: 0.86rem; font-weight: 700; color: var(--white); }
-    .account-substat { font-size: 0.72rem; color: var(--carbon-40); }
+    .lang-toggle button {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.74rem; font-weight: 700;
+      padding: 6px 0; border-radius: 16px;
+      background: none; border: none; color: var(--text-faint);
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .lang-toggle button.active { background: var(--accent); color: var(--text); }
 
-    .theme-toggle-row { display: flex; gap: 8px; padding: 0 24px 18px; }
-    .theme-pill {
-      flex: 1; padding: 10px 0; border-radius: 2px;
-      border: 1px solid var(--carbon-80); background: transparent;
-      color: var(--carbon-30); font-size: 0.8rem; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: background .15s, color .15s, border-color .15s;
-    }
-    .theme-pill.active { background: var(--white); color: var(--black); border-color: var(--white); }
-    .theme-pill:hover:not(.active) { border-color: var(--carbon-40); color: var(--white); }
+    /* ── LANGUAGE FADE ── */
+    /* everything except the header fades out/in on language switch */
+    .fade-region { transition: opacity .15s ease; }
+    .fade-region.fading { opacity: 0; }
 
-    .menu-quicklink { display: flex; align-items: center; gap: 12px; }
-    .menu-quicklink svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--carbon-40); transition: color .15s; }
-    .menu-quicklink:hover svg { color: var(--white); }
+    /* ── HERO ── */
+    .hero {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 30px 40px 44px;
+    }
+    .hero h1 {
+      font-size: clamp(1.7rem, 4vw, 2.35rem);
+      font-weight: 800; line-height: 1.18;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      font-size: 0.94rem; color: var(--text-dim);
+      line-height: 1.75; max-width: 480px;
+    }
 
-    /* ── SEARCH ── */
-    .search-overlay {
-      position: fixed;
-      top: calc(var(--safe-top) + 56px);
-      left: 0; right: 0; bottom: 0;
-      background: var(--carbon-90);
-      z-index: 1001;
-      opacity: 0;
-      transform: translateY(-10px);
-      visibility: hidden;
-      transition: opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
-      overflow-y: auto;
-      padding: 18px 24px calc(18px + var(--safe-bottom));
+    /* ── FORM ── */
+    .form-section { padding: 0 40px 90px; }
+    .form-wrap { max-width: 640px; margin: 0 auto; }
 
-      --surface-bg: var(--carbon-80);
-      --text-primary: var(--white);
-      --text-secondary: var(--carbon-30);
-      --text-tertiary: var(--carbon-40);
-      --divider: #3a3a3a;
+    .field-group { margin-bottom: 20px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+
+    label.field-label {
+      display: block; font-size: 0.78rem; font-weight: 700;
+      color: var(--text); margin-bottom: 7px;
     }
-    .search-overlay.open {
-      opacity: 1;
-      transform: translateY(0);
-      visibility: visible;
-      transition: opacity .22s ease, transform .22s ease;
+    label.field-label .req { color: var(--accent); margin-left: 3px; }
+    html[dir="rtl"] label.field-label .req { margin-left: 0; margin-right: 3px; }
+    label.field-label .opt { font-weight: 500; color: var(--text-faint); margin-left: 4px; }
+    html[dir="rtl"] label.field-label .opt { margin-left: 0; margin-right: 4px; }
+
+    .field-hint { font-size: 0.73rem; color: var(--text-faint); margin-top: 6px; line-height: 1.5; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    select,
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.87rem;
+      padding: 11px 13px;
+      background: var(--panel);
+      border: 1.5px solid var(--line-soft);
+      border-radius: 4px;
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
     }
-    .search-top { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-    .search-input-wrap {
-      flex: 1; display: flex; align-items: center; gap: 10px;
-      background: var(--carbon-80); border: 1px solid var(--carbon-60);
-      border-radius: 2px; padding: 11px 14px;
+    input::placeholder, textarea::placeholder { color: var(--text-faint); }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(194,62,74,0.22);
     }
-    .search-input-wrap svg { width: 16px; height: 16px; color: var(--carbon-40); flex-shrink: 0; }
-    .search-input-wrap input {
-      flex: 1; background: none; border: none; outline: none;
-      color: var(--white); font-size: 0.9rem; font-family: inherit;
+    textarea { resize: vertical; min-height: 92px; line-height: 1.6; }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a3797d' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 34px;
+      cursor: pointer;
     }
-    .search-input-wrap input::placeholder { color: var(--carbon-40); }
-    .search-close-btn {
-      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
-      color: var(--white); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+    html[dir="rtl"] select {
+      background-position: left 13px center;
+      padding-right: 13px;
+      padding-left: 34px;
+    }
+
+    /* role checkboxes — with short descriptions */
+    .role-checks { display: flex; flex-direction: column; gap: 2px; }
+    .role-check {
+      display: flex; align-items: flex-start; gap: 11px;
+      padding: 10px 4px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .role-check:last-child { border-bottom: none; }
+
+    .role-check input[type="checkbox"] {
+      appearance: none; width: 17px; height: 17px; flex-shrink: 0;
+      border: 1.5px solid var(--text-faint); border-radius: 3px;
+      cursor: pointer; position: relative; margin-top: 2px;
+      transition: background .15s, border-color .15s;
+    }
+    .role-check input[type="checkbox"]:checked {
+      background: var(--accent); border-color: var(--accent);
+    }
+    .role-check input[type="checkbox"]:checked::after {
+      content: ''; position: absolute; left: 5px; top: 1px;
+      width: 4px; height: 8px;
+      border: solid var(--text); border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .role-check input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .role-check-text { font-size: 0.86rem; }
+    .role-check-text strong { display: block; font-weight: 700; margin-bottom: 1px; }
+    .role-check-text span.desc { display: block; color: var(--text-faint); font-size: 0.76rem; font-weight: 400; }
+
+    /* experience pills */
+    .radio-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .radio-pill {
+      display: flex; align-items: center; gap: 6px;
+      border: 1.5px solid var(--line-soft); border-radius: 18px;
+      padding: 7px 14px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+      color: var(--text-dim);
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .radio-pill:hover { border-color: var(--text-faint); }
+    .radio-pill.checked { border-color: var(--accent); background: var(--accent); color: var(--text); }
+    .radio-pill input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .radio-pill:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .char-count { font-size: 0.71rem; color: var(--text-faint); text-align: right; margin-top: 5px; }
+    html[dir="rtl"] .char-count { text-align: left; }
+
+    .consent-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .consent-row input[type="checkbox"] {
+      appearance: none; width: 17px; height: 17px; flex-shrink: 0;
+      border: 1.5px solid var(--text-faint); border-radius: 3px;
+      margin-top: 2px; cursor: pointer; position: relative;
+    }
+    .consent-row input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+    .consent-row input[type="checkbox"]:checked::after {
+      content: ''; position: absolute; left: 5px; top: 1px;
+      width: 4px; height: 8px; border: solid var(--text); border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+    .consent-row label { font-size: 0.79rem; color: var(--text-dim); line-height: 1.6; cursor: pointer; }
+    .consent-row label .req { color: var(--accent); margin-left: 3px; }
+    html[dir="rtl"] .consent-row label .req { margin-left: 0; margin-right: 3px; }
+    .consent-row.invalid input[type="checkbox"] { border-color: var(--err); }
+
+    .consent-group { margin-bottom: 26px; }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--text);
+      border: none; border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9rem; font-weight: 700;
+      padding: 13px 20px; cursor: pointer;
       transition: background .15s;
     }
-    .search-close-btn:hover { background: rgba(255,255,255,0.14); }
-    .search-results { display: flex; flex-direction: column; gap: 14px; }
+    .submit-btn:hover { background: var(--accent-dark); }
+    .submit-btn:disabled { background: var(--panel-hi); color: var(--text-faint); cursor: not-allowed; }
 
-    /* ── SECONDARY NAV — static (no horizontal swipe/scroll), the four
-       sector tabs stretch evenly and are centered as a group so none is
-       pinned to the left or right edge. ── */
-    .secondary-nav {
-      background: var(--carbon-90);
-      border-bottom: 1px solid var(--carbon-80);
-      overflow-x: hidden;
-      white-space: normal;
-      position: sticky;
-      top: calc(var(--safe-top) + 56px);
-      z-index: 999;
+    .form-footnote { font-size: 0.75rem; color: var(--text-faint); text-align: center; margin-top: 14px; }
+
+    .error-msg {
+      font-size: 0.75rem; color: var(--err); margin-top: 6px;
+      display: none; align-items: center; gap: 5px;
     }
-    .secondary-nav ul {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: nowrap;
-      padding: 0 12px;
+    .error-msg.show { display: flex; }
+    .field-group.invalid input,
+    .field-group.invalid select,
+    .field-group.invalid textarea { border-color: var(--err); }
+
+    /* ── SECTION HEADERS (basic info / details) ── */
+    .section-heading {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px;
+      color: var(--text-faint); text-transform: uppercase;
+      margin-bottom: 16px;
     }
-    .secondary-nav li { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
-    .secondary-nav li a {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      padding: 12px 10px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--carbon-30);
-      transition: color .2s;
-      border-bottom: 3px solid transparent;
+    html[dir="rtl"] .section-heading { text-transform: none; }
+
+    /* ── COLLAPSIBLE BASIC-INFO SECTION ── */
+    #basicInfoSection { margin-bottom: 30px; }
+
+    #basicInfoFields {
+      overflow: hidden;
+      max-height: 2000px;
+      opacity: 1;
+      transition: max-height .35s ease, opacity .25s ease, margin .35s ease;
+    }
+    #basicInfoFields.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      pointer-events: none;
+    }
+
+    .summary-bar {
+      display: none;
+      align-items: center; justify-content: space-between;
+      gap: 12px;
+      background: var(--panel);
+      border: 1.5px solid var(--line-soft);
+      border-radius: 4px;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+    }
+    .summary-bar.show { display: flex; }
+    .summary-bar-text { font-size: 0.82rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .summary-bar-text strong { color: var(--text); font-weight: 700; }
+    .summary-edit-btn {
+      flex-shrink: 0;
+      background: none; border: 1.5px solid var(--line-soft); border-radius: 16px;
+      color: var(--accent); font-family: inherit; font-size: 0.76rem; font-weight: 700;
+      padding: 6px 13px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .summary-edit-btn:hover { border-color: var(--accent); }
+
+    #detailsSection {
+      transition: opacity .25s ease;
+    }
+    #detailsSection.hidden-details {
+      display: none;
+    }
+
+    /* success state */
+    .success-panel {
+      display: none;
       text-align: center;
+      padding: 60px 40px 100px;
+      max-width: 440px; margin: 0 auto;
     }
-    .secondary-nav li a:hover { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
-    .secondary-nav li a.sector-tab { display: flex; align-items: center; justify-content: center; gap: 7px; }
-    .secondary-nav li a.sector-tab::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .secondary-nav li a.sector-tab.log::before { background: var(--champ); }
-    .secondary-nav li a.sector-tab.res::before { background: var(--blue); }
-    .secondary-nav li a.sector-tab.rel::before { background: var(--champagne); }
-    .secondary-nav li a.sector-tab.med::before { background: var(--burg); }
+    .success-panel.show { display: block; }
+    .success-icon {
+      width: 50px; height: 50px; border-radius: 50%;
+      background: var(--panel); border: 1.5px solid var(--line-soft);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .success-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 2.4; }
+    .success-panel h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 9px; }
+    .success-panel p { font-size: 0.86rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 24px; }
+    .success-panel .btn-secondary {
+      display: inline-block; font-size: 0.81rem; font-weight: 700;
+      color: var(--accent); border: 1.5px solid var(--line-soft);
+      border-radius: 4px; padding: 9px 17px; cursor: pointer; background: none;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    .success-panel .btn-secondary:hover { border-color: var(--accent); }
 
-    /* ── SECTIONS ── */
-    section { padding: 60px 40px; }
-    .inner { max-width: 1160px; margin: 0 auto; }
+    #applyForm.hide { display: none; }
 
-    .section-header { margin-bottom: 32px; }
-    .label-tag {
-      font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--text-tertiary); margin-bottom: 6px;
-    }
-    .section-title { font-size: 1.45rem; font-weight: 700; color: var(--text-primary); }
-
-    /* ── HERO — welcoming header block above the newsletter, populated at
-       runtime from article id 40914 (see loadHeroArticle()). Full-bleed
-       image, serif display title underneath. ── */
-    .hero-block { padding: 0; border-bottom: 1px solid var(--divider); }
-    .hero-eyebrow {
-      padding: 28px 40px 0;
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--text-tertiary);
-    }
-    .hero-image-wrap { width: 100%; margin-top: 16px; background: var(--surface-alt-bg); }
-    .hero-image-wrap img { width: 100%; height: auto; max-height: 480px; object-fit: cover; display: block; }
-    .hero-body { padding: 22px 40px 36px; max-width: 860px; }
-    .hero-title {
-      font-family: 'Merriweather', 'Inter', serif;
-      font-weight: 700;
-      font-size: 2rem;
-      line-height: 1.25;
-      color: var(--text-primary);
-      margin-bottom: 14px;
-    }
-    .hero-dek {
-      font-family: 'Merriweather', 'Inter', serif;
-      font-weight: 300;
-      font-size: 1.05rem;
+    /* ── SUBMIT ERROR STATE ── */
+    .submit-error {
+      display: none;
+      font-size: 0.79rem;
+      color: var(--err);
+      background: rgba(226,100,111,0.1);
+      border: 1.5px solid rgba(226,100,111,0.35);
+      border-radius: 4px;
+      padding: 10px 13px;
+      margin-bottom: 16px;
       line-height: 1.6;
-      color: var(--text-secondary);
     }
-    .hero-meta {
-      margin-top: 16px;
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: var(--text-tertiary);
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .hero-cta {
-      display: inline-block;
-      margin-top: 18px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.4px;
-      color: var(--text-primary);
-      border-bottom: 2px solid var(--text-primary);
-      padding-bottom: 2px;
-      cursor: pointer;
-    }
-    @media (max-width: 640px) {
-      .hero-eyebrow { padding: 22px 20px 0; }
-      .hero-body { padding: 18px 20px 30px; }
-      .hero-title { font-size: 1.5rem; }
-      .hero-dek { font-size: 0.95rem; }
-    }
-
-    /* ── NEWSLETTER / FEED CARDS — Washington-Post / academic-journal
-       editorial layout: full-bleed image on top (edge-to-edge on phones,
-       no border/radius framing), text block ALWAYS below it — sector
-       rubric, title, byline/date, stats, excerpt. No image = card skips
-       straight to the text block; text position never changes. Sector
-       tag is the short 3-letter form (RES/MED/LOG/REL). ── */
-    .newsletter-stack { display: flex; flex-direction: column; }
-
-    .feed-article-card {
-      background: var(--surface-bg);
-      border: none;
-      border-bottom: 1px solid var(--divider);
-      cursor: pointer;
-      transition: background .2s ease;
-    }
-    .feed-article-card:hover { background: var(--surface-alt-bg); }
-    .feed-article-card:hover .feed-card-title { text-decoration: underline; }
-
-    .feed-card-image { margin: 0; }
-    .feed-card-image img { width: 100%; max-height: 340px; object-fit: cover; display: block; }
-
-    .feed-card-body { padding: 18px 22px 24px; }
-
-    .feed-card-sector {
-      display: inline-block;
-      font-size: 0.66rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-      color: #fff; padding: 3px 9px; border-radius: 2px; margin-bottom: 10px;
-    }
-
-    .feed-card-title {
-      font-family: 'Merriweather', 'Inter', serif;
-      font-weight: 700;
-      font-size: 1.15rem;
-      line-height: 1.35;
-      color: var(--text-primary);
-      margin-bottom: 10px;
-    }
-
-    .feed-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .feed-card-avatar {
-      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
-      background: linear-gradient(135deg, var(--champ), var(--champ-dark));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 700; color: #fff;
-    }
-    .feed-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .feed-card-authorinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
-    .feed-card-author { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .feed-card-date { font-size: 0.68rem; color: var(--text-tertiary); }
-
-    .feed-card-stats { display: flex; gap: 16px; margin-bottom: 12px; }
-    .feed-stat { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 600; color: var(--text-tertiary); }
-    .feed-stat svg { width: 14px; height: 14px; }
-
-    .feed-card-excerpt {
-      font-family: 'Merriweather', 'Inter', serif;
-      font-size: 0.88rem; color: var(--text-secondary); line-height: 1.75;
-    }
-
-    .newsletter-state {
-      padding: 40px 0; text-align: center; color: var(--text-tertiary); font-size: 0.85rem;
-    }
-    .newsletter-state.is-error { color: var(--orange-dark); }
-
-    /* ── FOOTER ── */
-    footer {
-      background: var(--black);
-      color: var(--white);
-      padding: 48px 40px calc(28px + var(--safe-bottom));
-    }
-    .footer-inner {
-      max-width: 1160px; margin: 0 auto;
-      display: grid; grid-template-columns: 1.6fr 1fr; gap: 48px; margin-bottom: 36px;
-    }
-    @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
-
-    .footer-logo { margin-bottom: 14px; }
-    .footer-logo img { height: 26px; filter: brightness(0) invert(1); }
-    .footer-desc { font-size: 0.83rem; color: var(--carbon-30); line-height: 1.7; margin-bottom: 20px; }
-    .footer-accred { font-size: 0.75rem; color: var(--carbon-40); }
-
-    .footer-col-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--carbon-40); margin-bottom: 14px; }
-
-    .social-icons { display: flex; gap: 10px; margin-top: 4px; }
-    .social-icon {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(255,255,255,0.08);
-      display: flex; align-items: center; justify-content: center;
-      transition: background .2s; flex-shrink: 0;
-    }
-    .social-icon:hover { background: rgba(255,255,255,0.16); }
-    .social-icon svg { width: 16px; height: 16px; fill: var(--white); }
-
-    .footer-divider { max-width: 1160px; margin: 0 auto 18px; border: none; border-top: 1px solid var(--carbon-80); }
-    .footer-bottom {
-      max-width: 1160px; margin: 0 auto;
-      display: flex; flex-wrap: wrap; gap: 10px 24px;
-      font-size: 0.73rem; color: var(--carbon-40);
-    }
-    .footer-bottom a { color: var(--carbon-40); }
-    .footer-bottom a:hover { color: var(--white); }
+    .submit-error.show { display: block; }
 
     @media (max-width: 600px) {
-      section { padding: 48px 20px; }
-      .site-header { padding-left: 20px; padding-right: 20px; }
-      footer { padding: 48px 20px calc(24px + var(--safe-bottom)); }
-      /* Full-bleed images on phones: pull the image out of the section's
-         side padding so it spans the entire screen width edge-to-edge;
-         the text block below keeps its own inset via .feed-card-body. */
-      #newsletter { padding-left: 0; padding-right: 0; }
-      #newsletter .section-header { padding: 0 20px; }
+      .site-header { padding: 18px 20px; }
+      .hero { padding: 24px 20px 36px; }
+      .form-section { padding: 0 20px 70px; }
     }
   </style>
 </head>
 <body>
-<script>
-  (function () {
-    var saved = localStorage.getItem('mb_theme');
-    document.body.classList.add(saved === 'theme-dark' ? 'theme-dark' : 'theme-light');
-  })();
-</script>
 
-<!-- HEADER -->
+<!-- HEADER (scrolls away with the page; static position, no fade) -->
 <header class="site-header">
   <a href="/" class="logo">
     <img src="IMG_3083.png" alt="MedicineBank" />
   </a>
-
-  <div class="header-right">
-    <button class="search-btn" id="searchBtn" type="button" aria-label="Search" aria-expanded="false">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    </button>
-    <button class="burger-btn" id="burgerBtn" type="button" aria-label="Menu" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
+  <div class="lang-toggle">
+    <button type="button" id="langEn" data-lang="en">EN</button>
+    <button type="button" id="langAr" class="active" data-lang="ar">عربي</button>
   </div>
 </header>
 
-<!-- SEARCH OVERLAY -->
-<div class="search-overlay" id="searchOverlay">
-  <div class="search-top">
-    <div class="search-input-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="searchInput" placeholder="Search Logistics, Research, Relations & Media…" autocomplete="off" />
-    </div>
-    <button class="search-close-btn" id="searchCloseBtn" type="button" aria-label="Close search">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-  <div class="search-results" id="searchResults">
-    <div class="newsletter-state">Start typing to search across Logistics, Research, Relations &amp; Media.</div>
-  </div>
-</div>
+<!-- Everything below the header fades on language switch -->
+<div class="fade-region" id="fadeRegion">
 
-<!-- BURGER MENU PANEL -->
-<nav class="burger-menu" id="burgerMenu" aria-label="Main menu">
-  <div class="menu-account">
-    <button class="menu-account-signed-out" id="acctSignedOut" type="button" onclick="window.location.href='login.html'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Sign in
-    </button>
-    <div class="menu-account-signed-in" id="acctSignedIn">
-      <div class="account-pfp" id="acctPfp">–</div>
-      <div class="account-stats">
-        <span class="account-name" id="acctName">–</span>
-        <span class="account-substat" id="acctSubstat">–</span>
+  <!-- HERO -->
+  <section class="hero">
+    <h1 data-en="Apply to MedicineBank Media" data-ar="التقديم على قسم الميديا">التقديم على قسم الميديا</h1>
+    <p data-en="Content creation, script writing, directing, cinematography, filmography, PopScience prep, presenting, and voice-over. Tell us who you are and where you'd fit." data-ar="صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك وفين ممكن تناسب.">صناعة محتوى، كتابة سكريبت، إخراج، تصوير سينمائي، فيلموغرافيا، إعداد PopScience، تقديم، وتعليق صوتي. عرّفنا على نفسك وفين ممكن تناسب.</p>
+  </section>
+
+  <!-- FORM -->
+  <section class="form-section">
+    <div class="form-wrap">
+
+      <form id="applyForm" novalidate>
+
+        <div class="submit-error" id="submitError" data-en="Something went wrong sending your application. Please check your connection and try again." data-ar="حصلت مشكلة في إرسال طلبك. تأكد من الاتصال بالإنترنت وحاول تاني.">حصلت مشكلة في إرسال طلبك. تأكد من الاتصال بالإنترنت وحاول تاني.</div>
+
+        <!-- ── BASIC INFO (collapses automatically once valid) ── -->
+        <div id="basicInfoSection">
+
+          <div class="summary-bar" id="summaryBar">
+            <span class="summary-bar-text" id="summaryBarText"></span>
+            <button type="button" class="summary-edit-btn" id="summaryEditBtn" data-en="Edit" data-ar="تعديل">تعديل</button>
+          </div>
+
+          <div id="basicInfoFields">
+
+            <div class="field-row">
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="fullName"><span data-en="Full name" data-ar="الاسم بالكامل">الاسم بالكامل</span><span class="req">*</span></label>
+                <input type="text" id="fullName" name="fullName" data-ph-en="No funny nicknames" data-ph-ar="بلاش اسامي شهرة الله يخليك" placeholder="بلاش اسامي شهرة الله يخليك" />
+                <div class="error-msg" data-en="Please enter your name." data-ar="من فضلك اكتب اسمك.">من فضلك اكتب اسمك.</div>
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="college"><span data-en="College" data-ar="الكلية">الكلية</span><span class="req">*</span></label>
+                <input type="text" id="college" name="university" data-ph-en="e.g. Faculty of Medicine" data-ph-ar="مثال: كلية الطب" placeholder="مثال: كلية الطب" />
+                <div class="error-msg" data-en="Please enter your college." data-ar="من فضلك اكتب كليتك.">من فضلك اكتب كليتك.</div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="email"><span data-en="Email" data-ar="البريد الإلكتروني">البريد الإلكتروني</span><span class="req">*</span></label>
+                <input type="email" id="email" name="email" data-ph-en="you@example.com" data-ph-ar="you@example.com" placeholder="you@example.com" />
+                <div class="error-msg" data-en="Please enter a valid email." data-ar="من فضلك اكتب بريد إلكتروني صحيح.">من فضلك اكتب بريد إلكتروني صحيح.</div>
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="phone"><span data-en="Phone / WhatsApp" data-ar="رقم الهاتف / واتساب">رقم الهاتف / واتساب</span><span class="req">*</span></label>
+                <input type="tel" id="phone" name="phone" data-ph-en="+20 1xx xxx xxxx" data-ph-ar="+20 1xx xxx xxxx" placeholder="+20 1xx xxx xxxx" />
+                <div class="error-msg" data-en="Please enter a phone number." data-ar="من فضلك اكتب رقم هاتف.">من فضلك اكتب رقم هاتف.</div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="city"><span data-en="City" data-ar="المدينة">المدينة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+                <input type="text" id="city" name="city" data-ph-en="e.g. Mansoura" data-ph-ar="مثال: المنصورة" placeholder="مثال: المنصورة" />
+              </div>
+              <div class="field-group" data-required="true">
+                <label class="field-label" for="year"><span data-en="Academic year" data-ar="السنة الدراسية">السنة الدراسية</span><span class="req">*</span></label>
+                <select id="year" name="year">
+                  <option value="" selected disabled data-en="Select year" data-ar="اختر السنة">اختر السنة</option>
+                  <option data-en="1st year" data-ar="الفرقة الأولى">الفرقة الأولى</option>
+                  <option data-en="2nd year" data-ar="الفرقة الثانية">الفرقة الثانية</option>
+                  <option data-en="3rd year" data-ar="الفرقة الثالثة">الفرقة الثالثة</option>
+                  <option data-en="4th year" data-ar="الفرقة الرابعة">الفرقة الرابعة</option>
+                  <option data-en="5th year" data-ar="الفرقة الخامسة">الفرقة الخامسة</option>
+                  <option data-en="6th year / Intern" data-ar="الفرقة السادسة / امتياز">الفرقة السادسة / امتياز</option>
+                </select>
+                <div class="error-msg" data-en="Please select your academic year." data-ar="من فضلك اختر سنتك الدراسية.">من فضلك اختر سنتك الدراسية.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── APPLICATION DETAILS ── -->
+        <div id="detailsSection">
+
+          <!-- Roles -->
+          <div class="field-group" data-required="true" id="roleGroup">
+            <label class="field-label"><span data-en="Which role(s) interest you?" data-ar="أنهي مجال/مجالات مهتم بيها؟">أنهي مجال/مجالات مهتم بيها؟</span><span class="req">*</span></label>
+            <div class="role-checks" id="roleChecks">
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Content Creation" />
+                <span class="role-check-text">
+                  <strong data-en="Content Creation" data-ar="صناعة محتوى">صناعة محتوى</strong>
+                  <span class="desc" data-en="Ideas, formats, series" data-ar="أفكار، فورمات، سلاسل حلقات">أفكار، فورمات، سلاسل حلقات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Script Writing" />
+                <span class="role-check-text">
+                  <strong data-en="Script Writing" data-ar="كتابة سكريبت">كتابة سكريبت</strong>
+                  <span class="desc" data-en="Episode & video scripts" data-ar="سكريبتات الحلقات والفيديوهات">سكريبتات الحلقات والفيديوهات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Directing" />
+                <span class="role-check-text">
+                  <strong data-en="Directing" data-ar="إخراج">إخراج</strong>
+                  <span class="desc" data-en="Shot-calling, pacing, tone" data-ar="اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة">اتخاذ القرارات الإخراجية، الإيقاع، النبرة العامة</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Cinematography" />
+                <span class="role-check-text">
+                  <strong data-en="Cinematography" data-ar="تصوير سينمائي">تصوير سينمائي</strong>
+                  <span class="desc" data-en="Camera work, lighting" data-ar="التصوير بالكاميرا والإضاءة">التصوير بالكاميرا والإضاءة</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Filmography" />
+                <span class="role-check-text">
+                  <strong data-en="Filmography" data-ar="فيلموغرافيا">فيلموغرافيا</strong>
+                  <span class="desc" data-en="Filming & editing footage" data-ar="تصوير ومونتاج اللقطات">تصوير ومونتاج اللقطات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="PopScience Prep" />
+                <span class="role-check-text">
+                  <strong>PopScience Prep</strong>
+                  <span class="desc" data-en="Research & fact-checking" data-ar="بحث وتدقيق المعلومات">بحث وتدقيق المعلومات</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Presenting" />
+                <span class="role-check-text">
+                  <strong data-en="Presenting" data-ar="تقديم">تقديم</strong>
+                  <span class="desc" data-en="On-camera hosting" data-ar="التقديم أمام الكاميرا">التقديم أمام الكاميرا</span>
+                </span>
+              </label>
+              <label class="role-check">
+                <input type="checkbox" name="roles" value="Voice-Over" />
+                <span class="role-check-text">
+                  <strong data-en="Voice-Over" data-ar="تعليق صوتي">تعليق صوتي</strong>
+                  <span class="desc" data-en="Narration & audio" data-ar="السرد الصوتي والأوديو">السرد الصوتي والأوديو</span>
+                </span>
+              </label>
+            </div>
+            <div class="error-msg" id="roleError" data-en="Please select at least one role." data-ar="من فضلك اختر مجال واحد على الأقل.">من فضلك اختر مجال واحد على الأقل.</div>
+          </div>
+
+          <!-- Experience level -->
+          <div class="field-group">
+            <label class="field-label"><span data-en="Experience level" data-ar="مستوى الخبرة">مستوى الخبرة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+            <div class="radio-row" id="expRow">
+              <label class="radio-pill"><input type="radio" name="experience" value="New to this" /><span data-en="New to this" data-ar="لسه بادئ">لسه بادئ</span></label>
+              <label class="radio-pill"><input type="radio" name="experience" value="Some experience" /><span data-en="Some experience" data-ar="عندي خبرة بسيطة">عندي خبرة بسيطة</span></label>
+              <label class="radio-pill"><input type="radio" name="experience" value="Experienced" /><span data-en="Experienced" data-ar="عندي خبرة">عندي خبرة</span></label>
+            </div>
+          </div>
+
+          <!-- Portfolio -->
+          <div class="field-group">
+            <label class="field-label" for="portfolio"><span data-en="Portfolio / sample work link" data-ar="رابط أعمالك السابقة">رابط أعمالك السابقة</span><span class="opt" data-en="(optional)" data-ar="(اختياري)">(اختياري)</span></label>
+            <input type="url" id="portfolio" name="portfolio" data-ph-en="YouTube, Drive, Instagram, anything showing your work" data-ph-ar="حط هنا لينكات اي محتوى اشتغلت عليه قبل كدا" placeholder="حط هنا لينك اي محتوى اشتغلت عليه قبل كدا" />
+            <div class="field-hint" data-en="No polished portfolio yet? Leave it blank — we care more about the answer below." data-ar="لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.">لسه معندكش أعمال جاهزة؟ سيبها فاضية، إحنا مهتمين أكتر بالإجابة اللي تحت.</div>
+          </div>
+
+          <!-- Why -->
+          <div class="field-group" data-required="true">
+            <label class="field-label" for="why"><span data-en="Why do you want to join Media?" data-ar="ليه عايز تنضم لقسم الميديا؟">ليه عايز تنضم لقسم الميديا؟</span><span class="req">*</span></label>
+            <textarea id="why" name="why" maxlength="600" data-ph-en="Tell us what draws you to this — a project you're proud of, a gap you want to fill, anything real." data-ph-ar="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تقدمها." placeholder="قولنا إيه اللي جذبك للموضوع ده، مشروع فخور بيه، أو حاجة حابب تقدمها."></textarea>
+            <div class="char-count"><span id="whyCount">0</span>/600</div>
+            <div class="error-msg" data-en="Tell us a bit about why you're applying." data-ar="قولنا كام كلمة ليه بتقدم.">قولنا كام كلمة ليه بتقدم.</div>
+          </div>
+
+          <div class="consent-group" id="consentGroup">
+            <div class="consent-row" id="consentRow">
+              <input type="checkbox" id="consent" name="consent" />
+              <label for="consent"><span data-en="I'm okay with MedicineBank Media contacting me by email or phone about this application." data-ar="موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.">موافق إن قسم الميديا في MedicineBank يتواصل معايا بالإيميل أو الهاتف بخصوص التقديم ده.</span><span class="req">*</span></label>
+            </div>
+            <div class="error-msg" id="consentError" data-en="You need to agree to be contacted before submitting." data-ar="لازم توافق إن يتم التواصل معاك قبل ما تقدر تبعت الطلب.">لازم توافق إن يتم التواصل معاك قبل ما تقدر تبعت الطلب.</div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn" data-en="Submit application" data-ar="إرسال التقديم">إرسال التقديم</button>
+          <p class="form-footnote" data-en="Applications are reviewed on a rolling basis." data-ar="بيتم مراجعة الطلبات أول بأول.">بيتم مراجعة الطلبات أول بأول.</p>
+
+        </div>
+
+      </form>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-panel" id="successPanel">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h2 data-en="Application received" data-ar="تم استلام طلبك">تم استلام طلبك</h2>
+        <p data-en="Thanks for applying to MedicineBank Media — we've got it. Someone from the team will reach out by email or phone once applications are reviewed." data-ar="شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.">شكرًا لتقديمك لقسم الميديا في MedicineBank، طلبك وصلنا. هيتم التواصل معاك بالإيميل أو الهاتف بعد مراجعة الطلبات.</p>
+        <button class="btn-secondary" id="resetBtn" data-en="Submit another response" data-ar="إرسال طلب تاني">إرسال طلب تاني</button>
       </div>
+
     </div>
-  </div>
+  </section>
 
-  <div class="menu-section-label">Appearance</div>
-  <div class="theme-toggle-row">
-    <button class="theme-pill" data-theme="theme-light" type="button">Light</button>
-    <button class="theme-pill" data-theme="theme-dark" type="button">Dark</button>
-  </div>
-  <hr />
-
-  <a href="#newsletter" class="nav-link" data-target="newsletter">Newsletter</a>
-  <a href="#" onclick="window.location.href='profile.html'; return false;">My Profile</a>
-  <a href="#" onclick="window.location.href='saved.html'; return false;">Saved Articles</a>
-  <hr />
-
-  <div class="menu-section-label">Quick Links</div>
-  <a class="menu-quicklink" href="#" onclick="window.location.href='membership.html'; return false;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Membership
-  </a>
-  <a class="menu-quicklink" href="#" onclick="window.location.href='calendar.html'; return false;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-    Calendar
-  </a>
-  <a class="menu-quicklink" href="#" onclick="window.location.href='scope.html'; return false;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-    Scope
-  </a>
-  <hr />
-
-  <a href="#" onclick="window.location.href='about.html'; return false;">About Us</a>
-  <a href="mailto:eyadd@icloud.com">Contact</a>
-  <a href="#" onclick="window.location.href='settings.html'; return false;">Settings</a>
-</nav>
-
-<!-- SECONDARY NAV — static (no swipe), sector tabs centered as an
-     even-width group so none sits pinned to an edge. -->
-<nav class="secondary-nav" id="secondary-nav" aria-label="Sectors">
-  <ul>
-    <li><a class="sector-tab log" href="https://logistics.medicinebank.org">Logistics</a></li>
-    <li><a class="sector-tab res" href="https://research.medicinebank.org">Research</a></li>
-    <li><a class="sector-tab rel" href="https://relations.medicinebank.org">Relations</a></li>
-    <li><a class="sector-tab med" href="https://media.medicinebank.org">Media</a></li>
-  </ul>
-</nav>
-
-<!-- HERO — welcoming header block above the newsletter. Populated at
-     runtime from article id 40914: its title/content become the hero
-     title + dek, and its first image (if any) becomes the full-bleed
-     hero image. Hidden until that article loads successfully. -->
-<section class="hero-block" id="heroBlock" style="display:none;">
-  <p class="hero-eyebrow">MedicineBank Initiative</p>
-  <div class="hero-image-wrap" id="heroImageWrap" style="display:none;">
-    <img id="heroImage" src="" alt="" />
-  </div>
-  <div class="hero-body">
-    <h1 class="hero-title" id="heroTitle">Welcome to MedicineBank</h1>
-    <p class="hero-dek" id="heroDek">Loading…</p>
-    <div class="hero-meta" id="heroMeta"></div>
-    <span class="hero-cta" id="heroCta">Read the full story →</span>
-  </div>
-</section>
-
-<!-- NEWSLETTER -->
-<section id="newsletter">
-  <div class="inner">
-    <div class="section-header">
-      <p class="label-tag">From MedicineBank</p>
-      <h2 class="section-title">Newsletter & Articles</h2>
-    </div>
-    <div class="newsletter-stack" id="newsletterStack">
-      <div class="newsletter-state" id="newsletterState">Loading articles…</div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer id="contact">
-  <div class="footer-inner">
-    <div>
-      <div class="footer-logo">
-        <img src="IMG_3083.png" alt="MedicineBank" />
-      </div>
-      <p class="footer-desc">A student-driven foundation fostering academic excellence, research innovation, and global connectivity — serving medical students across Egypt and the Arab region.</p>
-      <p class="footer-accred">Accredited by Mansoura National University · March 2026</p>
-    </div>
-    <div>
-      <p class="footer-col-title">Follow Us</p>
-      <div class="social-icons">
-        <a href="https://www.instagram.com/medicinebank.in?igsh=MXUzdmx6YXM3cW1xeQ==" target="_blank" class="social-icon" aria-label="Instagram">
-          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.332 3.608 1.308.975.975 1.245 2.242 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.332 2.633-1.308 3.608-.975.975-2.242 1.245-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.332-3.608-1.308C2.495 19.483 2.225 18.216 2.163 16.85 2.105 15.584 2.093 15.204 2.093 12s.012-3.584.07-4.85c.062-1.366.332-2.633 1.308-3.608C4.446 2.495 5.713 2.225 7.079 2.163 8.345 2.105 8.725 2.093 12 2.093zm0-2.163C8.741 0 8.332.013 7.052.072 5.197.157 3.355.673 1.998 2.03.641 3.387.125 5.229.04 7.084-.019 8.364 0 8.773 0 12c0 3.227.013 3.636.072 4.916.085 1.855.601 3.697 1.958 5.054 1.357 1.357 3.199 1.873 5.054 1.958C8.364 23.987 8.773 24 12 24c3.227 0 3.636-.013 4.916-.072 1.855-.085 3.697-.601 5.054-1.958 1.357-1.357 1.873-3.199 1.958-5.054.059-1.28.072-1.689.072-4.916 0-3.227-.013-3.636-.072-4.916-.085-1.855-.601-3.697-1.958-5.054C20.613.673 18.771.157 16.916.072 15.636.013 15.227 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
-        </a>
-        <a href="https://www.linkedin.com/company/medicinebank/" target="_blank" class="social-icon" aria-label="LinkedIn">
-          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-        </a>
-        <a href="https://discord.gg/jsY3mGPKC4" target="_blank" class="social-icon" aria-label="Discord">
-          <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-        </a>
-        <a href="https://youtube.com/@medicinebank.initiative?si=7f8DzbPTSvQMQuYL" target="_blank" class="social-icon" aria-label="YouTube">
-          <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-        </a>
-      </div>
-    </div>
-  </div>
-  <hr class="footer-divider" />
-  <div class="footer-bottom">
-    <span>© 2026 MedicineBank Initiative</span>
-    <span>Dakahlia, Egypt</span>
-    <a href="mailto:eyadd@icloud.com">Contact Us</a>
-  </div>
-</footer>
+</div><!-- /fade-region -->
 
 <script>
-  const SUPABASE_URL = 'https://ltxgafwywkdcxdlobcah.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0eGdhZnd5d2tkY3hkbG9iY2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MjU3NzUsImV4cCI6MjEwMDUwMTc3NX0.CR-FvlL1HODWjsD7VrZkWQvg_pEasIhPQBXbSHbbNoE';
+  const form = document.getElementById('applyForm');
+  const successPanel = document.getElementById('successPanel');
+  const resetBtn = document.getElementById('resetBtn');
+  const htmlEl = document.documentElement;
+  const fadeRegion = document.getElementById('fadeRegion');
+  const submitBtn = document.getElementById('submitBtn');
+  const submitError = document.getElementById('submitError');
 
-  const ARTICLES_TABLE = 'articles';
+  // Formspree endpoint for MedicineBank Media applications
+  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xwlkpgvp';
 
-  // shortLabel: 3-letter rubric shown on cards (RES/MED/LOG/REL).
-  // Relations recolored to champagne — colorVar now points at
-  // --champagne instead of --orange.
-  const LIBRARY_META = {
-    888: { label: 'Media',      shortLabel: 'MED', colorVar: '--burg'      },
-    777: { label: 'Research',   shortLabel: 'RES', colorVar: '--blue'      },
-    555: { label: 'Logistics',  shortLabel: 'LOG', colorVar: '--champ'     },
-    444: { label: 'Relations',  shortLabel: 'REL', colorVar: '--champagne' },
-  };
-  const LIBRARY_IDS = Object.keys(LIBRARY_META).map(Number);
+  let currentLang = 'ar';
 
-  // Article that feeds the hero welcome block at the top of the page.
-  const HERO_ARTICLE_ID = 40914;
+  /* ── Language toggle with fade ── */
+  const langButtons = document.querySelectorAll('.lang-toggle button');
 
-  let sbClient = null;
-  function getSupabaseClient() {
-    if (sbClient) return sbClient;
-    if (!window.supabase) return null;
-    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return sbClient;
+  function applyLangText(lang) {
+    htmlEl.setAttribute('lang', lang);
+    htmlEl.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    langButtons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const text = lang === 'ar' ? el.dataset.ar : el.dataset.en;
+      if (text != null) el.textContent = text;
+    });
+    document.querySelectorAll('[data-ph-en]').forEach(el => {
+      const ph = lang === 'ar' ? el.dataset.phAr : el.dataset.phEn;
+      if (ph != null) el.setAttribute('placeholder', ph);
+    });
+
+    // re-render dynamic summary bar text in the new language, if visible
+    updateSummaryBar();
   }
 
-  function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function setLang(lang) {
+    if (lang === currentLang) return;
+    currentLang = lang;
+
+    fadeRegion.classList.add('fading');
+    window.setTimeout(() => {
+      applyLangText(lang);
+      fadeRegion.classList.remove('fading');
+    }, 150);
   }
 
-  function formatDate(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d)) return '';
-    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  langButtons.forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+
+  /* ── role checkbox ── */
+  document.querySelectorAll('.role-check input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => clearFieldError(document.getElementById('roleGroup')));
+  });
+
+  /* ── experience pill visual state ── */
+  document.querySelectorAll('#expRow .radio-pill').forEach(pill => {
+    const radio = pill.querySelector('input[type="radio"]');
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('#expRow .radio-pill').forEach(p => p.classList.remove('checked'));
+      pill.classList.add('checked');
+    });
+  });
+
+  /* ── consent checkbox ── */
+  const consentField = document.getElementById('consent');
+  const consentRow = document.getElementById('consentRow');
+  const consentGroup = document.getElementById('consentGroup');
+  consentField.addEventListener('change', () => clearConsentError());
+
+  function clearConsentError() {
+    consentRow.classList.remove('invalid');
+    const err = consentGroup.querySelector('.error-msg');
+    if (err) err.classList.remove('show');
+  }
+  function setConsentError() {
+    consentRow.classList.add('invalid');
+    const err = consentGroup.querySelector('.error-msg');
+    if (err) err.classList.add('show');
   }
 
-  function formatCompactNumber(n) {
-    n = n || 0;
-    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
+  /* ── char counter ── */
+  const whyField = document.getElementById('why');
+  const whyCount = document.getElementById('whyCount');
+  whyField.addEventListener('input', () => { whyCount.textContent = whyField.value.length; });
+
+  function clearFieldError(group) {
+    group.classList.remove('invalid');
+    const err = group.querySelector('.error-msg');
+    if (err) err.classList.remove('show');
+  }
+  function setFieldError(group) {
+    group.classList.add('invalid');
+    const err = group.querySelector('.error-msg');
+    if (err) err.classList.add('show');
   }
 
-  const burgerBtn = document.getElementById('burgerBtn');
-  const burgerMenu = document.getElementById('burgerMenu');
-  const searchBtn = document.getElementById('searchBtn');
-  const searchOverlay = document.getElementById('searchOverlay');
-  const searchCloseBtn = document.getElementById('searchCloseBtn');
-  const searchInput = document.getElementById('searchInput');
-  const searchResults = document.getElementById('searchResults');
+  form.querySelectorAll('#basicInfoFields [data-required] input, #basicInfoFields [data-required] select').forEach(() => {});
 
-  function isMenuOpen() { return burgerMenu.classList.contains('open'); }
-  function isSearchOpen() { return searchOverlay.classList.contains('open'); }
-  function syncBodyLock() {
-    document.body.classList.toggle('menu-open', isMenuOpen() || isSearchOpen());
+  const basicRequiredNames = ['fullName', 'university', 'email', 'phone', 'year'];
+
+  function basicInfoIsValid() {
+    return basicRequiredNames.every(name => {
+      const el = form.elements[name];
+      let ok = el.value.trim().length > 0;
+      if (name === 'email' && ok) ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+      return ok;
+    });
   }
 
-  let _allowedMapPromise = null;
-  function getAllowedArticleMap() {
-    if (_allowedMapPromise) return _allowedMapPromise;
-    _allowedMapPromise = (async () => {
-      const client = getSupabaseClient();
-      const map = new Map();
-      if (!client) return map;
-      try {
-        const { data, error } = await client
-          .from('playlist_items')
-          .select('article_id,playlist_id')
-          .in('playlist_id', LIBRARY_IDS);
-        if (error) throw error;
-        (data || []).forEach(row => {
-          if (!map.has(row.article_id)) map.set(row.article_id, new Set());
-          map.get(row.article_id).add(row.playlist_id);
-        });
-      } catch (err) {
-        console.error('Library lookup failed:', err);
+  function validateBasicField(el) {
+    const group = el.closest('.field-group');
+    let ok = el.value.trim().length > 0;
+    if (el.name === 'email' && ok) ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+    if (ok) clearFieldError(group); else setFieldError(group);
+    return ok;
+  }
+
+  // clear-on-input for basic fields, plus check for auto-collapse
+  basicRequiredNames.forEach(name => {
+    const el = form.elements[name];
+    const evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(evt, () => {
+      clearFieldError(el.closest('.field-group'));
+      maybeAutoCollapse();
+    });
+  });
+
+  const basicInfoFields = document.getElementById('basicInfoFields');
+  const summaryBar = document.getElementById('summaryBar');
+  const summaryBarText = document.getElementById('summaryBarText');
+  const summaryEditBtn = document.getElementById('summaryEditBtn');
+
+  let basicInfoCollapsed = false;
+  let userReopened = false; // once reopened manually, don't auto-recollapse while editing
+
+  function updateSummaryBar() {
+    if (!basicInfoCollapsed) return;
+    const name = form.fullName.value.trim();
+    const college = form.university.value.trim();
+    const label = currentLang === 'ar'
+      ? `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(college)}`
+      : `<strong>${escapeHtml(name)}</strong> — ${escapeHtml(college)}`;
+    summaryBarText.innerHTML = label;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function collapseBasicInfo() {
+    basicInfoCollapsed = true;
+    basicInfoFields.classList.add('collapsed');
+    summaryBar.classList.add('show');
+    updateSummaryBar();
+  }
+
+  function expandBasicInfo() {
+    basicInfoCollapsed = false;
+    userReopened = true;
+    basicInfoFields.classList.remove('collapsed');
+    summaryBar.classList.remove('show');
+  }
+
+  function maybeAutoCollapse() {
+    if (basicInfoCollapsed || userReopened) return;
+    if (basicInfoIsValid()) {
+      collapseBasicInfo();
+    }
+  }
+
+  summaryEditBtn.addEventListener('click', expandBasicInfo);
+
+  /* ── submit ── */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    let valid = true;
+
+    submitError.classList.remove('show');
+
+    // basic info fields — validate regardless of collapsed state
+    basicRequiredNames.forEach(name => {
+      const el = form.elements[name];
+      if (!validateBasicField(el)) valid = false;
+    });
+
+    // why field
+    const whyGroup = whyField.closest('.field-group');
+    if (whyField.value.trim().length === 0) { setFieldError(whyGroup); valid = false; }
+    else clearFieldError(whyGroup);
+
+    // roles
+    const roleGroup = document.getElementById('roleGroup');
+    const anyRole = Array.from(form.querySelectorAll('input[name="roles"]')).some(cb => cb.checked);
+    if (!anyRole) { setFieldError(roleGroup); valid = false; }
+    else clearFieldError(roleGroup);
+
+    // consent — required before an application can be sent
+    if (!consentField.checked) { setConsentError(); valid = false; }
+    else clearConsentError();
+
+    if (!valid) {
+      // if the invalid field lives in a collapsed basic-info section, reopen it first
+      const firstInvalid = form.querySelector('.field-group.invalid') || (consentRow.classList.contains('invalid') ? consentGroup : null);
+      if (firstInvalid && basicInfoFields.contains(firstInvalid) && basicInfoCollapsed) {
+        expandBasicInfo();
       }
-      return map;
-    })();
-    return _allowedMapPromise;
-  }
-
-  function sectorMetaForArticle(articleId, allowedMap) {
-    const libs = allowedMap.get(articleId);
-    if (!libs) return null;
-    for (const libId of LIBRARY_IDS) {
-      if (libs.has(libId)) return LIBRARY_META[libId];
-    }
-    return null;
-  }
-
-  async function enrichArticles(rawArticles) {
-    const client = getSupabaseClient();
-    if (!client || !rawArticles.length) {
-      return rawArticles.map(a => ({ ...a, authorName: 'Anonymous', authorPfp: null, imageUrl: null, commentCount: 0 }));
+      if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
 
-    const artIds = rawArticles.map(a => a.id);
-    const uids = [...new Set(rawArticles.map(a => a.firebase_user_id).filter(Boolean))];
+    const data = {
+      fullName: form.fullName.value.trim(),
+      college: form.university.value.trim(),
+      email: form.email.value.trim(),
+      phone: form.phone.value.trim(),
+      year: form.year.value,
+      city: form.city.value.trim(),
+      roles: Array.from(form.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value),
+      experience: form.experience.value || null,
+      portfolio: form.portfolio.value.trim(),
+      why: form.why.value.trim(),
+      consent: form.consent.checked
+    };
 
-    let usersByUid = {};
-    if (uids.length) {
-      const { data: users } = await client.from('users').select('firebase_uid,username,full_name,pfp').in('firebase_uid', uids);
-      (users || []).forEach(u => { usersByUid[u.firebase_uid] = u; });
-    }
+    // ── SUBMISSION HANDLER ──────────────────────────────────────────
+    // Sends the application to Formspree. Formspree emails you each
+    // submission and keeps a copy in your dashboard at formspree.io.
+    submitBtn.disabled = true;
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.textContent = currentLang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
 
-    let firstImageByArticle = {};
-    const { data: media } = await client
-      .from('media')
-      .select('article_id,url,type,display_order')
-      .in('article_id', artIds)
-      .eq('type', 'image')
-      .order('display_order', { ascending: true });
-    (media || []).forEach(m => {
-      if (!(m.article_id in firstImageByArticle)) firstImageByArticle[m.article_id] = m.url;
-    });
-
-    let commentCounts = {};
-    const { data: comments } = await client.from('comments').select('article_id').in('article_id', artIds);
-    (comments || []).forEach(c => { commentCounts[c.article_id] = (commentCounts[c.article_id] || 0) + 1; });
-
-    return rawArticles.map(a => {
-      const u = usersByUid[a.firebase_user_id];
-      return {
-        ...a,
-        authorName: u?.username ? '@' + u.username : (u?.full_name || 'Anonymous'),
-        authorPfp: u?.pfp || null,
-        imageUrl: firstImageByArticle[a.id] || null,
-        commentCount: commentCounts[a.id] || 0,
-      };
-    });
-  }
-
-  // Card markup: image ALWAYS first (full-bleed, no frame), text block
-  // ALWAYS after it in its own padded container — title/byline/excerpt
-  // are forced underneath the image, never beside or over it. No image
-  // = card starts straight at the text block.
-  function buildFeedCardHTML(article, sectorMeta) {
-    const initial = (article.authorName || '?').replace('@', '').charAt(0).toUpperCase();
-    const avatarHTML = article.authorPfp
-      ? '<img src="' + escHtml(article.authorPfp) + '" alt="" />'
-      : escHtml(initial);
-    const contentStr = typeof article.content === 'string' ? article.content : JSON.stringify(article.content || '');
-    const excerpt = contentStr.slice(0, 220);
-    const dateStr = formatDate(article.created_at);
-    const sectorHTML = sectorMeta
-      ? '<span class="feed-card-sector" style="background:var(' + sectorMeta.colorVar + ');">' + escHtml(sectorMeta.shortLabel) + '</span>'
-      : '';
-    const imageHTML = article.imageUrl
-      ? '<div class="feed-card-image"><img src="' + escHtml(article.imageUrl) + '" alt="" loading="lazy" /></div>'
-      : '';
-
-    return (
-      '<div class="feed-article-card" data-article-id="' + escHtml(String(article.id)) + '">' +
-        imageHTML +
-        '<div class="feed-card-body">' +
-          sectorHTML +
-          '<div class="feed-card-title">' + escHtml(article.title || '(Untitled)') + '</div>' +
-          '<div class="feed-card-header">' +
-            '<div class="feed-card-avatar">' + avatarHTML + '</div>' +
-            '<div class="feed-card-authorinfo">' +
-              '<span class="feed-card-author">' + escHtml(article.authorName) + '</span>' +
-              (dateStr ? '<span class="feed-card-date">' + escHtml(dateStr) + '</span>' : '') +
-            '</div>' +
-          '</div>' +
-          '<div class="feed-card-stats">' +
-            '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' + formatCompactNumber(article.views) + '</span>' +
-            '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 -7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + formatCompactNumber(article.likes) + '</span>' +
-            '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + formatCompactNumber(article.commentCount) + '</span>' +
-          '</div>' +
-          (excerpt ? '<div class="feed-card-excerpt">' + escHtml(excerpt) + '</div>' : '') +
-        '</div>' +
-      '</div>'
-    );
-  }
-
-  function wireFeedCardClicks(container) {
-    container.querySelectorAll('.feed-article-card').forEach(card => {
-      card.addEventListener('click', () => {
-        window.location.href = 'article.html?id=' + encodeURIComponent(card.dataset.articleId);
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Submit failed');
+        showSuccess();
+      })
+      .catch(err => {
+        console.error('Application submission error:', err);
+        submitError.classList.add('show');
+        submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
       });
-    });
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // HERO — pulls article id 40914 directly and uses its
-  // title/content/first-image to populate the welcome block above the
-  // newsletter. Stays hidden if the article can't be found so the page
-  // never shows a broken/empty hero.
-  // ══════════════════════════════════════════════════════════
-  async function loadHeroArticle() {
-    const heroBlock = document.getElementById('heroBlock');
-    const heroImageWrap = document.getElementById('heroImageWrap');
-    const heroImage = document.getElementById('heroImage');
-    const heroTitle = document.getElementById('heroTitle');
-    const heroDek = document.getElementById('heroDek');
-    const heroMeta = document.getElementById('heroMeta');
-    const heroCta = document.getElementById('heroCta');
-
-    const client = getSupabaseClient();
-    if (!client) return;
-
-    try {
-      const { data: article, error } = await client
-        .from(ARTICLES_TABLE)
-        .select('id,title,content,firebase_user_id,views,likes,created_at')
-        .eq('id', HERO_ARTICLE_ID)
-        .maybeSingle();
-      if (error) throw error;
-      if (!article) return;
-
-      const [enriched] = await enrichArticles([article]);
-
-      heroTitle.textContent = enriched.title || 'Welcome to MedicineBank';
-      const contentStr = typeof enriched.content === 'string' ? enriched.content : JSON.stringify(enriched.content || '');
-      heroDek.textContent = contentStr.slice(0, 260) || "Stay up to date with MedicineBank's work across Logistics, Research, Relations and Media.";
-
-      const dateStr = formatDate(enriched.created_at);
-      const metaParts = [];
-      if (enriched.authorName) metaParts.push(escHtml(enriched.authorName));
-      if (dateStr) metaParts.push(escHtml(dateStr));
-      heroMeta.innerHTML = metaParts.map(p => '<span>' + p + '</span>').join('');
-
-      if (enriched.imageUrl) {
-        heroImage.src = enriched.imageUrl;
-        heroImageWrap.style.display = 'block';
-      } else {
-        heroImageWrap.style.display = 'none';
-      }
-
-      heroCta.addEventListener('click', () => {
-        window.location.href = 'article.html?id=' + encodeURIComponent(enriched.id);
-      });
-
-      heroBlock.style.display = 'block';
-    } catch (err) {
-      console.error('Hero article load failed:', err);
-    }
-  }
-
-  async function loadNewsletterArticles() {
-    const stack = document.getElementById('newsletterStack');
-    const stateEl = document.getElementById('newsletterState');
-    const client = getSupabaseClient();
-
-    if (!client) {
-      stateEl.textContent = 'Unable to connect — check your connection and reload.';
-      stateEl.classList.add('is-error');
-      return;
-    }
-
-    try {
-      const allowedMap = await getAllowedArticleMap();
-      const articleIds = [...allowedMap.keys()];
-
-      if (!articleIds.length) {
-        stateEl.textContent = 'No articles yet.';
-        stateEl.classList.remove('is-error');
-        return;
-      }
-
-      const { data, error } = await client
-        .from(ARTICLES_TABLE)
-        .select('id,title,content,firebase_user_id,views,likes,created_at')
-        .in('id', articleIds)
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      if (error) throw error;
-
-      const articles = data || [];
-      if (articles.length === 0) {
-        stateEl.textContent = 'No articles yet.';
-        stateEl.classList.remove('is-error');
-        return;
-      }
-
-      const enriched = await enrichArticles(articles);
-      stack.innerHTML = enriched.map(a => buildFeedCardHTML(a, sectorMetaForArticle(a.id, allowedMap))).join('');
-      wireFeedCardClicks(stack);
-    } catch (err) {
-      console.error('Article load failed:', err);
-      stateEl.textContent = 'Could not load articles right now.';
-      stateEl.classList.add('is-error');
-    }
-  }
-
-  function sanitizeForIlike(term) {
-    return term.replace(/[,()%_]/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  function openSearch() {
-    closeBurgerMenu();
-    searchOverlay.classList.add('open');
-    searchBtn.setAttribute('aria-expanded', 'true');
-    syncBodyLock();
-    setTimeout(() => searchInput.focus(), 60);
-  }
-  function closeSearch() {
-    searchOverlay.classList.remove('open');
-    searchBtn.setAttribute('aria-expanded', 'false');
-    syncBodyLock();
-  }
-  searchBtn.addEventListener('click', () => { isSearchOpen() ? closeSearch() : openSearch(); });
-  searchCloseBtn.addEventListener('click', closeSearch);
-
-  let searchDebounceTimer = null;
-  searchInput.addEventListener('input', () => {
-    clearTimeout(searchDebounceTimer);
-    const raw = searchInput.value.trim();
-    if (!raw) {
-      searchResults.innerHTML = '<div class="newsletter-state">Start typing to search across Logistics, Research, Relations &amp; Media.</div>';
-      return;
-    }
-    searchResults.innerHTML = '<div class="newsletter-state">Searching…</div>';
-    searchDebounceTimer = setTimeout(() => runSearch(raw), 320);
+    // ─────────────────────────────────────────────────────────────────
   });
 
-  async function runSearch(term) {
-    const client = getSupabaseClient();
-    if (!client) {
-      searchResults.innerHTML = '<div class="newsletter-state is-error">Unable to connect — check your connection and reload.</div>';
-      return;
-    }
-    const safeTerm = sanitizeForIlike(term);
-    if (!safeTerm) {
-      searchResults.innerHTML = '<div class="newsletter-state">Keep typing to search.</div>';
-      return;
-    }
-    try {
-      const allowedMap = await getAllowedArticleMap();
-      const allowedIds = [...allowedMap.keys()];
-      if (!allowedIds.length) {
-        searchResults.innerHTML = '<div class="newsletter-state">No searchable articles available right now.</div>';
-        return;
-      }
-      const { data, error } = await client
-        .from(ARTICLES_TABLE)
-        .select('id,title,content,firebase_user_id,views,likes,created_at')
-        .in('id', allowedIds)
-        .or('title.ilike.%' + safeTerm + '%,content.ilike.%' + safeTerm + '%')
-        .order('created_at', { ascending: false })
-        .limit(25);
-      if (error) throw error;
-
-      const articles = data || [];
-      if (!articles.length) {
-        searchResults.innerHTML = '<div class="newsletter-state">No matching articles found.</div>';
-        return;
-      }
-      const enriched = await enrichArticles(articles);
-      searchResults.innerHTML = enriched.map(a => buildFeedCardHTML(a, sectorMetaForArticle(a.id, allowedMap))).join('');
-      wireFeedCardClicks(searchResults);
-    } catch (err) {
-      console.error('Search failed:', err);
-      searchResults.innerHTML = '<div class="newsletter-state is-error">Search failed — please try again.</div>';
-    }
+  function showSuccess() {
+    form.classList.add('hide');
+    successPanel.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async function handleAuthChange(user) {
-    const signedOutEl = document.getElementById('acctSignedOut');
-    const signedInEl = document.getElementById('acctSignedIn');
-    const pfpEl = document.getElementById('acctPfp');
-    const nameEl = document.getElementById('acctName');
-    const substatEl = document.getElementById('acctSubstat');
+  resetBtn.addEventListener('click', () => {
+    form.reset();
+    document.querySelectorAll('#expRow .radio-pill.checked').forEach(p => p.classList.remove('checked'));
+    whyCount.textContent = '0';
+    form.querySelectorAll('.field-group.invalid').forEach(g => clearFieldError(g));
+    clearConsentError();
+    successPanel.classList.remove('show');
+    form.classList.remove('hide');
+    submitError.classList.remove('show');
 
-    if (!user) {
-      signedOutEl.style.display = 'inline-flex';
-      signedInEl.classList.remove('visible');
-      return;
-    }
-
-    signedOutEl.style.display = 'none';
-    signedInEl.classList.add('visible');
-    signedInEl.onclick = () => { window.location.href = 'profile.html'; };
-
-    const client = getSupabaseClient();
-    let profile = null;
-    if (client) {
-      try {
-        const { data } = await client
-          .from('users')
-          .select('username,full_name,pfp')
-          .eq('firebase_uid', user.uid)
-          .maybeSingle();
-        profile = data;
-      } catch (err) {
-        console.warn('Profile lookup failed:', err);
-      }
-    }
-
-    const displayName = (profile && (profile.full_name || profile.username)) || user.displayName || (user.email ? user.email.split('@')[0] : 'Account');
-    nameEl.textContent = displayName;
-    substatEl.textContent = profile && profile.username ? '@' + profile.username : (user.email || '');
-
-    const pfpUrl = (profile && profile.pfp) || user.photoURL || null;
-    if (pfpUrl) {
-      pfpEl.innerHTML = '<img src="' + escHtml(pfpUrl) + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-    } else {
-      pfpEl.textContent = (displayName || '?').trim().charAt(0).toUpperCase();
-    }
-  }
-
-  window.addEventListener('mb-auth-changed', (e) => { handleAuthChange(e.detail.user); });
-
-  const THEME_KEY = 'mb_theme';
-  const THEME_CLASSES = ['theme-light', 'theme-dark'];
-
-  function applyTheme(themeClass) {
-    THEME_CLASSES.forEach(t => document.body.classList.remove(t));
-    document.body.classList.add(themeClass);
-    localStorage.setItem(THEME_KEY, themeClass);
-    syncThemePills();
-  }
-  function syncThemePills() {
-    const current = THEME_CLASSES.find(t => document.body.classList.contains(t)) || 'theme-light';
-    document.querySelectorAll('.theme-pill').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.theme === current);
-    });
-  }
-  document.querySelectorAll('.theme-pill').forEach(btn => {
-    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-  });
-
-  function openBurgerMenu() {
-    closeSearch();
-    burgerMenu.classList.add('open');
-    burgerBtn.classList.add('open');
-    burgerBtn.setAttribute('aria-expanded', 'true');
-    syncBodyLock();
-  }
-  function closeBurgerMenu() {
-    burgerMenu.classList.remove('open');
-    burgerBtn.classList.remove('open');
-    burgerBtn.setAttribute('aria-expanded', 'false');
-    syncBodyLock();
-  }
-  burgerBtn.addEventListener('click', () => { isMenuOpen() ? closeBurgerMenu() : openBurgerMenu(); });
-  document.addEventListener('click', (e) => {
-    if (isMenuOpen() && !burgerMenu.contains(e.target) && !burgerBtn.contains(e.target)) {
-      closeBurgerMenu();
-    }
-  });
-
-  function smoothScrollTo(targetId) {
-    const target = document.getElementById(targetId);
-    if (!target) return;
-    const headerH = document.querySelector('.site-header').offsetHeight;
-    const secondaryH = document.querySelector('.secondary-nav').offsetHeight;
-    const offset = headerH + secondaryH;
-    const top = target.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: 'smooth' });
-  }
-
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      smoothScrollTo(link.dataset.target);
-      closeBurgerMenu();
-    });
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    loadHeroArticle();
-    loadNewsletterArticles();
-    syncThemePills();
-
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(e) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) e.preventDefault();
-      lastTouchEnd = now;
-    }, { passive: false });
-
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // reset basic-info collapse state too
+    basicInfoCollapsed = false;
+    userReopened = false;
+    basicInfoFields.classList.remove('collapsed');
+    summaryBar.classList.remove('show');
   });
 </script>
 </body>
