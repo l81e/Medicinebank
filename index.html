@@ -320,10 +320,11 @@
        loadHeroArticle()). No eyebrow/label strip — the site header above
        it is the first thing on the page. Two layouts:
          1. No image: plain stacked title + subtext on the page background.
-         2. Has image: image fills the block, title + subtext sit
-            directly on top of it (overlay), readable via a dark
-            gradient scrim behind the text — not two separate stacked
-            pieces. ── */
+         2. Has image: the FULL image is shown uncropped (object-fit:
+            contain, no fixed/max height clipping it — important for
+            portrait/vertical images), and the title + subtext overlay
+            the TOP portion of the image via a dark gradient scrim
+            fading down from the top edge. ── */
     .hero-block { padding: 0; border-bottom: 1px solid var(--divider); position: relative; }
 
     /* Plain (no-image) layout */
@@ -331,24 +332,30 @@
     .hero-block.no-image .hero-title { color: var(--text-primary); }
     .hero-block.no-image .hero-dek { color: var(--text-secondary); }
 
-    /* Image-overlay layout */
+    /* Image-overlay layout — full image, nothing cropped */
     .hero-block.has-image { color: #fff; }
     .hero-block.has-image .hero-image-wrap {
-      width: 100%; margin: 0; background: var(--surface-alt-bg);
-      position: relative; min-height: 320px; max-height: 520px; overflow: hidden;
+      width: 100%; margin: 0;
+      background: var(--black);
+      position: relative;
+      display: flex;
     }
     .hero-block.has-image .hero-image-wrap img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      position: absolute; top: 0; left: 0;
+      width: 100%; height: auto; display: block;
+      object-fit: contain; /* shows the whole image, no cropping — a tall
+                               portrait photo just makes the block taller
+                               rather than losing its top/bottom */
     }
     .hero-block.has-image .hero-image-wrap::after {
       content: '';
       position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.75) 100%);
+      /* Scrim now fades from the TOP (where the text sits) down into
+         the clear middle/bottom of the image. */
+      background: linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0) 70%);
     }
     .hero-block.has-image .hero-body {
-      position: absolute; left: 0; right: 0; bottom: 0;
-      padding: 28px 40px 32px; max-width: 760px; z-index: 1;
+      position: absolute; top: 0; left: 0; right: 0;
+      padding: 28px 40px 40px; max-width: 760px; z-index: 1;
     }
     .hero-block.has-image .hero-title { color: #fff; }
     .hero-block.has-image .hero-dek { color: rgba(255,255,255,0.88); }
@@ -365,7 +372,7 @@
     }
     @media (max-width: 640px) {
       .hero-block.no-image .hero-body { padding: 28px 20px 32px; }
-      .hero-block.has-image .hero-body { padding: 20px 20px 24px; }
+      .hero-block.has-image .hero-body { padding: 20px 20px 28px; }
       .hero-title { font-size: 1.35rem; }
       .hero-dek { font-size: 0.9rem; }
     }
