@@ -2,46 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!--
-    VIEWPORT: user-scalable=no + maximum-scale=1 is what actually blocks
-    pinch-zoom and the iOS double-tap-to-zoom gesture. Kept exactly as
-    requested, but note for future-you: this also blocks legitimate
-    accessibility zoom for low-vision visitors, which is normally something
-    we'd flag rather than just ship. Doing it anyway since it was explicit.
-  -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>MedicineBank Initiative</title>
 
-  <!--
-    THEME-COLOR / STATUS BAR FIX (the "white shadow" issue):
-    The dark-fading-to-transparent band above the header in the screenshot
-    is Safari's own status-bar chrome rendering over the page, because the
-    page never claimed that region with real content. Two things fix it,
-    for a page opened normally in a Safari TAB (which is what the
-    screenshot shows — visible URL bar and tab chrome at the bottom):
-      1. theme-color below, so Safari tints its own UI to match instead of
-         defaulting to a translucent dark overlay.
-      2. The safe-area-inset-top padding added to .site-header in the CSS,
-         so the header's own solid black background physically extends up
-         under the notch/status bar, leaving no gap for Safari to shade.
-    Both are needed — theme-color alone doesn't help if there's still a gap
-    under the notch with nothing but page background behind it.
-
-    The two apple-mobile-web-app-* tags below are DIFFERENT and NOT part of
-    that fix: per Apple's docs, they only take effect once a page has been
-    added to the iOS home screen and launched as a standalone app — they do
-    nothing for a normal Safari-tab visit like this screenshot. Left in
-    here as a no-cost head start in case MedicineBank adds "Add to Home
-    Screen" support later; if that's never going to happen, they can be
-    deleted with no effect on the bug being fixed here.
-
-    NOTE (kept theme-invariant on purpose): the header, burger menu, search
-    overlay and footer all stay this same fixed dark chrome regardless of
-    the new light/dark content theme added below. That's deliberate — it
-    means there's only ever one header color to keep in sync with
-    theme-color above, not two, so this fix never has to be re-derived per
-    theme.
-  -->
   <meta name="theme-color" content="#0b0b0b" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -54,8 +17,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    // NOTE: same Firebase project as Patholytica's login page, reused as-is
-    // so a session started there is recognized here.
     const firebaseConfig = {
       apiKey: "AIzaSyBs6V0yY14cuLBXB1nciZ-X0eyAiodC-Ak",
       authDomain: "patholytica.firebaseapp.com",
@@ -94,6 +55,9 @@
       --blue-dark: #134a85;
       --champ:     #b8973a;
       --champ-dark:#9a7d2e;
+      /* Champagne token used for Logistics per request. */
+      --champagne:      #d9c48f;
+      --champagne-dark: #b8a06a;
       --burg:      #7d2040;
       --burg-dark: #621832;
       --orange:    #c4601a;
@@ -103,33 +67,9 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    html {
-      /* Belt-and-suspenders against the same translucent-overlay issue:
-         a solid black background behind everything means there's never a
-         moment (e.g. during elastic overscroll bounce) where Safari has
-         white/transparent page background to blend its chrome against.
-         Stays plain black (not theme-linked) because the header and
-         footer — the two things that actually border this overscroll
-         region — are themselves always black regardless of theme; see
-         the theme-token block on body below. */
-      background: var(--black);
-    }
+    html { background: var(--black); }
 
     body {
-      /*
-        THEME TOKENS — LIGHT (default), living directly on body so the
-        page still renders sensibly if JS never runs (no theme class ever
-        gets applied) instead of falling back to unset custom properties.
-        body.theme-light below just restates the same values so toggling
-        back from dark is a plain class swap, not a special case; body.
-        theme-dark overrides them for the dark variant.
-
-        SCOPE: only the main content region (the sector strip, the
-        newsletter section and its article cards, the general page
-        background) reads these tokens. The header, secondary nav, burger
-        menu, search overlay and footer are deliberately NOT theme-aware —
-        see the note on the theme-color meta tag above for why.
-      */
       --page-bg: var(--white);
       --surface-bg: #ffffff;
       --surface-alt-bg: var(--carbon-05);
@@ -139,10 +79,9 @@
       --divider: var(--carbon-20);
 
       font-family: 'Inter', sans-serif; background: var(--page-bg); color: var(--text-primary); line-height: 1.6;
-      /* Block iOS text-selection callout / long-press menu, per request */
       -webkit-user-select: none; user-select: none;
       -webkit-touch-callout: none;
-      touch-action: manipulation; /* removes the 300ms double-tap-to-zoom delay & double-tap zoom gesture on elements that don't need pinch/pan */
+      touch-action: manipulation;
       transition: background .2s ease, color .2s ease;
     }
     body.theme-light {
@@ -163,15 +102,12 @@
       --text-tertiary: #8e8e8e;
       --divider: #2b2b2b;
     }
-    /* Inputs still need to be selectable/editable to actually type into them */
     input, textarea { -webkit-user-select: text; user-select: text; }
 
     a { color: inherit; text-decoration: none; }
     ul { list-style: none; }
     button { font-family: inherit; }
 
-    /* Locks background scroll while the full-page menu or search overlay
-       is open — see syncBodyLock() in the script. */
     body.menu-open { overflow: hidden; }
 
     /* ── HEADER ── */
@@ -184,16 +120,11 @@
       position: sticky;
       top: 0;
       z-index: 1000;
-      /* height now = safe-area + the original 56px bar, so the black box
-         itself covers the notch/status bar instead of stopping below it */
       height: calc(var(--safe-top) + 56px);
     }
 
     .logo img { height: 28px; width: auto; display: block; }
 
-    /* ── HEADER RIGHT — search + burger only now. Sign-in/account status
-       moved into the burger menu (see .menu-account below); it no longer
-       has a header footprint at all. ── */
     .header-right { display: flex; align-items: center; gap: 10px; }
 
     .search-btn {
@@ -215,17 +146,7 @@
     .burger-btn.open span:nth-child(2) { opacity: 0; }
     .burger-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-    /* ── BURGER MENU — now a full-page panel filling the viewport
-       underneath the header, not a small top-right dropdown, so it has
-       room for the account area, the theme switcher, and the membership/
-       calendar/scope links that used to be their own strip (removed —
-       see the newsletter section further down for where that used to
-       sit).
-       z-index bumped from the previous 998 to 1000: the menu and
-       .secondary-nav both pin to the exact same top offset once the page
-       is scrolled, and a narrow corner panel mostly avoided that overlap
-       before — a full-width one won't, so it needs to win that stacking
-       order outright now. ── */
+    /* ── BURGER MENU ── */
     .burger-menu {
       position: fixed;
       top: calc(var(--safe-top) + 56px);
@@ -255,12 +176,6 @@
       color: var(--carbon-40); padding: 16px 24px 6px;
     }
 
-    /* ── MENU ACCOUNT AREA — the sign-in chip / signed-in pfp+stats that
-       used to sit in the header, moved in here wholesale. Same element
-       IDs as before (acctSignedOut / acctSignedIn / acctPfp / acctName /
-       acctSubstat), so handleAuthChange() in the script below needed no
-       changes at all — only the wrapping classes and sizing did, to fit
-       a full-page menu instead of a compact header chip. ── */
     .menu-account { padding: 20px 24px 16px; border-bottom: 1px solid var(--carbon-80); margin-bottom: 4px; }
     .menu-account-signed-out {
       display: inline-flex; align-items: center; gap: 9px;
@@ -286,7 +201,6 @@
     .account-name { font-size: 0.86rem; font-weight: 700; color: var(--white); }
     .account-substat { font-size: 0.72rem; color: var(--carbon-40); }
 
-    /* ── THEME SWITCHER (in-menu) ── */
     .theme-toggle-row { display: flex; gap: 8px; padding: 0 24px 18px; }
     .theme-pill {
       flex: 1; padding: 10px 0; border-radius: 2px;
@@ -297,22 +211,11 @@
     .theme-pill.active { background: var(--white); color: var(--black); border-color: var(--white); }
     .theme-pill:hover:not(.active) { border-color: var(--carbon-40); color: var(--white); }
 
-    /* ── MENU QUICK LINKS — Membership / Calendar / Scope, moved in from
-       the old .quicklinks strip that used to sit under the secondary
-       nav (removed entirely — see the markup for where it was). ── */
     .menu-quicklink { display: flex; align-items: center; gap: 12px; }
     .menu-quicklink svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--carbon-40); transition: color .15s; }
     .menu-quicklink:hover svg { color: var(--white); }
 
-    /* ── SEARCH ──
-       Full-page overlay below the header, same footprint and stacking
-       approach as the burger menu (one z-index level above it, since
-       opening either one always closes the other — see the script — but
-       keeping it strictly higher removes any ambiguity regardless).
-       Its card/state colors are forced dark via the local custom-property
-       overrides below, independent of body.theme-*, since this panel
-       always sits on the same fixed dark chrome as the header and menu,
-       never on the light-theme content background. ── */
+    /* ── SEARCH ── */
     .search-overlay {
       position: fixed;
       top: calc(var(--safe-top) + 56px);
@@ -360,34 +263,42 @@
     .search-close-btn:hover { background: rgba(255,255,255,0.14); }
     .search-results { display: flex; flex-direction: column; gap: 14px; }
 
-    /* ── SECONDARY NAV — "the gray strip under the header". Used to hold
-       a single in-page "Newsletter" tab; now holds the four sector
-       redirect links instead (the newsletter jump link lives in the
-       burger menu now, under "Newsletter"). Stays fixed dark chrome, not
-       theme-aware, same as the header/burger-menu/footer. ── */
+    /* ── SECONDARY NAV — static (no horizontal swipe/scroll), the four
+       sector tabs stretch evenly and are centered as a group so none is
+       pinned to the left or right edge. ── */
     .secondary-nav {
       background: var(--carbon-90);
       border-bottom: 1px solid var(--carbon-80);
-      overflow-x: auto;
-      white-space: nowrap;
+      overflow-x: hidden;
+      white-space: normal;
       position: sticky;
       top: calc(var(--safe-top) + 56px);
       z-index: 999;
     }
-    .secondary-nav ul { display: inline-flex; padding: 0 32px; }
+    .secondary-nav ul {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: nowrap;
+      padding: 0 12px;
+    }
+    .secondary-nav li { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
     .secondary-nav li a {
-      display: block;
-      padding: 12px 18px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 10px;
       font-size: 0.82rem;
       font-weight: 600;
       color: var(--carbon-30);
       transition: color .2s;
       border-bottom: 3px solid transparent;
+      text-align: center;
     }
     .secondary-nav li a:hover { color: var(--white); border-bottom-color: rgba(255,255,255,0.4); }
-    .secondary-nav li a.sector-tab { display: flex; align-items: center; gap: 7px; }
+    .secondary-nav li a.sector-tab { display: flex; align-items: center; justify-content: center; gap: 7px; }
     .secondary-nav li a.sector-tab::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .secondary-nav li a.sector-tab.log::before { background: var(--champ); }
+    .secondary-nav li a.sector-tab.log::before { background: var(--champagne); }
     .secondary-nav li a.sector-tab.res::before { background: var(--blue); }
     .secondary-nav li a.sector-tab.rel::before { background: var(--orange); }
     .secondary-nav li a.sector-tab.med::before { background: var(--burg); }
@@ -404,107 +315,126 @@
     }
     .section-title { font-size: 1.45rem; font-weight: 700; color: var(--text-primary); }
 
-    /* ── NEWSLETTER / FEED CARDS ──
-       Redesigned to match how these same articles look on Patholytica:
-       real author identity (avatar + name), view/like/comment counts,
-       and — the specific complaint being fixed — no fallback image box
-       when an article has no image. The old version always rendered a
-       fixed 200px thumbnail column with a "📰" placeholder even when
-       there was nothing to show; here the image block simply isn't in
-       the markup at all unless the article actually has one. This same
-       card (and the .newsletter-state loading/empty/error style below
-       it) is reused by the search overlay — see the --surface-bg etc.
-       overrides on .search-overlay above for how it stays readable there
-       regardless of the site's light/dark theme. ── */
-    .newsletter-stack { display: flex; flex-direction: column; gap: 16px; }
+    /* ── HERO — simple welcoming header block above the newsletter,
+       populated at runtime from article id 40914 (see
+       loadHeroArticle()). No eyebrow/label strip — the site header above
+       it is the first thing on the page. Two layouts:
+         1. No image: plain stacked title + subtext on the page background.
+         2. Has image: image fills the block, title + subtext sit
+            directly on top of it (overlay), readable via a dark
+            gradient scrim behind the text — not two separate stacked
+            pieces. ── */
+    .hero-block { padding: 0; border-bottom: 1px solid var(--divider); position: relative; }
+
+    /* Plain (no-image) layout */
+    .hero-block.no-image .hero-body { padding: 36px 40px 40px; max-width: 760px; }
+    .hero-block.no-image .hero-title { color: var(--text-primary); }
+    .hero-block.no-image .hero-dek { color: var(--text-secondary); }
+
+    /* Image-overlay layout */
+    .hero-block.has-image { color: #fff; }
+    .hero-block.has-image .hero-image-wrap {
+      width: 100%; margin: 0; background: var(--surface-alt-bg);
+      position: relative; min-height: 320px; max-height: 520px; overflow: hidden;
+    }
+    .hero-block.has-image .hero-image-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      position: absolute; top: 0; left: 0;
+    }
+    .hero-block.has-image .hero-image-wrap::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.75) 100%);
+    }
+    .hero-block.has-image .hero-body {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 28px 40px 32px; max-width: 760px; z-index: 1;
+    }
+    .hero-block.has-image .hero-title { color: #fff; }
+    .hero-block.has-image .hero-dek { color: rgba(255,255,255,0.88); }
+
+    .hero-title {
+      font-weight: 700;
+      font-size: 1.7rem;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+    .hero-dek {
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    @media (max-width: 640px) {
+      .hero-block.no-image .hero-body { padding: 28px 20px 32px; }
+      .hero-block.has-image .hero-body { padding: 20px 20px 24px; }
+      .hero-title { font-size: 1.35rem; }
+      .hero-dek { font-size: 0.9rem; }
+    }
+
+    /* ── NEWSLETTER / FEED CARDS — Washington-Post / academic-journal
+       editorial layout: full-bleed image on top (edge-to-edge on phones,
+       no border/radius framing), text block ALWAYS below it — sector
+       rubric, title, byline/date, stats, excerpt. No image = card skips
+       straight to the text block; text position never changes. Sector
+       tag is the short 3-letter form (RES/MED/LOG/REL). ── */
+    .newsletter-stack { display: flex; flex-direction: column; }
 
     .feed-article-card {
       background: var(--surface-bg);
-      border: 1px solid var(--divider);
-      border-radius: 8px;
-      padding: 20px 22px;
+      border: none;
+      border-bottom: 1px solid var(--divider);
       cursor: pointer;
-      transition: border-color .2s ease, background .2s ease;
+      transition: background .2s ease;
     }
-    .feed-article-card:hover { border-color: var(--text-tertiary); }
+    .feed-article-card:hover { background: var(--surface-alt-bg); }
     .feed-article-card:hover .feed-card-title { text-decoration: underline; }
 
-    .feed-card-header { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+    .feed-card-image { margin: 0; }
+    .feed-card-image img { width: 100%; max-height: 340px; object-fit: cover; display: block; }
+
+    .feed-card-body { padding: 18px 22px 24px; }
+
+    .feed-card-sector {
+      display: inline-block;
+      font-size: 0.66rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+      color: #fff; padding: 3px 9px; border-radius: 2px; margin-bottom: 10px;
+    }
+
+    .feed-card-title {
+      font-family: 'Merriweather', 'Inter', serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      line-height: 1.35;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .feed-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
     .feed-card-avatar {
-      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
       background: linear-gradient(135deg, var(--champ), var(--champ-dark));
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.78rem; font-weight: 700; color: #fff;
+      font-size: 0.7rem; font-weight: 700; color: #fff;
     }
     .feed-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .feed-card-authorinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
-    .feed-card-author { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-card-author { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .feed-card-date { font-size: 0.68rem; color: var(--text-tertiary); }
-    .feed-card-sector {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
-      color: #fff; padding: 3px 8px; border-radius: 2px; flex-shrink: 0;
-    }
-
-    .feed-card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); line-height: 1.35; margin-bottom: 10px; }
 
     .feed-card-stats { display: flex; gap: 16px; margin-bottom: 12px; }
     .feed-stat { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 600; color: var(--text-tertiary); }
     .feed-stat svg { width: 14px; height: 14px; }
 
-    .feed-card-image { margin-bottom: 12px; border-radius: 5px; overflow: hidden; }
-    .feed-card-image img { width: 100%; max-height: 260px; object-fit: cover; display: block; }
-
-    .feed-card-excerpt { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.7; }
+    .feed-card-excerpt {
+      font-family: 'Merriweather', 'Inter', serif;
+      font-size: 0.88rem; color: var(--text-secondary); line-height: 1.75;
+    }
 
     .newsletter-state {
       padding: 40px 0; text-align: center; color: var(--text-tertiary); font-size: 0.85rem;
     }
     .newsletter-state.is-error { color: var(--orange-dark); }
 
-    /* ── SECTOR STRIP ──
-       Unchanged in purpose: the four sector names linking out to their
-       subdomains. The secondary nav above now holds its own copy of
-       these same four links for quicker access, but that one stays fixed
-       dark chrome — this one is page content, so it follows the
-       light/dark toggle. */
-    .sector-strip {
-      background: var(--surface-alt-bg);
-      border-top: 1px solid var(--divider);
-      border-bottom: 1px solid var(--divider);
-    }
-    .sector-strip .inner {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      padding: 0;
-    }
-    .sector-strip-link {
-      display: flex; align-items: center; justify-content: center; gap: 9px;
-      padding: 20px 12px;
-      font-size: 0.82rem; font-weight: 700;
-      letter-spacing: 0.3px;
-      color: var(--text-secondary);
-      border-right: 1px solid var(--divider);
-      transition: background .2s, color .2s;
-      position: relative;
-    }
-    .sector-strip-link:last-child { border-right: none; }
-    .sector-strip-link::before {
-      content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-    .sector-strip-link.log::before { background: var(--champ); }
-    .sector-strip-link.res::before { background: var(--blue); }
-    .sector-strip-link.rel::before { background: var(--orange); }
-    .sector-strip-link.med::before { background: var(--burg); }
-    .sector-strip-link:hover { background: var(--surface-bg); color: var(--text-primary); }
-
-    @media (max-width: 640px) {
-      .sector-strip .inner { grid-template-columns: 1fr 1fr; }
-      .sector-strip-link { border-bottom: 1px solid var(--divider); }
-    }
-
-    /* ── FOOTER — forced black regardless of theme, per request. This one
-       does NOT read the theme tokens above, same as the header/menu/
-       search chrome. ── */
+    /* ── FOOTER ── */
     footer {
       background: var(--black);
       color: var(--white);
@@ -517,13 +447,6 @@
     @media (max-width: 720px) { .footer-inner { grid-template-columns: 1fr; } }
 
     .footer-logo { margin-bottom: 14px; }
-    /*
-      LOGO COLOR FIX, reverted: an earlier pass made the footer white and
-      dropped this invert filter so the (dark) logo mark would still read
-      against a light background. The footer is black again now, so the
-      invert needs to come back too, or the logo disappears (dark mark on
-      a black field).
-    */
     .footer-logo img { height: 26px; filter: brightness(0) invert(1); }
     .footer-desc { font-size: 0.83rem; color: var(--carbon-30); line-height: 1.7; margin-bottom: 20px; }
     .footer-accred { font-size: 0.75rem; color: var(--carbon-40); }
@@ -553,15 +476,16 @@
       section { padding: 48px 20px; }
       .site-header { padding-left: 20px; padding-right: 20px; }
       footer { padding: 48px 20px calc(24px + var(--safe-bottom)); }
+      /* Full-bleed images on phones: pull the image out of the section's
+         side padding so it spans the entire screen width edge-to-edge;
+         the text block below keeps its own inset via .feed-card-body. */
+      #newsletter { padding-left: 0; padding-right: 0; }
+      #newsletter .section-header { padding: 0 20px; }
     }
   </style>
 </head>
 <body>
 <script>
-  // Applied synchronously, before anything else in the body paints, so the
-  // saved theme is already in place by the time the page is visible —
-  // avoids a flash of the wrong theme while the main script further down
-  // (which needs the Supabase/Firebase SDKs to have loaded first) boots.
   (function () {
     var saved = localStorage.getItem('mb_theme');
     document.body.classList.add(saved === 'theme-dark' ? 'theme-dark' : 'theme-light');
@@ -584,10 +508,7 @@
   </div>
 </header>
 
-<!-- SEARCH OVERLAY — dynamically searches only articles belonging to the
-     same four "allowed" libraries the newsletter pulls from (see
-     LIBRARY_META / getAllowedArticleMap in the script), not the full
-     articles table. -->
+<!-- SEARCH OVERLAY -->
 <div class="search-overlay" id="searchOverlay">
   <div class="search-top">
     <div class="search-input-wrap">
@@ -603,11 +524,7 @@
   </div>
 </div>
 
-<!-- BURGER MENU PANEL — full page underneath the header. Holds the
-     account/sign-in area and theme switcher that used to live in the
-     header, plus the membership/calendar/scope links that used to be
-     their own strip (removed — see the newsletter section further
-     down for where it used to sit). -->
+<!-- BURGER MENU PANEL -->
 <nav class="burger-menu" id="burgerMenu" aria-label="Main menu">
   <div class="menu-account">
     <button class="menu-account-signed-out" id="acctSignedOut" type="button" onclick="window.location.href='login.html'">
@@ -655,9 +572,8 @@
   <a href="#" onclick="window.location.href='settings.html'; return false;">Settings</a>
 </nav>
 
-<!-- SECONDARY NAV — the strip directly under the header. Used to hold a
-     single "Newsletter" tab; now holds the four sector links instead
-     (the newsletter jump link moved into the burger menu above). -->
+<!-- SECONDARY NAV — static (no swipe), sector tabs centered as an
+     even-width group so none sits pinned to an edge. -->
 <nav class="secondary-nav" id="secondary-nav" aria-label="Sectors">
   <ul>
     <li><a class="sector-tab log" href="https://logistics.medicinebank.org">Logistics</a></li>
@@ -666,6 +582,22 @@
     <li><a class="sector-tab med" href="https://media.medicinebank.org">Media</a></li>
   </ul>
 </nav>
+
+<!-- HERO — simple welcoming header block, sitting right under the site
+     header (no separate label strip above it). Populated at runtime
+     from article id 40914: its title/content become the hero title +
+     subtext. If that article has an image, the title/subtext overlay
+     directly on top of it; otherwise they sit plainly on the page.
+     Hidden until the article loads successfully. -->
+<section class="hero-block no-image" id="heroBlock" style="display:none;">
+  <div class="hero-image-wrap" id="heroImageWrap" style="display:none;">
+    <img id="heroImage" src="" alt="" />
+  </div>
+  <div class="hero-body">
+    <h1 class="hero-title" id="heroTitle">Welcome to MedicineBank</h1>
+    <p class="hero-dek" id="heroDek">Loading…</p>
+  </div>
+</section>
 
 <!-- NEWSLETTER -->
 <section id="newsletter">
@@ -677,16 +609,6 @@
     <div class="newsletter-stack" id="newsletterStack">
       <div class="newsletter-state" id="newsletterState">Loading articles…</div>
     </div>
-  </div>
-</section>
-
-<!-- SECTOR STRIP -->
-<section class="sector-strip" style="padding:0;">
-  <div class="inner">
-    <a class="sector-strip-link log" href="https://logistics.medicinebank.org">Logistics</a>
-    <a class="sector-strip-link res" href="https://research.medicinebank.org">Research</a>
-    <a class="sector-strip-link rel" href="https://relations.medicinebank.org">Relations</a>
-    <a class="sector-strip-link med" href="https://media.medicinebank.org">Media</a>
   </div>
 </section>
 
@@ -727,39 +649,23 @@
 </footer>
 
 <script>
-  // ══════════════════════════════════════════════════════════
-  // SUPABASE CONFIG — Patholytica's URL + PUBLISHABLE (anon) key.
-  //
-  // IMPORTANT, read before deploying:
-  // This must be the ANON/PUBLISHABLE key, never the service role key.
-  // Patholytica's own Tag Studio admin tool uses the service role key
-  // because it's a local/trusted-admin-only page that intentionally
-  // bypasses row-level security — that key must never appear in a public
-  // page like this one, since anyone can read it from view-source and get
-  // full read/write access to every table with no RLS restriction.
-  // The anon key is safe here because Supabase enforces RLS policies
-  // against it — it can only do what your RLS rules allow (e.g. public
-  // SELECT on published articles), not everything.
-  //
-  // Drop in the real values here:
-  // ══════════════════════════════════════════════════════════
-  const SUPABASE_URL = 'https://ltxgafwywkdcxdlobcah.supabase.co'; // Patholytica project URL (from patholytica login page's supabase client)
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0eGdhZnd5d2tkY3hkbG9iY2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MjU3NzUsImV4cCI6MjEwMDUwMTc3NX0.CR-FvlL1HODWjsD7VrZkWQvg_pEasIhPQBXbSHbbNoE'; // ⚠️ anon key only — see note above. Find it in Supabase → Project Settings → API → "anon public" key.
+  const SUPABASE_URL = 'https://ltxgafwywkdcxdlobcah.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0eGdhZnd5d2tkY3hkbG9iY2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MjU3NzUsImV4cCI6MjEwMDUwMTc3NX0.CR-FvlL1HODWjsD7VrZkWQvg_pEasIhPQBXbSHbbNoE';
 
   const ARTICLES_TABLE = 'articles';
 
-  // The newsletter and the search box both draw ONLY from these four
-  // Patholytica libraries (playlists) — not from tags, and not from the
-  // full articles table. Membership in one of these is now what decides
-  // the sector shown on each card (previously read off a tag on the
-  // article row itself).
+  // shortLabel: 3-letter rubric shown on cards (RES/MED/LOG/REL).
+  // Logistics uses champagne, Relations uses orange.
   const LIBRARY_META = {
-    888: { label: 'Media',      colorVar: '--burg'   },
-    777: { label: 'Research',   colorVar: '--blue'   },
-    555: { label: 'Logistics',  colorVar: '--champ'  },
-    444: { label: 'Relations',  colorVar: '--orange' },
+    888: { label: 'Media',      shortLabel: 'MED', colorVar: '--burg'      },
+    777: { label: 'Research',   shortLabel: 'RES', colorVar: '--blue'      },
+    555: { label: 'Logistics',  shortLabel: 'LOG', colorVar: '--champagne' },
+    444: { label: 'Relations',  shortLabel: 'REL', colorVar: '--orange'    },
   };
   const LIBRARY_IDS = Object.keys(LIBRARY_META).map(Number);
+
+  // Article that feeds the hero welcome block at the top of the page.
+  const HERO_ARTICLE_ID = 40914;
 
   let sbClient = null;
   function getSupabaseClient() {
@@ -787,11 +693,6 @@
     return String(n);
   }
 
-  // ══════════════════════════════════════════════════════════
-  // SHARED DOM REFS — grabbed up front so the menu, search and theme
-  // sections below can reference each other (opening search closes the
-  // menu, and vice versa) regardless of which section runs first.
-  // ══════════════════════════════════════════════════════════
   const burgerBtn = document.getElementById('burgerBtn');
   const burgerMenu = document.getElementById('burgerMenu');
   const searchBtn = document.getElementById('searchBtn');
@@ -806,11 +707,6 @@
     document.body.classList.toggle('menu-open', isMenuOpen() || isSearchOpen());
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ALLOWED-LIBRARY LOOKUP — cached so the newsletter's initial load and
-  // any later search both reuse the same playlist_items round trip
-  // instead of each fetching it separately.
-  // ══════════════════════════════════════════════════════════
   let _allowedMapPromise = null;
   function getAllowedArticleMap() {
     if (_allowedMapPromise) return _allowedMapPromise;
@@ -845,12 +741,6 @@
     return null;
   }
 
-  // ══════════════════════════════════════════════════════════
-  // ARTICLE ENRICHMENT + CARD RENDERING — shared by the newsletter list
-  // and the search results, so both display exactly the same way: real
-  // author, first image if one exists and NOTHING if it doesn't (no
-  // fallback placeholder box), and view/like/comment counts.
-  // ══════════════════════════════════════════════════════════
   async function enrichArticles(rawArticles) {
     const client = getSupabaseClient();
     if (!client || !rawArticles.length) {
@@ -893,41 +783,45 @@
     });
   }
 
+  // Card markup: image ALWAYS first (full-bleed, no frame), text block
+  // ALWAYS after it in its own padded container — title/byline/excerpt
+  // are forced underneath the image, never beside or over it. No image
+  // = card starts straight at the text block.
   function buildFeedCardHTML(article, sectorMeta) {
     const initial = (article.authorName || '?').replace('@', '').charAt(0).toUpperCase();
     const avatarHTML = article.authorPfp
       ? '<img src="' + escHtml(article.authorPfp) + '" alt="" />'
       : escHtml(initial);
     const contentStr = typeof article.content === 'string' ? article.content : JSON.stringify(article.content || '');
-    const excerpt = contentStr.slice(0, 200);
+    const excerpt = contentStr.slice(0, 220);
     const dateStr = formatDate(article.created_at);
     const sectorHTML = sectorMeta
-      ? '<span class="feed-card-sector" style="background:var(' + sectorMeta.colorVar + ');">' + escHtml(sectorMeta.label) + '</span>'
+      ? '<span class="feed-card-sector" style="background:var(' + sectorMeta.colorVar + ');">' + escHtml(sectorMeta.shortLabel) + '</span>'
       : '';
-    // No fallback/placeholder box here on purpose — if there's no image,
-    // this whole block just isn't emitted, same as Patholytica's own card.
     const imageHTML = article.imageUrl
       ? '<div class="feed-card-image"><img src="' + escHtml(article.imageUrl) + '" alt="" loading="lazy" /></div>'
       : '';
 
     return (
       '<div class="feed-article-card" data-article-id="' + escHtml(String(article.id)) + '">' +
-        '<div class="feed-card-header">' +
-          '<div class="feed-card-avatar">' + avatarHTML + '</div>' +
-          '<div class="feed-card-authorinfo">' +
-            '<span class="feed-card-author">' + escHtml(article.authorName) + '</span>' +
-            (dateStr ? '<span class="feed-card-date">' + escHtml(dateStr) + '</span>' : '') +
-          '</div>' +
-          sectorHTML +
-        '</div>' +
-        '<div class="feed-card-title">' + escHtml(article.title || '(Untitled)') + '</div>' +
-        '<div class="feed-card-stats">' +
-          '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' + formatCompactNumber(article.views) + '</span>' +
-          '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 -7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + formatCompactNumber(article.likes) + '</span>' +
-        '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + formatCompactNumber(article.commentCount) + '</span>' +
-        '</div>' +
         imageHTML +
-        (excerpt ? '<div class="feed-card-excerpt">' + escHtml(excerpt) + '</div>' : '') +
+        '<div class="feed-card-body">' +
+          sectorHTML +
+          '<div class="feed-card-title">' + escHtml(article.title || '(Untitled)') + '</div>' +
+          '<div class="feed-card-header">' +
+            '<div class="feed-card-avatar">' + avatarHTML + '</div>' +
+            '<div class="feed-card-authorinfo">' +
+              '<span class="feed-card-author">' + escHtml(article.authorName) + '</span>' +
+              (dateStr ? '<span class="feed-card-date">' + escHtml(dateStr) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="feed-card-stats">' +
+            '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' + formatCompactNumber(article.views) + '</span>' +
+            '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 -7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + formatCompactNumber(article.likes) + '</span>' +
+            '<span class="feed-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + formatCompactNumber(article.commentCount) + '</span>' +
+          '</div>' +
+          (excerpt ? '<div class="feed-card-excerpt">' + escHtml(excerpt) + '</div>' : '') +
+        '</div>' +
       '</div>'
     );
   }
@@ -941,8 +835,56 @@
   }
 
   // ══════════════════════════════════════════════════════════
-  // NEWSLETTER — pulls only from the four allowed libraries above.
+  // HERO — pulls article id 40914 directly and uses its
+  // title/content/first-image to populate the welcome block above the
+  // newsletter. Stays hidden if the article can't be found so the page
+  // never shows a broken/empty hero.
   // ══════════════════════════════════════════════════════════
+  async function loadHeroArticle() {
+    const heroBlock = document.getElementById('heroBlock');
+    const heroImageWrap = document.getElementById('heroImageWrap');
+    const heroImage = document.getElementById('heroImage');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroDek = document.getElementById('heroDek');
+
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    try {
+      const { data: article, error } = await client
+        .from(ARTICLES_TABLE)
+        .select('id,title,content,firebase_user_id,views,likes,created_at')
+        .eq('id', HERO_ARTICLE_ID)
+        .maybeSingle();
+      if (error) throw error;
+      if (!article) return;
+
+      const [enriched] = await enrichArticles([article]);
+
+      heroTitle.textContent = enriched.title || 'Welcome to MedicineBank';
+      const contentStr = typeof enriched.content === 'string' ? enriched.content : JSON.stringify(enriched.content || '');
+      heroDek.textContent = contentStr.slice(0, 260) || "Stay up to date with MedicineBank's work across Logistics, Research, Relations and Media.";
+
+      // Two simple layouts: if the article has an image, the block shows
+      // the image with the title/subtext overlaid on top of it; if not,
+      // it's just plain stacked text on the page background.
+      if (enriched.imageUrl) {
+        heroImage.src = enriched.imageUrl;
+        heroImageWrap.style.display = 'block';
+        heroBlock.classList.remove('no-image');
+        heroBlock.classList.add('has-image');
+      } else {
+        heroImageWrap.style.display = 'none';
+        heroBlock.classList.remove('has-image');
+        heroBlock.classList.add('no-image');
+      }
+
+      heroBlock.style.display = 'block';
+    } catch (err) {
+      console.error('Hero article load failed:', err);
+    }
+  }
+
   async function loadNewsletterArticles() {
     const stack = document.getElementById('newsletterStack');
     const stateEl = document.getElementById('newsletterState');
@@ -990,16 +932,7 @@
     }
   }
 
-  // ══════════════════════════════════════════════════════════
-  // SEARCH — dynamic, debounced, restricted to the same allowed-library
-  // article set as the newsletter (reuses the cached Map above instead
-  // of fetching it a second time).
-  // ══════════════════════════════════════════════════════════
   function sanitizeForIlike(term) {
-    // PostgREST's .or() filter string uses commas to separate conditions
-    // and parentheses for grouping; % and _ are ILIKE wildcards. Strip
-    // all of these out of user input so a stray comma or paren can't
-    // break the filter (or reach into conditions it shouldn't).
     return term.replace(/[,()%_]/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
@@ -1071,12 +1004,6 @@
     }
   }
 
-  // ══════════════════════════════════════════════════════════
-  // AUTH — pfp + stats in the menu's account area (moved out of the
-  // header; see .menu-account in the CSS and the top of <nav
-  // class="burger-menu"> in the markup — same element IDs as before, so
-  // this function itself didn't need to change, only its surroundings).
-  // ══════════════════════════════════════════════════════════
   async function handleAuthChange(user) {
     const signedOutEl = document.getElementById('acctSignedOut');
     const signedInEl = document.getElementById('acctSignedIn');
@@ -1123,12 +1050,6 @@
 
   window.addEventListener('mb-auth-changed', (e) => { handleAuthChange(e.detail.user); });
 
-  // ══════════════════════════════════════════════════════════
-  // THEME SWITCHER — persists to localStorage under 'mb_theme'; the tiny
-  // inline script at the very top of <body> applies the saved value
-  // before first paint (avoiding a flash of the wrong theme), this part
-  // just handles changes made from the menu during the session.
-  // ══════════════════════════════════════════════════════════
   const THEME_KEY = 'mb_theme';
   const THEME_CLASSES = ['theme-light', 'theme-dark'];
 
@@ -1148,11 +1069,6 @@
     btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
   });
 
-  // ══════════════════════════════════════════════════════════
-  // BURGER MENU — now a full-page panel (see .burger-menu in the CSS),
-  // so opening it also locks background scroll via syncBodyLock(), and
-  // opening search closes it (and vice versa — see openSearch() above).
-  // ══════════════════════════════════════════════════════════
   function openBurgerMenu() {
     closeSearch();
     burgerMenu.classList.add('open');
@@ -1173,11 +1089,6 @@
     }
   });
 
-  // ══════════════════════════════════════════════════════════
-  // NAV / SCROLL SPY — only the in-menu "Newsletter" link uses this now;
-  // the sector links in the secondary nav and sector strip are plain
-  // outbound links to the subdomains, not in-page scroll targets.
-  // ══════════════════════════════════════════════════════════
   function smoothScrollTo(targetId) {
     const target = document.getElementById(targetId);
     if (!target) return;
@@ -1196,16 +1107,11 @@
     });
   });
 
-  // ══════════════════════════════════════════════════════════
-  // BOOT
-  // ══════════════════════════════════════════════════════════
   document.addEventListener('DOMContentLoaded', () => {
+    loadHeroArticle();
     loadNewsletterArticles();
     syncThemePills();
 
-    // Prevent double-tap-to-zoom on browsers where touch-action alone
-    // isn't fully honored (older WebKit). Blocks the synthetic dblclick
-    // that iOS Safari fires from a fast double-tap.
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(e) {
       const now = Date.now();
@@ -1213,8 +1119,6 @@
       lastTouchEnd = now;
     }, { passive: false });
 
-    // Block the iOS "copy / look up / share" callout on long-press, and
-    // right-click context menu on desktop, per the "no text editor" ask.
     document.addEventListener('contextmenu', (e) => e.preventDefault());
   });
 </script>
